@@ -16,7 +16,7 @@
 
 ## 发布通道与开发能力
 
-当前开发版本与源码获取方式见[项目首页](../../README.md#获取源码)，已发布版本见[Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases)。版本字符串、源码提交与实际 SDK 能力同时核对；插件能力通过已登录控制面的 `/api/plugin-sdk` 查询。
+当前发行版本与源码获取方式见[项目首页](../../README.md#获取源码)，已发布版本见[Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases)。版本字符串、源码提交与实际 SDK 能力同时核对；插件能力通过已登录控制面的 `/api/plugin-sdk` 查询。
 
 `/api/meta` 可提供平台元信息，不能代替功能探测。`/api/plugin-sdk` 返回401时先登录；没有该入口或返回不支持的合同版本时，不向旧系统导入包。执行 Agent 不是控制面插件管理入口。
 

@@ -24,7 +24,7 @@ Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它
 | [Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases) | 选择已发布标签及其安装说明，固定源码和实际镜像摘要。 |
 | `main` | 当前维护主线，适合贡献和评审；生产安装选择已发布标签。 |
 
-当前开发版本为 **0.11.2**，`v0.11.2` 标签在正式发布后使用。源码、镜像和服务器分别管理；拉取代码不会自动升级已有部署。
+当前正式发行版本为 **0.11.2**，固定标签 `v0.11.2` 对应本版源码。源码、镜像和服务器分别管理；拉取代码不会自动升级已有部署。
 
 当前固定原生适配基线为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。平台通过受控适配器使用其配置、模板和 deployer 入口；不同运行时并非每个动作都直接执行同一个 `deploy.py`。原生版本、模型镜像及外部依赖的具体兼容范围见[原生集成说明](web/docs/NATIVE_INTEGRATION.md)与[能力矩阵](web/docs/NATIVE_CAPABILITY_MATRIX.md)。
 
@@ -32,7 +32,7 @@ Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它
 
 **部署用户**：先阅读[文档导航](web/docs/README.md)，选择运行时、数据库和网络入口，再按[安装入口](web/DEPLOYMENT.md)准备独立目录、密钥、镜像及 Agent。
 
-从 Releases 选择已发布标签，替换下面的 `SOURCE_REF`；`v0.11.2` 发布后可使用该值：
+以下命令获取 `v0.11.2` 发行源码；如需其他已发布版本，从 Releases 选择对应标签替换 `SOURCE_REF`：
 
 ```bash
 SOURCE_REF=v0.11.2
