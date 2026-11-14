@@ -112,7 +112,7 @@ class ImageOperations:
         result = self.runtime.operation(identifier)
         if result and result.get("action") in {"image_pull", "image_remove"} and self.failed.is_set() \
                 and result.get("operation_status") in {"accepted", "running"}:
-            result = self.runtime._state().interrupt(identifier, message="Image worker is unavailable; inspect the durable operation before retrying",
+            result = self.runtime.resource_ledger().interrupt(identifier, message="Image worker is unavailable; inspect the durable operation before retrying",
                                                       resources_may_exist=result["operation_status"] == "running")
         return result if result and result.get("action") in {"image_pull", "image_remove"} else None
 
@@ -125,7 +125,7 @@ class ImageOperations:
         identity = {"node_id": request.node_id}
         identity.update(image=request.image) if action == "image_pull" else identity.update(image_id=request.image_id)
         fingerprint = intent_hash(action, identity)
-        state = self.runtime._state()
+        state = self.runtime.resource_ledger()
         with self.guard:
             replay = state.replay(request.operation_id, fingerprint)
             if replay is not None:
@@ -135,7 +135,7 @@ class ImageOperations:
             if self.pending.full():
                 raise HTTPException(429, "Image operation queue is full; no operation was accepted", headers={"Retry-After": "10"})
             if action == "image_remove":
-                self._assert_unused(self.runtime._docker(), request.image_id)
+                self._assert_unused(self.runtime.engine_client(), request.image_id)
             public_intent = {"image_reference": request.image} if action == "image_pull" else {"image_id": request.image_id}
             replay = state.begin(request.operation_id, fingerprint, action, "", request.node_id,
                                  public_intent=public_intent)
@@ -155,7 +155,7 @@ class ImageOperations:
                 if task is not None:
                     _action, request, _deadline = task
                     try:
-                        self.runtime._state().finish(request.operation_id, error=ValueError("Agent shut down before this image operation executed"), resources_may_exist=False)
+                        self.runtime.resource_ledger().finish(request.operation_id, error=ValueError("Agent shut down before this image operation executed"), resources_may_exist=False)
                     finally:
                         self.pending.task_done()
                 else:
@@ -243,7 +243,7 @@ class ImageOperations:
                 raise HTTPException(409, "Image is referenced by an existing container, including stopped containers; removal refused")
 
     def _execute(self, action, request, deadline):
-        state = self.runtime._state()
+        state = self.runtime.resource_ledger()
         write_attempted = False
         stream = None
         try:
@@ -252,7 +252,7 @@ class ImageOperations:
             if self.closed.is_set():
                 raise ValueError("Agent shut down before the image operation executed")
             state.running(request.operation_id)
-            client = self.runtime._docker()
+            client = self.runtime.engine_client()
             if action == "image_pull":
                 auth = self._auth(client, request, deadline)
                 self._check_time(deadline)

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "contracts": [
+    { "id": "console.http.handler", "version": "1.0.0", "cardinality": "one" },
+    { "id": "console.http.transport", "version": "1.0.0", "cardinality": "one" }
+  ],
+  "packages": [
+    { "id": "reference.http-node", "version": "1.0.0", "root": "../dist/plugins/http-node", "sha256": "PIN" },
+    { "id": "example.maintenance-http", "version": "1.0.0", "root": "maintenance-provider", "sha256": "PIN" }
+  ],
+  "selected": ["reference.http-node", "example.maintenance-http"],
+  "bindings": {
+    "console.http.handler": "example.maintenance-http",
+    "console.http.transport": "reference.http-node"
+  },
+  "settings": { "reference.http-node": { "host": "127.0.0.1", "port": 19080 } }
+}

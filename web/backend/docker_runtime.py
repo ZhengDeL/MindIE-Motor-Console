@@ -46,11 +46,24 @@ def _now() -> str:
 class DockerRuntime:
     def __init__(self, client=None, upstream_dir: str | Path | None = None,
                  workspace_dir: str | Path | None = None, host_root: str | Path | None = None,
-                 state_dir: str | Path | None = None, read_only: bool | None = None):
+                 state_dir: str | Path | None = None, read_only: bool | None = None,
+                 native_adapter=None, ledger_factory=None, host_telemetry=None, admission=None,
+                 provider_generation=None, provider_binding=None):
+        if native_adapter is None:
+            from .provider_host.defaults import ReferenceNativeAdapter
+            native_adapter = ReferenceNativeAdapter()
+        self.native_adapter = native_adapter
+        self.ledger_factory = ledger_factory or DockerAgentState
+        self.host_telemetry = host_telemetry
+        if admission is None:
+            from .provider_host.defaults import ResourceAdmission
+            admission = ResourceAdmission()
+        self.admission = admission
+        self.provider_generation, self.provider_binding = provider_generation, provider_binding
         self._client = client
         self._inventory_client = client
         self._inventory_cache = ObservationCache()
-        self.upstream_dir = upstream_path(upstream_dir)
+        self.upstream_dir = self.native_adapter.upstream_path(upstream_dir)
         self.workspace_dir = str(workspace_dir or os.environ.get("MOTOR_HOST_WORKSPACE_DIR", "/opt/motor-console/workspace"))
         self.host_root = Path(host_root or os.environ.get("MOTOR_HOST_ROOT", "/"))
         self._lock = threading.RLock()
@@ -65,7 +78,7 @@ class DockerRuntime:
             raise DockerUnavailable("Agent resource journal is busy")
         try:
             if self._journal is None:
-                self._journal = DockerAgentState(self._state_dir, initialization_timeout=10 if read_timeout is None else read_timeout)
+                self._journal = self.ledger_factory(self._state_dir, initialization_timeout=10 if read_timeout is None else read_timeout)
             return self._journal
         finally:
             self._journal_guard.release()
@@ -146,6 +159,14 @@ class DockerRuntime:
 
     def operation(self, identifier):
         return self._state().receipt(identifier)
+
+    def engine_client(self):
+        """Public Docker engine capability used by the selected image package."""
+        return self._docker()
+
+    def resource_ledger(self):
+        """Public operation/allocation port; never exposes a SQL connection."""
+        return self._state()
 
     def _docker(self):
         try:
@@ -286,7 +307,7 @@ class DockerRuntime:
         if len(interfaces) > 4096:
             return ""
         matches = []
-        with official_helpers(self.upstream_dir) as helpers:
+        with self.native_adapter.official_helpers(self.upstream_dir) as helpers:
             for _, name in interfaces:
                 if not re.fullmatch(r"[A-Za-z0-9_.:-]{1,15}", name):
                     continue
@@ -460,7 +481,7 @@ class DockerRuntime:
         nic = os.environ.get("MOTOR_NODE_NIC", "")
         if not nic and node_address:
             nic = self._network_nic(node_address)
-        telemetry = collect_resource_telemetry(self.host_root)
+        telemetry = (self.host_telemetry or collect_resource_telemetry)(self.host_root)
         if time.monotonic() >= deadline:
             devices, ledger = None, None
             errors.append({"source": "inventory", "code": "collection_budget_exceeded",
@@ -597,52 +618,17 @@ class DockerRuntime:
                 raise ContainerConflict("Cannot verify host process ownership for the restart targets") from error
         return pids
 
-    def _check_physical_usage(self, requested, owned):
-        if not requested:
-            return
-        mode = os.getenv("MOTOR_NPU_ADMISSION_MODE", "observed")
-        if mode not in {"observed", "declarations"}:
-            raise ContainerConflict("MOTOR_NPU_ADMISSION_MODE must be observed or declarations")
-        if mode == "declarations":
-            return
+    def admission_context(self):
+        from .provider_host.contracts import AdmissionContextV1
         from .resource_telemetry import collect_resource_telemetry
-        telemetry = collect_resource_telemetry(self.host_root).get("npu_telemetry") or {}
-        try:
-            captured = datetime.now(timezone.utc)
-            observed_at = datetime.fromisoformat(telemetry.get("collected_at", "").replace("Z", "+00:00"))
-            expires = datetime.fromisoformat(telemetry.get("expires_at", "").replace("Z", "+00:00"))
-            if (observed_at.tzinfo is None or expires.tzinfo is None or observed_at > captured
-                    or expires <= captured or not 0 < (expires - observed_at).total_seconds() <= 300):
-                raise ValueError("Expired observation")
-        except (ValueError, TypeError, AttributeError) as error:
-            raise ContainerConflict("Fresh NPU hardware observations are required before resource admission") from error
-        observed = telemetry.get("devices") or []
-        owned_pids = None
-        for device in requested:
-            matches = [item for item in observed if item.get("device_index") == device]
-            if len(matches) != 1:
-                raise ContainerConflict(f"davinci{device} has no unique hardware observation")
-            observation = matches[0]
-            if observation.get("mapping_status") != "verified":
-                raise ContainerConflict(f"davinci{device} hardware identity mapping has not been verified")
-            if observation.get("process_pid_scope") != "host" or observation.get("physical_device_id") != device:
-                raise ContainerConflict(f"davinci{device} has no verified physical device and host PID mapping")
-            if observation.get("health") != "healthy" or observation.get("processes_status") != "ready":
-                raise ContainerConflict(f"davinci{device} health or process observation is unavailable")
-            total, used = observation.get("memory_total_bytes"), observation.get("memory_used_bytes")
-            if type(total) is not int or type(used) is not int or not 0 <= used <= total or total == 0:
-                raise ContainerConflict(f"davinci{device} HBM observation is unavailable or inconsistent")
-            processes = observation.get("processes") or []
-            if processes:
-                if owned_pids is None:
-                    owned_pids = self._container_pids(owned)
-                if any(item.get("pid") not in owned_pids for item in processes):
-                    raise ContainerConflict(f"davinci{device} has processes outside the restart targets")
-            else:
-                utilization = observation.get("utilization_percent")
-                if (type(utilization) not in {int, float} or not math.isfinite(utilization)
-                        or utilization < 0 or utilization > 100 or utilization > 0):
-                    raise ContainerConflict(f"davinci{device} idle hardware utilization is not verified")
+        return AdmissionContextV1(self.host_root, self.host_telemetry or collect_resource_telemetry,
+            self._container_pids, self._devices, self._labels, self._declared_devices,
+            self._resource_numbers, self._container_ports, self._port_in_use,
+            self._owned_listener_ports, self._check_physical_usage)
+
+    def _check_physical_usage(self, requested, owned):
+        return self.admission.check_physical_usage(self.admission_context(), requested, owned)
+
 
     def _owned_listener_ports(self, owned):
         """Attribute existing host-network listeners; never assume a bound port is ours."""
@@ -685,44 +671,8 @@ class DockerRuntime:
             raise ContainerConflict("Cannot verify ownership of an occupied restart port") from error
 
     def _restart_admission(self, daemon, owned, containers, operation_id):
-        targets = {container.id for container in owned}
-        devices, ports, claims = set(), set(), {}
-        discovered = set(self._devices())
-        for container in owned:
-            labels = self._labels(container)
-            requested = self._declared_devices(container)
-            if "motor-console.resource-devices" in labels:
-                try:
-                    requested |= self._resource_numbers(json.loads(labels["motor-console.resource-devices"]), "device")
-                except (ValueError, TypeError) as error:
-                    raise ContainerConflict("Owned container device claims are malformed") from error
-            devices.update(requested)
-            planned_ports = self._container_ports(container, required=True)
-            ports.update(planned_ports)
-            allocation_id = labels.get("motor-console.allocation-id") or "allocation_" + hashlib.sha256((daemon + ":" + container.id).encode()).hexdigest()[:32]
-            if not re.fullmatch(r"allocation_[a-f0-9]{32}", allocation_id):
-                raise ContainerConflict("Owned container allocation identity is malformed")
-            claim = claims.setdefault(allocation_id, {"allocation_id": allocation_id, "daemon_id": daemon,
-                "service_id": labels[SERVICE_LABEL], "node_id": labels[NODE_LABEL], "operation_id": operation_id,
-                "devices": [], "ports": [], "container_ids": [], "container_names": []})
-            claim["devices"] = sorted(set(claim["devices"]) | requested)
-            claim["ports"] = sorted(set(claim["ports"]) | planned_ports)
-            claim["container_ids"].append(container.id); claim["container_names"].append(container.name)
-        if not devices <= discovered:
-            raise ContainerConflict("Restart target devices are missing from the current host inventory")
-        # Full-group checks precede the first restart, including containers of the same service not in this target.
-        for container in containers:
-            if container.id in targets or getattr(container, "status", "") not in {"running", "restarting", "paused"}:
-                continue
-            if devices & self._declared_devices(container):
-                raise ContainerConflict("Restart devices are held by another running container: " + container.name)
-            if ports and ports & self._container_ports(container):
-                raise ContainerConflict("Restart ports are claimed by another running container: " + container.name)
-        busy_ports = {port for port in ports if self._port_in_use(port)}
-        if busy_ports and not busy_ports <= self._owned_listener_ports(owned):
-            raise ContainerConflict("A restart port is occupied outside the verified target processes")
-        self._check_physical_usage(devices, owned)
-        return list(claims.values())
+        return self.admission.restart(self.admission_context(), daemon, owned, containers, operation_id)
+
 
     @native_operation
     def preflight(self, payload: dict) -> dict:
@@ -733,8 +683,8 @@ class DockerRuntime:
                     "warnings": [], "command": "", "validation": "not_tested", **mode}
         from .native_contracts import native_contract_checks
         from .compatibility import public_profile
-        checks = native_contract_checks(payload.get("user_config"), payload.get("env"), runtime="docker",
-                                        commit=public_profile()["commit"])
+        checks = self.native_adapter.native_contract_checks(payload.get("user_config"), payload.get("env"), runtime="docker",
+                                        commit=self.native_adapter.public_profile()["commit"])
         if any(item["status"] == "fail" for item in checks):
             return {"valid": False, "checks": checks, "warnings": [], "command": "", "validation": "not_tested"}
         client = self._docker()  # Missing daemon is HTTP 503, not a synthetic plan.
@@ -748,17 +698,17 @@ class DockerRuntime:
 
         try:
             if payload.get("full_placements"):
-                checks.extend(validate_layout(payload["user_config"], payload["full_placements"], env=payload.get("env", {}),
+                checks.extend(self.native_adapter.validate_layout(payload["user_config"], payload["full_placements"], env=payload.get("env", {}),
                                               nodes=payload.get("placement_nodes", {}), upstream_dir=self.upstream_dir))
                 if any(item["status"] == "fail" for item in checks):
                     return {"valid": False, "checks": checks, "warnings": warnings, "command": ""}
-            spec = build_container_spec(payload, self.upstream_dir, self.workspace_dir)
+            spec = self.native_adapter.build_container_spec(payload, self.upstream_dir, self.workspace_dir)
         except (ValueError, TypeError, KeyError, OSError, ImportError) as exc:
             check("Motor configuration", "fail", str(exc))
             return {"valid": False, "checks": checks, "warnings": warnings, "command": ""}
         check("Motor configuration", "pass", "Pinned official helpers accepted the configuration and Docker template")
         try:
-            with official_helpers(self.upstream_dir) as h:
+            with self.native_adapter.official_helpers(self.upstream_dir) as h:
                 h.docker.require_pod_ip_and_nic(payload["node"]["address"], payload["node"]["nic_name"])
             check("Host network", "pass", "Node IPv4 matches its actual network interface")
         except ValueError as exc:
@@ -903,7 +853,7 @@ class DockerRuntime:
             if not plan["valid"]:
                 raise MotorConfigError("; ".join(c["detail"] for c in plan["checks"] if c["status"] == "fail"))
             request = {**payload, "_workspace_id": uuid.uuid4().hex}
-            spec = build_container_spec(request, self.upstream_dir, self.workspace_dir)
+            spec = self.native_adapter.build_container_spec(request, self.upstream_dir, self.workspace_dir)
             self._pin_image_bindings(client, spec, plan.get("image_bindings") or {})
             allocation_id = "allocation_" + hashlib.sha256((daemon + ":" + spec["create_kwargs"]["name"]).encode()).hexdigest()[:32]
             names = [kwargs["name"] for kwargs in (spec["create_kwargs"], spec.get("render_kwargs")) if kwargs]

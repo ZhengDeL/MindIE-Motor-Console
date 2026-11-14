@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useBranding } from "./brandingState";
 import type { ReactNode } from "react";
 import { Server, ShieldCheck } from "./icons";
@@ -17,7 +18,7 @@ type ChangeConnection = <K extends keyof AgentSSHConnection>(
   key: K,
   value: AgentSSHConnection[K],
 ) => void;
-export function CredentialFields({
+function DefaultCredentialFields({
   method,
   onMethod,
   epoch,
@@ -36,22 +37,22 @@ export function CredentialFields({
 }) {
   return (
     <>
-      <h3>登录凭据</h3>
+      <UiElement as="h3"><UiText>{"登录凭据"}</UiText></UiElement>
       <Field label="认证方式">
-        <select
+        <UiElement as="select"
           value={method}
           onChange={(event) =>
             onMethod(event.target.value as AgentSSHCredentials["method"])
           }
         >
-          <option value="password">密码</option>
-          <option value="private_key">SSH 私钥文件</option>
-        </select>
+          <UiElement as="option" value="password"><UiText>{"密码"}</UiText></UiElement>
+          <UiElement as="option" value="private_key"><UiText>{"SSH 私钥文件"}</UiText></UiElement>
+        </UiElement>
       </Field>
-      <div key={epoch}>
+      <UiElement as="div" key={epoch}>
         {method === "password" ? (
           <Field label="SSH 登录密码" required>
-            <input
+            <UiElement as="input"
               type="password"
               autoComplete="new-password"
               maxLength={4096}
@@ -65,7 +66,7 @@ export function CredentialFields({
               required
               hint="最多 64 KiB；只保留于本窗口内存，不展示私钥内容。"
             >
-              <input
+              <UiElement as="input"
                 type="file"
                 aria-label="选择 SSH 私钥文件"
                 onChange={(event) => {
@@ -75,10 +76,10 @@ export function CredentialFields({
               />
             </Field>
             {keyFilename && (
-              <p className="rollout-key-filename">已选择：{keyFilename}</p>
+              <UiElement as="p" className="rollout-key-filename"><UiText>{"已选择："}</UiText>{keyFilename}</UiElement>
             )}
             <Field label="私钥口令（可选）">
-              <input
+              <UiElement as="input"
                 type="password"
                 autoComplete="new-password"
                 maxLength={4096}
@@ -87,11 +88,11 @@ export function CredentialFields({
             </Field>
           </>
         )}
-      </div>
+      </UiElement>
     </>
   );
 }
-export function IdentityFields({
+function DefaultIdentityFields({
   spec,
   connection,
   changeSpec,
@@ -117,18 +118,17 @@ export function IdentityFields({
   children: ReactNode;
 }) {
   return (
-    <div className="rollout-section">
+    <UiElement as="div" className="rollout-section">
       <InfoBox>
-        执行主机需已有 Docker 和 Compose ≥2.20。Docker 每台宿主机一个
-        Agent；Kubernetes 每集群一个执行 Agent，使用预先授权的 kubeconfig。
+        <UiText>{"执行主机需已有 Docker 和 Compose ≥2.20。Docker 每台宿主机一个 Agent；Kubernetes 每集群一个执行 Agent，使用预先授权的 kubeconfig。"}</UiText>
       </InfoBox>
-      <h3>
+      <UiElement as="h3">
         <Server size={17} />
-        目标节点
-      </h3>
-      <div className="rollout-form-grid">
+        <UiText>{"目标节点"}</UiText>
+      </UiElement>
+      <UiElement as="div" className="rollout-form-grid">
         <Field label="节点名称" required>
-          <input
+          <UiElement as="input"
             value={spec.name}
             maxLength={100}
             onChange={(event) => changeSpec("name", event.target.value)}
@@ -136,7 +136,7 @@ export function IdentityFields({
           />
         </Field>
         <Field label="管理 IPv4 地址" required>
-          <input
+          <UiElement as="input"
             value={spec.address}
             onChange={(event) =>
               changeSpec("address", event.target.value.trim())
@@ -149,7 +149,7 @@ export function IdentityFields({
           required
           hint="可使用管理 IP 或解析到目标节点的主机名。"
         >
-          <input
+          <UiElement as="input"
             value={connection.host}
             onChange={(event) =>
               changeConnection("host", event.target.value.trim())
@@ -158,7 +158,7 @@ export function IdentityFields({
           />
         </Field>
         <Field label="SSH 端口" required>
-          <input
+          <UiElement as="input"
             type="number"
             min={1}
             max={65535}
@@ -169,7 +169,7 @@ export function IdentityFields({
           />
         </Field>
         <Field label="SSH 用户" required>
-          <input
+          <UiElement as="input"
             autoComplete="off"
             value={connection.username}
             onChange={(event) =>
@@ -178,7 +178,7 @@ export function IdentityFields({
           />
         </Field>
         <Field label="执行权限">
-          <select
+          <UiElement as="select"
             value={connection.privilege}
             onChange={(event) =>
               changeConnection(
@@ -187,38 +187,38 @@ export function IdentityFields({
               )
             }
           >
-            <option value="root">root 环境直接执行</option>
-            <option value="sudo_n">非 root，使用 sudo -n 免密提权</option>
-          </select>
+            <UiElement as="option" value="root"><UiText>{"root 环境直接执行"}</UiText></UiElement>
+            <UiElement as="option" value="sudo_n"><UiText>{"非 root，使用 sudo -n 免密提权"}</UiText></UiElement>
+          </UiElement>
         </Field>
-      </div>
-      <h3>
+      </UiElement>
+      <UiElement as="h3">
         <ShieldCheck size={17} />
-        SSH 主机身份
-      </h3>
-      <div className="rollout-fingerprint-discovery">
-        <Button
+        <UiText>{"SSH 主机身份"}</UiText>
+      </UiElement>
+      <UiElement as="div" className="rollout-fingerprint-discovery">
+        <Button actionId="action.AgentRolloutForms.001"
           loading={busy === "host-key"}
           disabled={locked && busy !== "host-key"}
           onClick={() => void discover()}
         >
-          仅探测主机指纹
+          <UiText>{"仅探测主机指纹"}</UiText>
         </Button>
-        <span>此步骤不发送用户名、密码或私钥。</span>
-      </div>
+        <UiElement as="span"><UiText>{"此步骤不发送用户名、密码或私钥。"}</UiText></UiElement>
+      </UiElement>
       {observedKey && (
-        <div className="rollout-observed-key">
-          <Badge status="warning">尚未验证</Badge>
-          <span>{observedKey.key_type}</span>
-          <code>{observedKey.fingerprint}</code>
-        </div>
+        <UiElement as="div" className="rollout-observed-key">
+          <Badge status="warning"><UiText>{"尚未验证"}</UiText></Badge>
+          <UiElement as="span">{observedKey.key_type}</UiElement>
+          <UiElement as="code">{observedKey.fingerprint}</UiElement>
+        </UiElement>
       )}
       <Field
         label="期望的 SSH 主机指纹"
         required
         hint="通过目标机控制台等独立渠道执行 ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub 核对；网络探测结果不能作为信任依据。"
       >
-        <input
+        <UiElement as="input"
           className="mono"
           value={connection.host_key_sha256}
           autoComplete="off"
@@ -228,20 +228,20 @@ export function IdentityFields({
           placeholder="SHA256:…"
         />
       </Field>
-      <label className="rollout-checkbox">
-        <input
+      <UiElement as="label" className="rollout-checkbox">
+        <UiElement as="input"
           type="checkbox"
           checked={fingerprintConfirmed}
           onChange={(event) => setFingerprintConfirmed(event.target.checked)}
         />
-        <span>我已通过独立渠道核对上述指纹，确认它属于目标主机。</span>
-      </label>
+        <UiElement as="span"><UiText>{"我已通过独立渠道核对上述指纹，确认它属于目标主机。"}</UiText></UiElement>
+      </UiElement>
       {children}
-    </div>
+    </UiElement>
   );
 }
 
-export function ConfigurationFields({
+function DefaultConfigurationFields({
   spec,
   changeSpec,
   artifacts,
@@ -260,10 +260,10 @@ export function ConfigurationFields({
 }) {
   const branding = useBranding();
   return (
-    <div className="rollout-section">
-      <div className="rollout-form-grid">
+    <UiElement as="div" className="rollout-section">
+      <UiElement as="div" className="rollout-form-grid">
         <Field label="运行环境">
-          <select
+          <UiElement as="select"
             value={spec.runtime}
             onChange={(event) => {
               changeSpec(
@@ -273,16 +273,16 @@ export function ConfigurationFields({
               changeSpec("kubeconfig_path", "");
             }}
           >
-            <option value="docker">Docker 宿主机</option>
-            <option value="kubernetes">Kubernetes 集群</option>
-          </select>
+            <UiElement as="option" value="docker"><UiText>{"Docker 宿主机"}</UiText></UiElement>
+            <UiElement as="option" value="kubernetes"><UiText>{"Kubernetes 集群"}</UiText></UiElement>
+          </UiElement>
         </Field>
         <Field
           label="安装标识"
           required
           hint="用于远端安装目录与容器项目标识；使用小写字母、数字和连字符。"
         >
-          <input
+          <UiElement as="input"
             value={spec.installation_name}
             maxLength={63}
             onChange={(event) =>
@@ -290,14 +290,13 @@ export function ConfigurationFields({
             }
           />
         </Field>
-      </div>
-      <h3>Agent 镜像</h3>
+      </UiElement>
+      <UiElement as="h3"><UiText>{"Agent 镜像"}</UiText></UiElement>
       <InfoBox>
-        此处安装 {branding.name} 自有 Agent，请使用专用 Agent 镜像。
-        推理镜像在创建推理服务时配置。
+        <UiText>{"此处安装"}</UiText> {branding.name} <UiText>{"自有 Agent，请使用专用 Agent 镜像。 推理镜像在创建推理服务时配置。"}</UiText>
       </InfoBox>
       <Field label="镜像来源">
-        <select
+        <UiElement as="select"
           value={spec.image_source}
           onChange={(event) => {
             changeSpec(
@@ -311,9 +310,9 @@ export function ConfigurationFields({
             );
           }}
         >
-          <option value="artifact">已准备的镜像包</option>
-          <option value="registry">镜像仓库（固定摘要）</option>
-        </select>
+          <UiElement as="option" value="artifact"><UiText>{"已准备的镜像包"}</UiText></UiElement>
+          <UiElement as="option" value="registry"><UiText>{"镜像仓库（固定摘要）"}</UiText></UiElement>
+        </UiElement>
       </Field>
       {spec.image_source === "artifact" ? (
         artifactLoading ? (
@@ -321,42 +320,41 @@ export function ConfigurationFields({
         ) : artifacts.length ? (
           <>
             <Field label="Agent 镜像包" required>
-              <select
+              <UiElement as="select"
                 value={spec.artifact_id}
                 onChange={(event) =>
                   changeSpec("artifact_id", event.target.value)
                 }
               >
                 {artifacts.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.filename} · {item.architecture} · Console{" "}
+                  <UiElement as="option" key={item.id} value={item.id}>
+                    {item.filename} <UiText>{"·"}</UiText> {item.architecture} <UiText>{"· Console"}</UiText>{" "}
                     {item.console_version}
-                  </option>
+                  </UiElement>
                 ))}
-              </select>
+              </UiElement>
             </Field>
             {artifacts
               .filter((item) => item.id === spec.artifact_id)
               .map((item) => (
-                <dl className="rollout-summary" key={item.id}>
-                  <dt>文件摘要</dt>
-                  <dd>
-                    <code>sha256:{item.sha256}</code>
-                  </dd>
-                  <dt>大小 / 协议</dt>
-                  <dd>
-                    {(item.size_bytes / 1024 ** 2).toFixed(1)} MiB · Agent 协议{" "}
+                <UiElement as="dl" className="rollout-summary" key={item.id}>
+                  <UiElement as="dt"><UiText>{"文件摘要"}</UiText></UiElement>
+                  <UiElement as="dd">
+                    <UiElement as="code"><UiText>{"sha256:"}</UiText>{item.sha256}</UiElement>
+                  </UiElement>
+                  <UiElement as="dt"><UiText>{"大小 / 协议"}</UiText></UiElement>
+                  <UiElement as="dd">
+                    {(item.size_bytes / 1024 ** 2).toFixed(1)} <UiText>{"MiB · Agent 协议"}</UiText>{" "}
                     {item.agent_protocol}
-                  </dd>
-                </dl>
+                  </UiElement>
+                </UiElement>
               ))}
           </>
         ) : (
           <InfoBox>
-            尚无可用的 Agent 镜像包。请在有 Docker 的主机使用{" "}
-            <code>web/scripts/package_agent_image.py</code>{" "}
-            打包，并按部署文档放入控制台配置的镜像包目录；也可选择固定摘要的
-            Agent 仓库镜像。
+            <UiText>{"尚无可用的 Agent 镜像包。请在有 Docker 的主机使用"}</UiText>{" "}
+            <UiElement as="code"><UiText>{"web/scripts/package_agent_image.py"}</UiText></UiElement>{" "}
+            <UiText>{"打包，并按部署文档放入控制台配置的镜像包目录；也可选择固定摘要的 Agent 仓库镜像。"}</UiText>
           </InfoBox>
         )
       ) : (
@@ -365,7 +363,7 @@ export function ConfigurationFields({
           required
           hint="填写包含 Agent 及固定 Motor 源码的控制台镜像，以不可变 SHA256 摘要固定版本。"
         >
-          <input
+          <UiElement as="input"
             className="mono"
             value={spec.image}
             onChange={(event) => changeSpec("image", event.target.value.trim())}
@@ -374,9 +372,9 @@ export function ConfigurationFields({
         </Field>
       )}
       {artifactIssues && (
-        <p className="rollout-muted">
-          部分镜像包未通过读取或元数据检查，未列入可选项。
-        </p>
+        <UiElement as="p" className="rollout-muted">
+          <UiText>{"部分镜像包未通过读取或元数据检查，未列入可选项。"}</UiText>
+        </UiElement>
       )}
       {spec.runtime === "kubernetes" && (
         <Field
@@ -384,7 +382,7 @@ export function ConfigurationFields({
           required
           hint="只使用预先授权的集群凭据；安装向导不会创建或提升集群角色。"
         >
-          <input
+          <UiElement as="input"
             className="mono"
             value={spec.kubeconfig_path}
             onChange={(event) =>
@@ -394,10 +392,10 @@ export function ConfigurationFields({
           />
         </Field>
       )}
-      <h3>Agent HTTPS 接入</h3>
-      <div className="rollout-form-grid">
+      <UiElement as="h3"><UiText>{"Agent HTTPS 接入"}</UiText></UiElement>
+      <UiElement as="div" className="rollout-form-grid">
         <Field label="TLS 方式">
-          <select
+          <UiElement as="select"
             value={spec.tls_mode}
             onChange={(event) => {
               changeSpec(
@@ -407,12 +405,12 @@ export function ConfigurationFields({
               changeSpec("https_proxy_confirmed", false);
             }}
           >
-            <option value="managed_tls">自动签发与安装 HTTPS 身份</option>
-            <option value="existing_https">使用现有 HTTPS 入口</option>
-          </select>
+            <UiElement as="option" value="managed_tls"><UiText>{"自动签发与安装 HTTPS 身份"}</UiText></UiElement>
+            <UiElement as="option" value="existing_https"><UiText>{"使用现有 HTTPS 入口"}</UiText></UiElement>
+          </UiElement>
         </Field>
         <Field label="Agent 监听端口" required>
-          <input
+          <UiElement as="input"
             type="number"
             min={1024}
             max={65535}
@@ -422,7 +420,7 @@ export function ConfigurationFields({
             }
           />
         </Field>
-      </div>
+      </UiElement>
       <Field
         label="控制台访问 Agent 的 HTTPS 地址"
         required
@@ -432,7 +430,7 @@ export function ConfigurationFields({
             : "填写已配置好的 HTTPS 反向代理入口。"
         }
       >
-        <input
+        <UiElement as="input"
           className="mono"
           value={spec.agent_url}
           readOnly={spec.tls_mode === "managed_tls"}
@@ -442,37 +440,37 @@ export function ConfigurationFields({
         />
       </Field>
       {spec.tls_mode === "existing_https" && (
-        <label className="rollout-checkbox">
-          <input
+        <UiElement as="label" className="rollout-checkbox">
+          <UiElement as="input"
             type="checkbox"
             checked={spec.https_proxy_confirmed}
             onChange={(event) =>
               changeSpec("https_proxy_confirmed", event.target.checked)
             }
           />
-          <span>
-            现有 HTTPS 入口已正确转发到此 Agent，且控制台可以验证它的证书。
-          </span>
-        </label>
+          <UiElement as="span">
+            <UiText>{"现有 HTTPS 入口已正确转发到此 Agent，且控制台可以验证它的证书。"}</UiText>
+          </UiElement>
+        </UiElement>
       )}
-      <details className="rollout-advanced">
-        <summary>资源限额与节点标签</summary>
-        <div className="rollout-form-grid">
+      <UiElement as="details" className="rollout-advanced">
+        <UiElement as="summary"><UiText>{"资源限额与节点标签"}</UiText></UiElement>
+        <UiElement as="div" className="rollout-form-grid">
           <Field label="CPU 上限（核）">
-            <input
+            <UiElement as="input"
               value={spec.cpus}
               onChange={(event) => changeSpec("cpus", event.target.value)}
             />
           </Field>
           <Field label="内存上限">
-            <input
+            <UiElement as="input"
               value={spec.memory}
               onChange={(event) => changeSpec("memory", event.target.value)}
               placeholder="1g"
             />
           </Field>
           <Field label="进程数上限">
-            <input
+            <UiElement as="input"
               type="number"
               min={64}
               max={4096}
@@ -483,7 +481,7 @@ export function ConfigurationFields({
             />
           </Field>
           <Field label="原生部署任务并发">
-            <input
+            <UiElement as="input"
               type="number"
               min={1}
               max={4}
@@ -494,14 +492,14 @@ export function ConfigurationFields({
             />
           </Field>
           <Field label="通信网卡（可选）">
-            <input
+            <UiElement as="input"
               value={spec.nic_name}
               onChange={(event) => changeSpec("nic_name", event.target.value)}
               placeholder="bond0"
             />
           </Field>
           <Field label="节点标签" hint="使用逗号分隔。">
-            <input
+            <UiElement as="input"
               value={labelsText}
               onChange={(event) => {
                 setLabelsText(event.target.value);
@@ -515,8 +513,15 @@ export function ConfigurationFields({
               }}
             />
           </Field>
-        </div>
-      </details>
-    </div>
+        </UiElement>
+      </UiElement>
+    </UiElement>
   );
 }
+
+export const CredentialFields = withUiSlot("component.CredentialFields", DefaultCredentialFields);
+export const IdentityFields = withUiSlot("component.IdentityFields", DefaultIdentityFields);
+export const ConfigurationFields = withUiSlot("component.ConfigurationFields", DefaultConfigurationFields);
+
+// Reference package implementation exports.
+export { DefaultCredentialFields, DefaultIdentityFields, DefaultConfigurationFields };

@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { api, post, roleLabel } from "./api";
 import { Button, Copy, Empty, ErrorBox, Field, InfoBox, Modal, Spinner } from "./ui";
@@ -13,7 +14,7 @@ function mutationFailure(reason: unknown): string {
   return failure.message + (failure.outcomeUnknown ? " 操作结果尚未确认，请先关闭窗口并读取目录核对，不要连续重复提交。" : failure.status === 409
     ? " 输入仍保留在当前窗口；请先复制保存，再关闭窗口读取最新目录后对比提交。" : "");
 }
-export default function PluginPackagesPanel({ identity, canManage, onCatalogRefresh }: { identity: string; canManage: boolean; onCatalogRefresh: () => void }) {
+function DefaultPluginPackagesPanel({ identity, canManage, onCatalogRefresh }: { identity: string; canManage: boolean; onCatalogRefresh: () => void }) {
   const [directory, setDirectory] = useState<PluginPackages | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -41,38 +42,38 @@ export default function PluginPackagesPanel({ identity, canManage, onCatalogRefr
     } catch (reason) { if (active.current) setError(mutationFailure(reason)); }
     finally { guard.current = false; if (active.current) setBusy(false); }
   }
-  return <section className="panel plugin-packages" aria-labelledby="plugin-packages-title">
-    <div className="panel-head"><div><h2 id="plugin-packages-title">社区插件包</h2><p className="small-caption">导入离线包，核对来源后选择下次启动加载的版本。</p></div>
-      <div className="plugin-package-toolbar"><Button onClick={() => void query.refresh()} loading={query.refreshing}><RefreshCw size={14} />读取目录</Button>
-        {canManage && <Button kind="primary" onClick={() => setImportOpen(true)}><Upload size={14} />导入插件</Button>}</div></div>
-    <div className="settings-content">
-      {!canManage && <InfoBox>演示环境仅展示包目录。导入或选择服务端插件代码需要在正式控制面使用已登录的管理员账号。</InfoBox>}
+  return <UiRegion name="layout.panel" as="section" className="panel plugin-packages" aria-labelledby="plugin-packages-title">
+    <UiElement as="div" className="panel-head"><UiElement as="div"><UiElement as="h2" id="plugin-packages-title"><UiText>{"社区插件包"}</UiText></UiElement><UiElement as="p" className="small-caption"><UiText>{"导入离线包，核对来源后选择下次启动加载的版本。"}</UiText></UiElement></UiElement>
+      <UiElement as="div" className="plugin-package-toolbar"><Button actionId="plugins.server.refresh" onClick={() => void query.refresh()} loading={query.refreshing}><RefreshCw size={14} /><UiText>{"读取目录"}</UiText></Button>
+        {canManage && <Button actionId="plugins.server.import.open" kind="primary" onClick={() => setImportOpen(true)}><Upload size={14} /><UiText>{"导入插件"}</UiText></Button>}</UiElement></UiElement>
+    <UiElement as="div" className="settings-content">
+      {!canManage && <InfoBox><UiText>{"演示环境仅展示包目录。导入或选择服务端插件代码需要在正式控制面使用已登录的管理员账号。"}</UiText></InfoBox>}
       {error && <ErrorBox message={error} />}{message && <InfoBox>{message}</InfoBox>}
-      {directory?.pending_restart && <InfoBox>已选择的插件与当前加载结果不同。请先检查下方的停用或兼容原因；允许加载的选择会在重启对应控制台进程后生效。</InfoBox>}
+      {directory?.pending_restart && <InfoBox><UiText>{"已选择的插件与当前加载结果不同。请先检查下方的停用或兼容原因；允许加载的选择会在重启对应控制台进程后生效。"}</UiText></InfoBox>}
       {!directory ? error ? null : <Spinner label="正在读取插件包目录" /> : !directory.items.length ? <Empty title="尚未导入社区插件" description="支持 .qhplugin 离线包，单包最多 8 MiB。导入仅检查并保存，不执行插件代码。" /> :
-        <div className="plugin-package-list">{directory.items.map((item) => <article key={item.digest} className="plugin-package-card">
-          <div className="plugin-package-title"><div><h3>{item.name}</h3><code>{item.id} · {item.version}</code></div>
-            <div className="plugin-package-badges">{item.loaded && <span className="badge badge-pass"><i />当前已加载</span>}{item.selected && <span className={`badge ${item.blocked_reason ? "badge-warn" : "badge-info"}`}><i />{item.blocked_reason ? "已选择 · 加载受阻" : "下次启动选择"}</span>}{!item.loaded && !item.selected && <span className="badge badge-stopped"><i />已导入</span>}{item.compatible_with_host === false && <span className="badge badge-warn"><i />与当前宿主不兼容</span>}</div></div>
-          {item.description && <p>{item.description}</p>}
-          {(item.blocked_reason || item.compatible_with_host === false) && <InfoBox>{item.blocked_reason || "此包声明的兼容范围不包含当前宿主版本"}。
+        <UiElement as="div" className="plugin-package-list">{directory.items.map((item) => <UiElement as="article" key={item.digest} className="plugin-package-card">
+          <UiElement as="div" className="plugin-package-title"><UiElement as="div"><UiElement as="h3">{item.name}</UiElement><UiElement as="code">{item.id} <UiText>{"·"}</UiText> {item.version}</UiElement></UiElement>
+            <UiElement as="div" className="plugin-package-badges">{item.loaded && <UiElement as="span" className="badge badge-pass"><UiElement as="i" /><UiText>{"当前已加载"}</UiText></UiElement>}{item.selected && <UiElement as="span" className={`badge ${item.blocked_reason ? "badge-warn" : "badge-info"}`}><UiElement as="i" />{item.blocked_reason ? "已选择 · 加载受阻" : "下次启动选择"}</UiElement>}{!item.loaded && !item.selected && <UiElement as="span" className="badge badge-stopped"><UiElement as="i" /><UiText>{"已导入"}</UiText></UiElement>}{item.compatible_with_host === false && <UiElement as="span" className="badge badge-warn"><UiElement as="i" /><UiText>{"与当前宿主不兼容"}</UiText></UiElement>}</UiElement></UiElement>
+          {item.description && <UiElement as="p">{item.description}</UiElement>}
+          {(item.blocked_reason || item.compatible_with_host === false) && <InfoBox>{item.blocked_reason || "此包声明的兼容范围不包含当前宿主版本"}<UiText>{"。"}</UiText>
             {item.compatible_with_host === false ? "不能选择此版本；保留包文件供版本回退核验，不会自动删除。" : "仅重启不能解除宿主停用，请先检查部署侧插件配置。"}</InfoBox>}
-          <dl><dt>作者 / 许可</dt><dd>{item.author} · {item.license}</dd><dt>最低访问角色</dt><dd>{roleLabel(item.access)}</dd><dt>SHA-256</dt><dd><code>{item.digest}</code><Copy value={item.digest} /></dd></dl>
-          {canManage && <div className="plugin-package-actions"><Button disabled={item.selected || busy || item.compatible_with_host === false} onClick={() => { setSelection(item); setError(""); }}>{directory.items.some((other) => other.id === item.id && other.selected) ? "选择此版本 / 回退" : "选择下次启动"}</Button>
-            {item.selected && <Button disabled={busy} onClick={() => setDeselect({ item, revision: directory.revision })}>取消下次启动选择</Button>}</div>
+          <UiElement as="dl"><UiElement as="dt"><UiText>{"作者 / 许可"}</UiText></UiElement><UiElement as="dd">{item.author} <UiText>{"·"}</UiText> {item.license}</UiElement><UiElement as="dt"><UiText>{"最低访问角色"}</UiText></UiElement><UiElement as="dd">{roleLabel(item.access)}</UiElement><UiElement as="dt"><UiText>{"SHA-256"}</UiText></UiElement><UiElement as="dd"><UiElement as="code">{item.digest}</UiElement><Copy value={item.digest} /></UiElement></UiElement>
+          {canManage && <UiElement as="div" className="plugin-package-actions"><Button actionId="plugins.server.select.review" disabled={item.selected || busy || item.compatible_with_host === false} onClick={() => { setSelection(item); setError(""); }}>{directory.items.some((other) => other.id === item.id && other.selected) ? "选择此版本 / 回退" : "选择下次启动"}</Button>
+            {item.selected && <Button actionId="plugins.server.deselect.review" disabled={busy} onClick={() => setDeselect({ item, revision: directory.revision })}><UiText>{"取消下次启动选择"}</UiText></Button>}</UiElement>
           }
-        </article>)}</div>}
-    </div>
+        </UiElement>)}</UiElement>}
+    </UiElement>
     {importOpen && canManage && <ImportPluginPackage identity={identity} onClose={() => setImportOpen(false)} onImported={async () => { await query.refresh(); setMessage("插件包已检查并保存。请选择版本并核对信任声明，导入不会自动启用。"); }} />}
     {selection && directory && canManage && <SelectPluginPackage key={selection.digest} item={selection} revision={directory.revision} identity={identity}
       onClose={() => setSelection(null)} onSelected={async () => { setSelection(null); setMessage("已保存下次启动选择；当前插件清单未热切换。"); await query.refresh(); onCatalogRefresh(); }} />}
     {deselect && canManage && <Modal title="取消下次启动选择" subtitle={`${deselect.item.name} · ${deselect.item.version}`} onClose={() => { if (!busy) setDeselect(null); }} closeDisabled={busy}
-      footer={<><Button disabled={busy} onClick={() => setDeselect(null)}>保留选择</Button><Button loading={busy} onClick={() => void removeChoice(deselect.item, deselect.revision)}>确认取消选择</Button></>}>
-      <p>取消后不会删除插件包或业务数据。当前已经加载的版本会继续运行，直到控制台进程重启。</p>{error && <ErrorBox message={error} />}
+      footer={<><Button actionId="plugins.server.deselect.cancel" disabled={busy} onClick={() => setDeselect(null)}><UiText>{"保留选择"}</UiText></Button><Button actionId="plugins.server.deselect" loading={busy} onClick={() => void removeChoice(deselect.item, deselect.revision)}><UiText>{"确认取消选择"}</UiText></Button></>}>
+      <UiElement as="p"><UiText>{"取消后不会删除插件包或业务数据。当前已经加载的版本会继续运行，直到控制台进程重启。"}</UiText></UiElement>{error && <ErrorBox message={error} />}
     </Modal>}
-  </section>;
+  </UiRegion>;
 }
 
-function ImportPluginPackage({ identity, onClose, onImported }: { identity: string; onClose: () => void; onImported: () => Promise<void> }) {
+function DefaultImportPluginPackage({ identity, onClose, onImported }: { identity: string; onClose: () => void; onImported: () => Promise<void> }) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const guard = useRef(false), alive = useRef(true);
@@ -93,14 +94,14 @@ function ImportPluginPackage({ identity, onClose, onImported }: { identity: stri
     } finally { guard.current = false; if (alive.current) setBusy(false); }
   }
   return <Modal title="导入社区插件" subtitle="保存离线包并检查内容完整性、清单与兼容范围。" onClose={onClose} closeDisabled={busy}
-    footer={<><Button disabled={busy} onClick={onClose}>取消</Button><Button kind="primary" loading={busy} disabled={!file} onClick={() => void submit()}><Upload size={14} />检查并导入</Button></>}>
-    <Field label="插件包" required hint="仅支持 .qhplugin；最大 8 MiB。导入不会安装依赖、联网下载或执行插件。"><input type="file" accept=".qhplugin" disabled={busy} onChange={(event) => { setFile(event.target.files?.[0] ?? null); setError(""); }} /></Field>
-    {file && <p className="plugin-file-summary">{file.name} · {pluginPackageSize(file.size)}</p>}
-    <InfoBox>插件包包含服务端代码。导入后仍需核对作者、许可和摘要，再单独选择下次启动加载。</InfoBox>{error && <ErrorBox message={error} />}
+    footer={<><Button actionId="plugins.server.import.cancel" disabled={busy} onClick={onClose}><UiText>{"取消"}</UiText></Button><Button actionId="plugins.server.import" kind="primary" loading={busy} disabled={!file} onClick={() => void submit()}><Upload size={14} /><UiText>{"检查并导入"}</UiText></Button></>}>
+    <Field label="插件包" required hint="仅支持 .qhplugin；最大 8 MiB。导入不会安装依赖、联网下载或执行插件。"><UiElement as="input" type="file" accept=".qhplugin" disabled={busy} onChange={(event) => { setFile(event.target.files?.[0] ?? null); setError(""); }} /></Field>
+    {file && <UiElement as="p" className="plugin-file-summary">{file.name} <UiText>{"·"}</UiText> {pluginPackageSize(file.size)}</UiElement>}
+    <InfoBox><UiText>{"插件包包含服务端代码。导入后仍需核对作者、许可和摘要，再单独选择下次启动加载。"}</UiText></InfoBox>{error && <ErrorBox message={error} />}
   </Modal>;
 }
 
-function SelectPluginPackage({ item, revision, identity, onClose, onSelected }: { item: PluginPackage; revision: number; identity: string; onClose: () => void; onSelected: () => Promise<void> }) {
+function DefaultSelectPluginPackage({ item, revision, identity, onClose, onSelected }: { item: PluginPackage; revision: number; identity: string; onClose: () => void; onSelected: () => Promise<void> }) {
   const [trusted, setTrusted] = useState(false), [configuration, setConfiguration] = useState("{}"), [error, setError] = useState(""), [busy, setBusy] = useState(false);
   const guard = useRef(false), alive = useRef(true);
   const expectedRevision = useRef(revision).current;
@@ -119,10 +120,18 @@ function SelectPluginPackage({ item, revision, identity, onClose, onSelected }: 
     finally { guard.current = false; if (alive.current) setBusy(false); }
   }
   return <Modal title="选择下次启动版本" subtitle={`${item.name} · ${item.version}`} onClose={onClose} closeDisabled={busy}
-    footer={<><Button disabled={busy} onClick={onClose}>取消</Button><Button kind="primary" loading={busy} disabled={!trusted} onClick={() => void submit()}>保存下次启动选择</Button></>}>
-    <dl className="description-list"><dt>插件标识</dt><dd>{item.id}</dd><dt>作者 / 许可</dt><dd>{item.author} · {item.license}</dd><dt>代码包摘要</dt><dd className="plugin-digest"><code>{item.digest}</code><Copy value={item.digest} /></dd></dl>
-    <Field label="插件配置 JSON" hint="紧凑 JSON 的 UTF-8 编码最多 32 KiB（32,768 字节）。配置会持久保存；密码、令牌或私钥请按插件文档使用部署侧秘密引用。"><textarea rows={7} value={configuration} maxLength={MAX_PLUGIN_CONFIGURATION_INPUT_CHARACTERS} disabled={busy} onChange={(event) => setConfiguration(event.target.value)} spellCheck={false} /></Field>
-    <label className="plugin-trust-check"><input type="checkbox" checked={trusted} disabled={busy} onChange={(event) => setTrusted(event.target.checked)} /><span>我已审查此版本来源、许可与 SHA-256，并信任它在控制台进程中执行。插件与宿主拥有同等进程权限，不提供代码沙箱。</span></label>
-    <p className="settings-context-note">保存只更新下次启动配置。请按部署流程重启控制台并检查实际加载结果；页面不会重启平台或模型。</p>{error && <ErrorBox message={error} />}
+    footer={<><Button actionId="plugins.server.select.cancel" disabled={busy} onClick={onClose}><UiText>{"取消"}</UiText></Button><Button actionId="plugins.server.select" kind="primary" loading={busy} disabled={!trusted} onClick={() => void submit()}><UiText>{"保存下次启动选择"}</UiText></Button></>}>
+    <UiElement as="dl" className="description-list"><UiElement as="dt"><UiText>{"插件标识"}</UiText></UiElement><UiElement as="dd">{item.id}</UiElement><UiElement as="dt"><UiText>{"作者 / 许可"}</UiText></UiElement><UiElement as="dd">{item.author} <UiText>{"·"}</UiText> {item.license}</UiElement><UiElement as="dt"><UiText>{"代码包摘要"}</UiText></UiElement><UiElement as="dd" className="plugin-digest"><UiElement as="code">{item.digest}</UiElement><Copy value={item.digest} /></UiElement></UiElement>
+    <Field label="插件配置 JSON" hint="紧凑 JSON 的 UTF-8 编码最多 32 KiB（32,768 字节）。配置会持久保存；密码、令牌或私钥请按插件文档使用部署侧秘密引用。"><UiElement as="textarea" rows={7} value={configuration} maxLength={MAX_PLUGIN_CONFIGURATION_INPUT_CHARACTERS} disabled={busy} onChange={(event) => setConfiguration(event.target.value)} spellCheck={false} /></Field>
+    <UiElement as="label" className="plugin-trust-check"><UiElement as="input" type="checkbox" checked={trusted} disabled={busy} onChange={(event) => setTrusted(event.target.checked)} /><UiElement as="span"><UiText>{"我已审查此版本来源、许可与 SHA-256，并信任它在控制台进程中执行。插件与宿主拥有同等进程权限，不提供代码沙箱。"}</UiText></UiElement></UiElement>
+    <UiElement as="p" className="settings-context-note"><UiText>{"保存只更新下次启动配置。请按部署流程重启控制台并检查实际加载结果；页面不会重启平台或模型。"}</UiText></UiElement>{error && <ErrorBox message={error} />}
   </Modal>;
 }
+
+const PluginPackagesPanel = withUiSlot("component.PluginPackagesPanel", DefaultPluginPackagesPanel);
+export default PluginPackagesPanel;
+const ImportPluginPackage = withUiSlot("component.ImportPluginPackage", DefaultImportPluginPackage);
+const SelectPluginPackage = withUiSlot("component.SelectPluginPackage", DefaultSelectPluginPackage);
+
+// Reference package implementation exports.
+export { DefaultPluginPackagesPanel, DefaultImportPluginPackage, DefaultSelectPluginPackage };

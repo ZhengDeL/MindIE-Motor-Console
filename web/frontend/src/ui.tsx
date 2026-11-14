@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
@@ -13,7 +14,7 @@ import {
 } from "./icons";
 import { statusName } from "./api";
 
-export function Badge({
+function DefaultBadge({
   status,
   children,
 }: {
@@ -21,13 +22,13 @@ export function Badge({
   children?: ReactNode;
 }) {
   return (
-    <span className={`badge badge-${status}`}>
-      <i />
+    <UiElement as="span" className={`badge badge-${status}`}>
+      <UiElement as="i" />
       {children ?? statusName(status)}
-    </span>
+    </UiElement>
   );
 }
-export function Empty({
+function DefaultEmpty({
   title = "暂无数据",
   description = "数据接入后将在这里展示。",
   icon,
@@ -39,28 +40,28 @@ export function Empty({
   action?: ReactNode;
 }) {
   return (
-    <div className="empty-state">
-      <div className="empty-icon">{icon ?? <Search size={25} />}</div>
-      <h3>{title}</h3>
-      <p>{description}</p>
+    <UiElement as="div" className="empty-state">
+      <UiElement as="div" className="empty-icon">{icon ?? <Search size={25} />}</UiElement>
+      <UiElement as="h3">{title}</UiElement>
+      <UiElement as="p">{description}</UiElement>
       {action}
-    </div>
+    </UiElement>
   );
 }
-export function Spinner({ label = "正在加载" }: { label?: string }) {
+function DefaultSpinner({ label = "正在加载" }: { label?: string }) {
   return (
-    <div
+    <UiElement as="div"
       className="loading-state"
       role="status"
       aria-live="polite"
       aria-atomic="true"
     >
       <Loader2 className="spin" size={22} />
-      <span>{label}</span>
-    </div>
+      <UiElement as="span">{label}</UiElement>
+    </UiElement>
   );
 }
-export function Button({
+function DefaultButton({
   children,
   onClick,
   kind = "default",
@@ -70,6 +71,8 @@ export function Button({
   type = "button",
   title,
   size = "small",
+  actionId,
+  actionContext,
 }: {
   children: ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -80,9 +83,13 @@ export function Button({
   type?: "button" | "submit";
   title?: string;
   size?: "small" | "medium" | "large";
+  actionId?: string;
+  actionContext?: Record<string, unknown>;
 }) {
   return (
-    <button
+    <UiButton
+      actionId={actionId}
+      actionContext={actionContext}
       type={type}
       title={title}
       className={`btn btn-${kind} btn-${size} ${className}`}
@@ -92,10 +99,10 @@ export function Button({
     >
       {loading && <Loader2 className="spin" size={14} />}
       {children}
-    </button>
+    </UiButton>
   );
 }
-export function Field({
+function DefaultField({
   label,
   children,
   hint,
@@ -109,19 +116,19 @@ export function Field({
   layout?: "vertical" | "horizontal";
 }) {
   return (
-    <label className={`field field-${layout}`}>
-      <span className="field-label">
+    <UiElement as="label" className={`field field-${layout}`}>
+      <UiElement as="span" className="field-label">
         {label}
-        {required && <em aria-hidden="true">*</em>}
-      </span>
-      <span className="field-control">
+        {required && <UiElement as="em" aria-hidden="true"><UiText>{"*"}</UiText></UiElement>}
+      </UiElement>
+      <UiElement as="span" className="field-control">
         {children}
-        {hint && <small>{hint}</small>}
-      </span>
-    </label>
+        {hint && <UiElement as="small">{hint}</UiElement>}
+      </UiElement>
+    </UiElement>
   );
 }
-export function SearchInput({
+function DefaultSearchInput({
   value,
   onChange,
   placeholder = "搜索名称、模型或节点",
@@ -134,9 +141,9 @@ export function SearchInput({
 }) {
   const input = useRef<HTMLInputElement>(null);
   return (
-    <div className="search-input">
+    <UiElement as="div" className="search-input">
       <Search size={15} />
-      <input
+      <UiElement as="input"
         ref={input}
         type="search"
         aria-label={ariaLabel || placeholder}
@@ -144,7 +151,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
       />
-      <button
+      <UiButton actionId="action.ui.001"
         type="button"
         className="icon-btn search-clear"
         aria-label="清除搜索"
@@ -155,27 +162,27 @@ export function SearchInput({
         }}
       >
         <X size={14} />
-      </button>
-    </div>
+      </UiButton>
+    </UiElement>
   );
 }
-export function ErrorBox({ message }: { message: string }) {
+function DefaultErrorBox({ message }: { message: string }) {
   return (
-    <div className="error-box" role="alert">
+    <UiElement as="div" className="error-box" role="alert">
       <AlertCircle size={17} />
-      <span>{message}</span>
-    </div>
+      <UiElement as="span">{message}</UiElement>
+    </UiElement>
   );
 }
-export function InfoBox({ children }: { children: ReactNode }) {
+function DefaultInfoBox({ children }: { children: ReactNode }) {
   return (
-    <div className="info-box">
-      <span className="info-circle">i</span>
-      <div>{children}</div>
-    </div>
+    <UiElement as="div" className="info-box">
+      <UiElement as="span" className="info-circle"><UiText>{"i"}</UiText></UiElement>
+      <UiElement as="div">{children}</UiElement>
+    </UiElement>
   );
 }
-export function Copy({
+function DefaultCopy({
   value,
   label = "复制",
 }: {
@@ -194,7 +201,7 @@ export function Copy({
     };
   }, []);
   return (
-    <button
+    <UiButton actionId="action.ui.002"
       type="button"
       className="copy-button"
       title={
@@ -228,7 +235,7 @@ export function Copy({
       ) : (
         <CopyIcon size={14} />
       )}
-    </button>
+    </UiButton>
   );
 }
 type ModalEntry = { id: symbol; node: HTMLDivElement };
@@ -291,7 +298,7 @@ function overlayExitMilliseconds() {
   );
 }
 
-export function Modal({
+function DefaultModal({
   title,
   subtitle,
   children,
@@ -418,7 +425,7 @@ export function Modal({
     };
   }, []);
   return createPortal(
-    <div
+    <UiElement as="div"
       className={`modal-overlay${layout === "drawer" ? " modal-overlay-drawer" : ""}`}
       data-closing={closing || undefined}
       onPointerDown={(event) => {
@@ -426,7 +433,7 @@ export function Modal({
           requestClose();
       }}
     >
-      <div
+      <UiElement as="div"
         ref={ref}
         tabIndex={-1}
         className={`modal ${wide ? "modal-wide" : `modal-${size}`}${layout === "drawer" ? " modal-drawer" : ""}`}
@@ -434,40 +441,40 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
       >
-        <div className="modal-header">
-          <div>
-            {headerIcon && <div className="modal-header-symbol">{headerIcon}</div>}
-            <h2>{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
-          </div>
-          <button
+        <UiElement as="div" className="modal-header">
+          <UiElement as="div">
+            {headerIcon && <UiElement as="div" className="modal-header-symbol">{headerIcon}</UiElement>}
+            <UiElement as="h2">{title}</UiElement>
+            {subtitle && <UiElement as="p">{subtitle}</UiElement>}
+          </UiElement>
+          <UiButton actionId="action.ui.003"
             type="button"
             className="icon-btn"
             aria-label="关闭窗口"
             onClick={requestClose}
             disabled={closeDisabled || closing}
           >
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div ref={body} className="modal-body" inert={closing || undefined}>
+            <UiElement as="span" aria-hidden="true"><UiText>{"×"}</UiText></UiElement>
+          </UiButton>
+        </UiElement>
+        <UiElement as="div" ref={body} className="modal-body" inert={closing || undefined}>
           {children}
-        </div>
+        </UiElement>
         {footer && (
-          <div className="modal-footer" inert={closing || undefined}>
+          <UiElement as="div" className="modal-footer" inert={closing || undefined}>
             {typeof footer === "function" ? footer(requestClose) : footer}
-          </div>
+          </UiElement>
         )}
-      </div>
-    </div>,
+      </UiElement>
+    </UiElement>,
     document.body,
   );
 }
 
-export function Drawer(props: Omit<ModalProps, "layout">) {
+function DefaultDrawer(props: Omit<ModalProps, "layout">) {
   return <Modal {...props} layout="drawer" />;
 }
-export function Confirm({
+function DefaultConfirm({
   title,
   description,
   confirmText = "确定",
@@ -495,16 +502,16 @@ export function Confirm({
       onClose={onClose}
       closeDisabled={busy}
       headerIcon={
-        <span className={`confirm-symbol ${danger ? "danger" : ""}`}>
+        <UiElement as="span" className={`confirm-symbol ${danger ? "danger" : ""}`}>
           {danger ? <AlertCircle size={40} /> : <CheckCircle2 size={40} />}
-        </span>
+        </UiElement>
       }
       footer={
         <>
-          <Button size="medium" onClick={onClose} disabled={busy}>
-            取消
+          <Button actionId="action.ui.004" size="medium" onClick={onClose} disabled={busy}>
+            <UiText>{"取消"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.ui.005"
             kind={danger ? "danger" : "primary"}
             size="medium"
             loading={busy}
@@ -517,11 +524,11 @@ export function Confirm({
       }
     >
       {error && <ErrorBox message={error} />}
-      <div className="confirm-content">{description}</div>
+      <UiElement as="div" className="confirm-content">{description}</UiElement>
     </Modal>
   );
 }
-export function Segment({
+function DefaultSegment({
   options,
   value,
   onChange,
@@ -531,9 +538,9 @@ export function Segment({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="segment">
+    <UiElement as="div" className="segment">
       {options.map((x) => (
-        <button
+        <UiButton actionId="action.ui.006"
           type="button"
           aria-pressed={value === x.value}
           className={value === x.value ? "active" : ""}
@@ -542,12 +549,12 @@ export function Segment({
         >
           {x.icon}
           {x.label}
-        </button>
+        </UiButton>
       ))}
-    </div>
+    </UiElement>
   );
 }
-export function Select({
+function DefaultSelect({
   value,
   onChange,
   children,
@@ -561,20 +568,20 @@ export function Select({
   disabled?: boolean;
 }) {
   return (
-    <div className="select-wrap">
-      <select
+    <UiElement as="div" className="select-wrap">
+      <UiElement as="select"
         disabled={disabled}
         aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
         {children}
-      </select>
+      </UiElement>
       <ChevronDown size={14} />
-    </div>
+    </UiElement>
   );
 }
-export function StatBar({
+function DefaultStatBar({
   value,
   kind = "orange",
 }: {
@@ -582,18 +589,18 @@ export function StatBar({
   kind?: string;
 }) {
   return (
-    <div className="stat-bar-wrap">
-      <div className="stat-bar">
-        <div
+    <UiElement as="div" className="stat-bar-wrap">
+      <UiElement as="div" className="stat-bar">
+        <UiElement as="div"
           className={kind}
           style={{ width: `${Math.min(100, Math.max(0, value ?? 0))}%` }}
         />
-      </div>
-      <span>{value == null ? "—" : `${value.toFixed(0)}%`}</span>
-    </div>
+      </UiElement>
+      <UiElement as="span">{value == null ? "—" : `${value.toFixed(0)}%`}</UiElement>
+    </UiElement>
   );
 }
-export function JsonEditor({
+function DefaultJsonEditor({
   value,
   onChange,
   label = "配置 JSON",
@@ -608,21 +615,21 @@ export function JsonEditor({
 }) {
   const nums = value.split("\n").length;
   return (
-    <div className="code-editor">
-      <div className="code-editor-top">
-        <span>
-          <i />
+    <UiElement as="div" className="code-editor">
+      <UiElement as="div" className="code-editor-top">
+        <UiElement as="span">
+          <UiElement as="i" />
           {label}
-        </span>
-        <span>JSON · UTF-8</span>
-      </div>
-      <div className="code-editor-content">
-        <div className="line-numbers" aria-hidden="true">
+        </UiElement>
+        <UiElement as="span"><UiText>{"JSON · UTF-8"}</UiText></UiElement>
+      </UiElement>
+      <UiElement as="div" className="code-editor-content">
+        <UiElement as="div" className="line-numbers" aria-hidden="true">
           {Array.from({ length: Math.max(nums, rows) }, (_, i) => (
-            <span key={i}>{i + 1}</span>
+            <UiElement as="span" key={i}>{i + 1}</UiElement>
           ))}
-        </div>
-        <textarea
+        </UiElement>
+        <UiElement as="textarea"
           aria-label={label}
           disabled={disabled}
           value={value}
@@ -630,7 +637,27 @@ export function JsonEditor({
           rows={rows}
           spellCheck={false}
         />
-      </div>
-    </div>
+      </UiElement>
+    </UiElement>
   );
 }
+
+export const Badge = withUiSlot("component.Badge", DefaultBadge);
+export const Empty = withUiSlot("component.Empty", DefaultEmpty);
+export const Spinner = withUiSlot("component.Spinner", DefaultSpinner);
+export const Button = withUiSlot("component.Button", DefaultButton);
+export const Field = withUiSlot("component.Field", DefaultField);
+export const SearchInput = withUiSlot("component.SearchInput", DefaultSearchInput);
+export const ErrorBox = withUiSlot("component.ErrorBox", DefaultErrorBox);
+export const InfoBox = withUiSlot("component.InfoBox", DefaultInfoBox);
+export const Copy = withUiSlot("component.Copy", DefaultCopy);
+export const Modal = withUiSlot("component.Modal", DefaultModal);
+export const Drawer = withUiSlot("component.Drawer", DefaultDrawer);
+export const Confirm = withUiSlot("component.Confirm", DefaultConfirm);
+export const Segment = withUiSlot("component.Segment", DefaultSegment);
+export const Select = withUiSlot("component.Select", DefaultSelect);
+export const StatBar = withUiSlot("component.StatBar", DefaultStatBar);
+export const JsonEditor = withUiSlot("component.JsonEditor", DefaultJsonEditor);
+
+// Reference package implementation exports.
+export { DefaultBadge, DefaultEmpty, DefaultSpinner, DefaultButton, DefaultField, DefaultSearchInput, DefaultErrorBox, DefaultInfoBox, DefaultCopy, DefaultModal, DefaultDrawer, DefaultConfirm, DefaultSegment, DefaultSelect, DefaultStatBar, DefaultJsonEditor };

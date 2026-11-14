@@ -35,14 +35,14 @@ class _FeatureTable(HTMLParser):
             self.row = None
 
 
-def capabilities(upstream: Path) -> list[dict]:
+def capabilities(upstream: Path, *, native_profile=None) -> list[dict]:
     path = upstream / "docs/zh/user_guide/features/supported_features.md"
     if not path.is_file(): return []
     parser = _FeatureTable()
     parser.feed(path.read_text(encoding="utf-8"))
     result, category = [], "推理与调度"
     docs_url = documentation_url()
-    motor_commit = public_profile()["commit"]
+    motor_commit = (native_profile if native_profile is not None else public_profile())["commit"]
     for row in parser.rows:
         if len(row) < 7 or not any("✅" in cell for cell in row): continue
         if len(row) == 8: category = row[0]

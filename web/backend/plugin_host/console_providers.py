@@ -55,7 +55,7 @@ def mount_services(context: PluginContext) -> tuple[Any, ...]:
     store, fleet, lock, mode, upstream = (context.require_service(name) for name in
                                         ("store", "fleet", "mutation_lock", "mode", "upstream"))
     routers = _mount(context, (
-        create_placement_router(store, upstream_dir=upstream),
+        create_placement_router(store, upstream_dir=upstream, recommender=context.services.get("placement_recommender")),
         create_endpoint_router(store, fleet, mode=mode),
         create_recovery_router(store, fleet, lock, mode=mode),
     ))
@@ -93,7 +93,8 @@ def mount_templates(context: PluginContext) -> tuple[Any, ...]:
     _scope(context, "templates")
     store, official, lock, role = (context.require_service(name) for name in
                                  ("store", "template_list", "mutation_lock", "role_for_request"))
-    routers = _mount(context, (create_template_router(store, official, lock, role),))
+    routers = _mount(context, (create_template_router(store, official, lock, role,
+                         profile_provider=context.services.get("native_adapter")),))
     context.provide("templates.routes", 1, routers)
     return routers
 

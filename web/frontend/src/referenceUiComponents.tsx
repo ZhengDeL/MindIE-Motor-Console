@@ -1,0 +1,126 @@
+/** Concrete reference providers. Resolve selected implementations during activation, before interactive rendering. */
+import { createElement } from "react";
+import type { ComponentType } from "react";
+const loaders: Record<string, () => Promise<ComponentType<any>>> = {
+  "component.AccountsPage": () => import("./Accounts").then(module => module.DefaultAccountsPage),
+  "component.AgentDetails": () => import("./AgentDetails").then(module => module.DefaultAgentDetails),
+  "component.AgentNpuResources": () => import("./NpuSummary").then(module => module.DefaultAgentNpuResources),
+  "component.AgentRolloutDialog": () => import("./AgentRolloutDialog").then(module => module.DefaultAgentRolloutDialog),
+  "component.AllocationRecords": () => import("./NodeResourceDetails").then(module => module.DefaultAllocationRecords),
+  "component.AppearanceSettings": () => import("./AppearanceSettings").then(module => module.DefaultAppearanceSettings),
+  "component.Badge": () => import("./ui").then(module => module.DefaultBadge),
+  "component.Brand": () => import("./App").then(module => module.DefaultBrand),
+  "component.BrandIdentity": () => import("./PlatformBrand").then(module => module.DefaultBrandIdentity),
+  "component.BrandingSettings": () => import("./BrandingSettings").then(module => module.DefaultBrandingSettings),
+  "component.Button": () => import("./ui").then(module => module.DefaultButton),
+  "component.CapabilitiesPage": () => import("./CapabilitiesPage").then(module => module.DefaultCapabilitiesPage),
+  "component.ClusterNodesPanel": () => import("./ClusterNodes").then(module => module.DefaultClusterNodesPanel),
+  "component.CommandPalette": () => import("./CommandPalette").then(module => module.DefaultCommandPalette),
+  "component.CommunityPluginPage": () => import("./CommunityPluginPage").then(module => module.DefaultCommunityPluginPage),
+  "component.ConfigurationFields": () => import("./AgentRolloutForms").then(module => module.DefaultConfigurationFields),
+  "component.Confirm": () => import("./ui").then(module => module.DefaultConfirm),
+  "component.Copy": () => import("./ui").then(module => module.DefaultCopy),
+  "component.CredentialFields": () => import("./AgentRolloutForms").then(module => module.DefaultCredentialFields),
+  "component.CredentialStatus": () => import("./NodesPage").then(module => module.DefaultCredentialStatus),
+  "component.DeferredPanel": () => import("./DeferredPanel").then(module => module.DefaultDeferredPanel),
+  "component.DeviceObservations": () => import("./NodeResourceDetails").then(module => module.DefaultDeviceObservations),
+  "component.DockerNpuValue": () => import("./NpuSummary").then(module => module.DefaultDockerNpuValue),
+  "component.Drawer": () => import("./ui").then(module => module.DefaultDrawer),
+  "component.Empty": () => import("./ui").then(module => module.DefaultEmpty),
+  "component.ErrorBox": () => import("./ui").then(module => module.DefaultErrorBox),
+  "component.Fact": () => import("./AgentDetails").then(module => module.DefaultFact),
+  "component.Field": () => import("./ui").then(module => module.DefaultField),
+  "component.GatewayAuthorizationHelp": () => import("./GatewaysPage").then(module => module.DefaultGatewayAuthorizationHelp),
+  "component.GatewayEditor": () => import("./GatewaysPage").then(module => module.DefaultGatewayEditor),
+  "component.GatewaysPage": () => import("./GatewaysPage").then(module => module.DefaultGatewaysPage),
+  "component.IdentityFields": () => import("./AgentRolloutForms").then(module => module.DefaultIdentityFields),
+  "component.ImageContractPanel": () => import("./IntegrationImages").then(module => module.DefaultImageContractPanel),
+  "component.ImageOperations": () => import("./ImageOperations").then(module => module.DefaultImageOperations),
+  "component.ImagesPage": () => import("./ImagesPage").then(module => module.DefaultImagesPage),
+  "component.ImportPluginPackage": () => import("./PluginPackages").then(module => module.DefaultImportPluginPackage),
+  "component.InferenceResponse": () => import("./InferenceResponse").then(module => module.DefaultInferenceResponse),
+  "component.InfoBox": () => import("./ui").then(module => module.DefaultInfoBox),
+  "component.InfrastructureSettings": () => import("./InfrastructureSettings").then(module => module.DefaultInfrastructureSettings),
+  "component.JobProgress": () => import("./JobProgress").then(module => module.DefaultJobProgress),
+  "component.JsonEditor": () => import("./ui").then(module => module.DefaultJsonEditor),
+  "component.KubernetesEndpoints": () => import("./KubernetesEndpoints").then(module => module.DefaultKubernetesEndpoints),
+  "component.KubernetesNpuContent": () => import("./NpuSummary").then(module => module.DefaultKubernetesNpuContent),
+  "component.LogsPage": () => import("./App").then(module => module.DefaultLogsPage),
+  "component.ManifestReview": () => import("./ManifestReview").then(module => module.DefaultManifestReview),
+  "component.Modal": () => import("./ui").then(module => module.DefaultModal),
+  "component.ModelMetadata": () => import("./IntegrationModels").then(module => module.DefaultModelMetadata),
+  "component.NativeAigwEditor": () => import("./IntegrationAigw").then(module => module.DefaultNativeAigwEditor),
+  "component.NativeAigwModelsPanel": () => import("./IntegrationModels").then(module => module.DefaultNativeAigwModelsPanel),
+  "component.NodeCredentialsModal": () => import("./NodesPage").then(module => module.DefaultNodeCredentialsModal),
+  "component.NodeModal": () => import("./NodesPage").then(module => module.DefaultNodeModal),
+  "component.NodeMoreMenu": () => import("./NodesPage").then(module => module.DefaultNodeMoreMenu),
+  "component.NodeResourceDetails": () => import("./NodeResourceDetails").then(module => module.DefaultNodeResourceDetails),
+  "component.NodeTlsStatus": () => import("./NodesPage").then(module => module.DefaultNodeTlsStatus),
+  "component.NodesPage": () => import("./NodesPage").then(module => module.DefaultNodesPage),
+  "component.NpuResourceCard": () => import("./NpuSummary").then(module => module.DefaultNpuResourceCard),
+  "component.OfflineGuide": () => import("./CapabilitiesPage").then(module => module.DefaultOfflineGuide),
+  "component.OverviewPage": () => import("./OverviewPage").then(module => module.DefaultOverviewPage),
+  "component.Pagination": () => import("./Pagination").then(module => module.DefaultPagination),
+  "component.PasswordDialog": () => import("./Accounts").then(module => module.DefaultPasswordDialog),
+  "component.PasswordInput": () => import("./LoginPage").then(module => module.DefaultPasswordInput),
+  "component.PlacementPlanDialog": () => import("./PlacementPlanDialog").then(module => module.DefaultPlacementPlanDialog),
+  "component.PlanReview": () => import("./AgentRolloutStatus").then(module => module.DefaultPlanReview),
+  "component.PlatformBrand": () => import("./PlatformBrand").then(module => module.DefaultPlatformBrand),
+  "component.PluginPackagesPanel": () => import("./PluginPackages").then(module => module.DefaultPluginPackagesPanel),
+  "component.PluginSettings": () => import("./PluginSettings").then(module => module.DefaultPluginSettings),
+  "component.RateChart": () => import("./ServiceMetricsPanel").then(module => module.DefaultRateChart),
+  "component.ReadNotice": () => import("./OverviewPage").then(module => module.DefaultReadNotice),
+  "component.RecordDetails": () => import("./RecordDetails").then(module => module.DefaultRecordDetails),
+  "component.RecoveryArchiveStatus": () => import("./SystemMaintenance").then(module => module.DefaultRecoveryArchiveStatus),
+  "component.Resources": () => import("./ClusterNodes").then(module => module.DefaultResources),
+  "component.RolloutHistory": () => import("./AgentRolloutStatus").then(module => module.DefaultRolloutHistory),
+  "component.RolloutJobDetails": () => import("./AgentRolloutStatus").then(module => module.DefaultRolloutJobDetails),
+  "component.RuntimeLogFilters": () => import("./RuntimeLogs").then(module => module.DefaultRuntimeLogFilters),
+  "component.RuntimeLogLine": () => import("./RuntimeLogs").then(module => module.DefaultRuntimeLogLine),
+  "component.RuntimeTag": () => import("./App").then(module => module.DefaultRuntimeTag),
+  "component.ScaleDialog": () => import("./ScaleDialog").then(module => module.DefaultScaleDialog),
+  "component.SearchInput": () => import("./ui").then(module => module.DefaultSearchInput),
+  "component.Segment": () => import("./ui").then(module => module.DefaultSegment),
+  "component.Select": () => import("./ui").then(module => module.DefaultSelect),
+  "component.SelectPluginPackage": () => import("./PluginPackages").then(module => module.DefaultSelectPluginPackage),
+  "component.ServiceDetail": () => import("./ServiceDetail").then(module => module.DefaultServiceDetail),
+  "component.ServiceEditor": () => import("./ServiceEditor").then(module => module.DefaultServiceEditor),
+  "component.ServiceMenu": () => import("./App").then(module => module.DefaultServiceMenu),
+  "component.ServiceMetricsPanel": () => import("./ServiceMetricsPanel").then(module => module.DefaultServiceMetricsPanel),
+  "component.SettingsPage": () => import("./SettingsPage").then(module => module.DefaultSettingsPage),
+  "component.Spinner": () => import("./ui").then(module => module.DefaultSpinner),
+  "component.StatBar": () => import("./ui").then(module => module.DefaultStatBar),
+  "component.SystemLogs": () => import("./SystemLogs").then(module => module.DefaultSystemLogs),
+  "component.SystemMaintenance": () => import("./SystemMaintenance").then(module => module.DefaultSystemMaintenance),
+  "component.TemplateEditor": () => import("./TemplatesPage").then(module => module.DefaultTemplateEditor),
+  "component.TemplatesPage": () => import("./TemplatesPage").then(module => module.DefaultTemplatesPage),
+  "component.TrafficTrend": () => import("./TrafficTrend").then(module => module.DefaultTrafficTrend),
+  "component.UiPluginPackages": () => import("./UiPluginPackages").then(module => module.DefaultUiPluginPackages),
+  "component.UiPluginReview": () => import("./UiPluginPackages").then(module => module.DefaultUiPluginReview),
+  "component.UndeployDialog": () => import("./UndeployDialog").then(module => module.DefaultUndeployDialog),
+  "component.UserDialog": () => import("./Accounts").then(module => module.DefaultUserDialog),
+  "component.Value": () => import("./RecordDetails").then(module => module.DefaultValue),
+  "page.login": () => import("./LoginPage").then(module => module.DefaultLoginPage),
+  "ui.appearance": () => import("./appearance").then(module => module.DefaultAppearanceProvider),
+  "ui.shell": () => import("./App").then(module => module.DefaultApp),
+};
+const implementations = new Map<string, ComponentType<any>>();
+const pending = new Map<string, Promise<void>>();
+function prepare(slot: string): Promise<void> {
+  if (implementations.has(slot)) return Promise.resolve();
+  const active = pending.get(slot);
+  if (active) return active;
+  const loading = loaders[slot]().then(implementation => { implementations.set(slot, implementation); });
+  pending.set(slot, loading);
+  return loading;
+}
+export const referenceUiComponents: Readonly<Record<string, ComponentType<any>>> = Object.freeze(Object.fromEntries(
+  Object.keys(loaders).map(slot => [slot, function ConcreteReferenceProvider(props: any) {
+    const Implementation = implementations.get(slot);
+    if (!Implementation) throw Error(`Selected reference component was not initialized: ${slot}`);
+    return createElement(Implementation, props);
+  }]),
+));
+export async function prepareReferenceUiComponents(selectedSlots: readonly string[]): Promise<void> {
+  await Promise.all(selectedSlots.filter(slot => Object.hasOwn(loaders, slot)).map(prepare));
+}

@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCircle2, RefreshCw } from "./icons";
 import { post, roleName, statusName, when } from "./api";
@@ -32,7 +33,7 @@ function stepMessage(step: JobStep): string {
   }
 }
 
-export default function JobProgress({
+function DefaultJobProgress({
   job,
   nodes,
   canOperate,
@@ -100,15 +101,15 @@ export default function JobProgress({
       onClose={onClose}
       footer={
         <>
-          {canAdminister && auditEnabled && <Button onClick={onAudit}>查看操作记录</Button>}
-          <Button kind="primary" onClick={onClose}>
-            关闭
+          {canAdminister && auditEnabled && <Button actionId="action.JobProgress.001" onClick={onAudit}><UiText>{"查看操作记录"}</UiText></Button>}
+          <Button actionId="action.JobProgress.002" kind="primary" onClick={onClose}>
+            <UiText>{"关闭"}</UiText>
           </Button>
         </>
       }
     >
-      <div className="job-summary">
-        <div className={`job-symbol ${job.status}`}>
+      <UiElement as="div" className="job-summary">
+        <UiElement as="div" className={`job-symbol ${job.status}`}>
           {["queued", "running", "pending", "deploying"].includes(job.status) ? (
             <RefreshCw className="spin" size={27} />
           ) : ["completed", "success", "succeeded"].includes(job.status) ? (
@@ -116,80 +117,78 @@ export default function JobProgress({
           ) : (
             <AlertCircle size={27} />
           )}
-        </div>
-        <div>
-          <h3>{statusName(job.status)}</h3>
-          <p>按节点与角色跟踪实际执行结果</p>
-        </div>
+        </UiElement>
+        <UiElement as="div">
+          <UiElement as="h3">{statusName(job.status)}</UiElement>
+          <UiElement as="p"><UiText>{"按节点与角色跟踪实际执行结果"}</UiText></UiElement>
+        </UiElement>
         <Badge status={job.status} />
-      </div>
+      </UiElement>
       {job.error && <ErrorBox message={job.error} />}
       {error && <ErrorBox message={error} />}
-      <div className="job-steps">
+      <UiElement as="div" className="job-steps">
         {executionSteps.map((step, index) => (
-          <div key={index}>
-            <span className={`job-step-dot ${step.status}`}>
+          <UiElement as="div" key={index}>
+            <UiElement as="span" className={`job-step-dot ${step.status}`}>
               {["completed", "success", "succeeded"].includes(step.status) ? (
                 <Check size={12} />
               ) : (
                 index + 1
               )}
-            </span>
-            <div>
-              <b>
+            </UiElement>
+            <UiElement as="div">
+              <UiElement as="b">
                 {nodes.find((node) => node.id === step.node_id)?.name ??
                   step.node_id}
-                <span>{step.role === "cleanup" ? "重建前清理" : roleName(step.role)}</span>
-              </b>
-              <p>{stepMessage(step)}</p>
-              {step.operation_id && <small className="muted-text">操作标识 <code>{step.operation_id}</code> · {operationStatusName(step.operation_status)}</small>}
-            </div>
+                <UiElement as="span">{step.role === "cleanup" ? "重建前清理" : roleName(step.role)}</UiElement>
+              </UiElement>
+              <UiElement as="p">{stepMessage(step)}</UiElement>
+              {step.operation_id && <UiElement as="small" className="muted-text"><UiText>{"操作标识"}</UiText> <UiElement as="code">{step.operation_id}</UiElement> <UiText>{"·"}</UiText> {operationStatusName(step.operation_status)}</UiElement>}
+            </UiElement>
             <Badge status={step.status} />
-          </div>
+          </UiElement>
         ))}
-      </div>
+      </UiElement>
       {(executionSteps.some(step => step.operation_id) || job.receipt_observations) && (
-        <section className="job-reconciliation" aria-label="Agent 持久回执">
-          <div className="reconciliation-heading"><h3>Agent 持久回执</h3>
-            {canOperate && !demo && <Button loading={busy} onClick={() => void queryReceipts()}><RefreshCw size={14} />查询回执</Button>}
-          </div>
-          <InfoBox>仅查询原操作，不会重放。Agent 操作完成后仍需验证模型加载、服务就绪和真实推理。</InfoBox>
+        <UiRegion name="layout.panel" as="section" className="job-reconciliation" aria-label="Agent 持久回执">
+          <UiElement as="div" className="reconciliation-heading"><UiElement as="h3"><UiText>{"Agent 持久回执"}</UiText></UiElement>
+            {canOperate && !demo && <Button actionId="action.JobProgress.003" loading={busy} onClick={() => void queryReceipts()}><RefreshCw size={14} /><UiText>{"查询回执"}</UiText></Button>}
+          </UiElement>
+          <InfoBox><UiText>{"仅查询原操作，不会重放。Agent 操作完成后仍需验证模型加载、服务就绪和真实推理。"}</UiText></InfoBox>
           {job.receipt_observations && <>
-            <p className="muted-text">最近查询 {when(job.receipt_observations.observed_at)} · 当前第 {job.receipt_observations.offset + 1}–{job.receipt_observations.offset + job.receipt_observations.items.length} 项 / 共 {job.receipt_observations.target_count} 项</p>
-            <ul className="reconciliation-resource-list">{job.receipt_observations.items.map(item => <li key={item.operation_id}><code>{item.operation_id}</code><span>{operationStatusName(item.operation_status)}{item.error && ` · ${item.error}`}</span></li>)}</ul>
-            {canOperate && !demo && job.receipt_observations.next_offset !== null && <Button loading={busy} onClick={() => void queryReceipts(job.receipt_observations!.next_offset!)}>查询下一页回执</Button>}
+            <UiElement as="p" className="muted-text"><UiText>{"最近查询"}</UiText> {when(job.receipt_observations.observed_at)} <UiText>{"· 当前第"}</UiText> {job.receipt_observations.offset + 1}<UiText>{"–"}</UiText>{job.receipt_observations.offset + job.receipt_observations.items.length} <UiText>{"项 / 共"}</UiText> {job.receipt_observations.target_count} <UiText>{"项"}</UiText></UiElement>
+            <UiElement as="ul" className="reconciliation-resource-list">{job.receipt_observations.items.map(item => <UiElement as="li" key={item.operation_id}><UiElement as="code">{item.operation_id}</UiElement><UiElement as="span">{operationStatusName(item.operation_status)}{item.error && ` · ${item.error}`}</UiElement></UiElement>)}</UiElement>
+            {canOperate && !demo && job.receipt_observations.next_offset !== null && <Button actionId="action.JobProgress.004" loading={busy} onClick={() => void queryReceipts(job.receipt_observations!.next_offset!)}><UiText>{"查询下一页回执"}</UiText></Button>}
           </>}
-        </section>
+        </UiRegion>
       )}
       {(recoverable || job.reconciliation) && (
-        <section className="job-reconciliation" aria-label="任务资源对账">
-          <div className="reconciliation-heading">
-            <h3>资源对账</h3>
+        <UiRegion name="layout.panel" as="section" className="job-reconciliation" aria-label="任务资源对账">
+          <UiElement as="div" className="reconciliation-heading">
+            <UiElement as="h3"><UiText>{"资源对账"}</UiText></UiElement>
             {canOperate && recoverable && !demo && (
-              <Button loading={busy} onClick={() => void reconcile()}>
+              <Button actionId="action.JobProgress.005" loading={busy} onClick={() => void reconcile()}>
                 <RefreshCw size={14} />
                 {job.reconciliation ? "重新对账" : "检查实际资源"}
               </Button>
             )}
-          </div>
+          </UiElement>
           <InfoBox>
-            对账只读取当前受管容器与 Kubernetes
-            资源，不会重放任务或修改服务状态。资源存在、Pod
-            就绪仅说明运行状态；请通过实际推理请求确认模型服务可用。
+            <UiText>{"对账只读取当前受管容器与 Kubernetes 资源，不会重放任务或修改服务状态。资源存在、Pod 就绪仅说明运行状态；请通过实际推理请求确认模型服务可用。"}</UiText>
             {demo && "演示环境不连接真实节点。"}
           </InfoBox>
           {job.reconciliation ? (
             <>
-              <div className="reconciliation-caption">
-                已检查 {job.reconciliation.checked_count} /{" "}
-                {job.reconciliation.target_count} 个执行节点
-                <span>最近观测 {when(job.reconciliation.observed_at)}</span>
-              </div>
-              <div className="reconciliation-nodes">
+              <UiElement as="div" className="reconciliation-caption">
+                <UiText>{"已检查"}</UiText> {job.reconciliation.checked_count} <UiText>{"/"}</UiText>{" "}
+                {job.reconciliation.target_count} <UiText>{"个执行节点"}</UiText>
+                <UiElement as="span"><UiText>{"最近观测"}</UiText> {when(job.reconciliation.observed_at)}</UiElement>
+              </UiElement>
+              <UiElement as="div" className="reconciliation-nodes">
                 {job.reconciliation.nodes.map((node) => (
-                  <article key={node.node_id}>
-                    <div className="reconciliation-node-heading">
-                      <b>{node.node_name || node.node_id}</b>
+                  <UiElement as="article" key={node.node_id}>
+                    <UiElement as="div" className="reconciliation-node-heading">
+                      <UiElement as="b">{node.node_name || node.node_id}</UiElement>
                       <Badge
                         status={
                           node.result === "unknown"
@@ -205,65 +204,71 @@ export default function JobProgress({
                             ? "未发现受管资源"
                             : "未能确认"}
                       </Badge>
-                    </div>
-                    <p className="muted-text">
+                    </UiElement>
+                    <UiElement as="p" className="muted-text">
                       {node.runtime === "kubernetes" ? "Kubernetes" : "Docker"}{" "}
-                      · {when(node.observed_at)}
-                    </p>
+                      <UiText>{"·"}</UiText> {when(node.observed_at)}
+                    </UiElement>
                     {node.error && <ErrorBox message={node.error} />}
                     {node.state && (
                       <>
                         {node.state.namespace && (
-                          <p>
-                            命名空间 <code>{node.state.namespace}</code>
-                          </p>
+                          <UiElement as="p">
+                            <UiText>{"命名空间"}</UiText> <UiElement as="code">{node.state.namespace}</UiElement>
+                          </UiElement>
                         )}
                         {node.state.resources && (
-                          <p>
-                            已核验 {node.state.resources.length} 个资源身份；
-                            {node.state.items.length} 个 Pod
-                          </p>
+                          <UiElement as="p">
+                            <UiText>{"已核验"}</UiText> {node.state.resources.length} <UiText>{"个资源身份；"}</UiText>
+                            {node.state.items.length} <UiText>{"个 Pod"}</UiText>
+                          </UiElement>
                         )}
-                        <ul className="reconciliation-resource-list">
+                        <UiElement as="ul" className="reconciliation-resource-list">
                           {node.state.items.map((item, index) => (
-                            <li key={String(item.id ?? item.uid ?? index)}>
-                              <code>
+                            <UiElement as="li" key={String(item.id ?? item.uid ?? index)}>
+                              <UiElement as="code">
                                 {String(item.name ?? item.id ?? "未命名资源")}
-                              </code>
-                              <span>
+                              </UiElement>
+                              <UiElement as="span">
                                 {String(
                                   item.status ?? item.phase ?? "未知状态",
                                 )}
                                 {item.role ? ` · ${item.role}` : ""}
-                              </span>
-                            </li>
+                              </UiElement>
+                            </UiElement>
                           ))}
-                        </ul>
+                        </UiElement>
                       </>
                     )}
-                  </article>
+                  </UiElement>
                 ))}
-              </div>
+              </UiElement>
               {canOperate &&
                 recoverable &&
                 !demo &&
                 job.reconciliation.next_offset !== null && (
-                  <Button
+                  <Button actionId="action.JobProgress.006"
                     loading={busy}
                     onClick={() =>
                       void reconcile(job.reconciliation!.next_offset!)
                     }
                   >
-                    继续检查剩余节点
+                    <UiText>{"继续检查剩余节点"}</UiText>
                   </Button>
                 )}
             </>
           ) : (
-            <p className="muted-text">尚未执行资源对账。</p>
+            <UiElement as="p" className="muted-text"><UiText>{"尚未执行资源对账。"}</UiText></UiElement>
           )}
-        </section>
+        </UiRegion>
       )}
-      <div className="subtle-note">关闭窗口不会中断已经提交的后台任务。</div>
+      <UiElement as="div" className="subtle-note"><UiText>{"关闭窗口不会中断已经提交的后台任务。"}</UiText></UiElement>
     </Modal>
   );
 }
+
+const JobProgress = withUiSlot("component.JobProgress", DefaultJobProgress);
+export default JobProgress;
+
+// Reference package implementation exports.
+export { DefaultJobProgress };

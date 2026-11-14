@@ -1,0 +1,44 @@
+name: motor-console
+services:
+  # Reuse the reviewed Python control settings, volumes and resource limits.
+  # It remains private; browser/API requests enter through the selected host.
+  worker:
+    extends:
+      file: compose.modular.yaml
+      service: control
+  control:
+    image: ${MOTOR_PLUGIN_HOST_IMAGE:?Use a reviewed plugin host image digest}
+    runtime: runc
+    user: 1000:1000
+    environment:
+      NODE_ENV: production
+    depends_on:
+      worker:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 192m
+    cpus: 0.5
+    pids_limit: 64
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '5'
+    restart: unless-stopped
+    stop_grace_period: 90s
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+  web:
+    extends:
+      file: compose.modular.yaml
+      service: web

@@ -2,6 +2,18 @@
 **
 !LICENSE
 !NOTICE.md
+!platform/
+platform/**
+!platform/Dockerfile
+!platform/package.json
+!platform/package-lock.json
+!platform/tsconfig.json
+!platform/src/
+!platform/src/**
+!platform/scripts/
+!platform/scripts/**
+!platform/examples/
+!platform/examples/**
 !web/
 web/**
 !web/Dockerfile
@@ -27,6 +39,8 @@ web/frontend/**
 !web/frontend/vite.config.ts
 !web/frontend/src/
 !web/frontend/src/**
+!web/frontend/scripts/
+!web/frontend/scripts/**
 !web/frontend/public/
 !web/frontend/public/**
 !mindie-motor/
@@ -52,5 +66,6 @@ web/tests/**
 web/frontend/test-results/**
 web/frontend/playwright-report/**
 web/frontend/dist/**
+platform/dist/**
 web/frontend/public/fonts/**
 web/frontend/public/brand/**

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "sdkVersion": 1,
+  "id": "community.maintenance-overview",
+  "version": "1.0.0",
+  "contracts": {"api.overview": 1},
+  "dependencies": [],
+  "factory": "create_provider"
+}

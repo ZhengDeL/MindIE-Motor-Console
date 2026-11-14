@@ -86,12 +86,21 @@ def _profile(identifier: str) -> str:
 
 
 class TemplateLibrary:
-    def __init__(self, store, official: list[dict], mutation_lock):
+    def __init__(self, store, official: list[dict], mutation_lock, *, profile_provider=None):
         self.store, self.mutation_lock = store, mutation_lock
-        profile = public_profile()["profile_id"]
+        self.profile_provider = profile_provider
+        profile = (profile_provider.public_profile() if profile_provider is not None else public_profile())["profile_id"]
         self.official = {item["id"]: {**copy.deepcopy(item), "source": "official", "description": "", "tags": [],
             "runtime": None, "motor_profile": profile, "revision": 1, "created_at": None, "updated_at": None,
             "extra_manifests": []} for item in official}
+
+    def _profile(self, identifier):
+        if self.profile_provider is None: return _profile(identifier)
+        try:
+            desired = identifier or self.profile_provider.public_profile()["profile_id"]
+            return self.profile_provider.check_binding(desired)["profile_id"]
+        except CompatibilityError as error:
+            raise HTTPException(409, "模板与所选 Motor 适配配置不兼容；请保留原模板并另存新模板。" + str(error)) from error
 
     @staticmethod
     def view(value: dict, role: str | None):
@@ -128,7 +137,7 @@ class TemplateLibrary:
     def create(self, data: TemplateInput):
         with self.mutation_lock:
             self._name_available(data.name)
-            profile = _profile(data.motor_profile)
+            profile = self._profile(data.motor_profile)
             timestamp = now()
             value = {**data.model_dump(), **_summary(data.user_config), "id": uid("tpl_"), "source": "custom",
                      "motor_profile": profile, "revision": 1, "created_at": timestamp, "updated_at": timestamp}
@@ -145,7 +154,7 @@ class TemplateLibrary:
             desired_profile = data.motor_profile or previous["motor_profile"]
             if desired_profile != previous["motor_profile"]:
                 raise HTTPException(409, "现有模板的 Motor 适配配置绑定不能替换，请另存新模板")
-            profile = _profile(desired_profile)
+            profile = self._profile(desired_profile)
             value = {**data.model_dump(exclude={"revision"}), **_summary(data.user_config), "id": identifier,
                      "source": "custom", "motor_profile": profile, "revision": previous["revision"] + 1,
                      "created_at": previous["created_at"], "updated_at": now()}
@@ -163,8 +172,8 @@ class TemplateLibrary:
             return {"ok": True, "id": identifier}
 
 
-def create_template_router(store, official, mutation_lock, role_for_request: Callable[[Request], str | None]):
-    library = TemplateLibrary(store, official, mutation_lock)
+def create_template_router(store, official, mutation_lock, role_for_request: Callable[[Request], str | None], *, profile_provider=None):
+    library = TemplateLibrary(store, official, mutation_lock, profile_provider=profile_provider)
     router = APIRouter(prefix="/api/templates", tags=["templates"])
 
     def writer(request):

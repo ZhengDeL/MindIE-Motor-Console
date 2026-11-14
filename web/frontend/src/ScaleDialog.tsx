@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -26,7 +27,7 @@ const names: Record<string, string> = {
   hybrid_instances_num: "PD 混部实例",
 };
 
-export default function ScaleDialog({
+function DefaultScaleDialog({
   service,
   onClose,
   onScale,
@@ -95,12 +96,12 @@ export default function ScaleDialog({
       onClose={onClose}
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
-          <Button onClick={preview} loading={busy} disabled={!runtimeAccess.enabled}>
+          <Button actionId="action.ScaleDialog.001" onClick={onClose}><UiText>{"取消"}</UiText></Button>
+          <Button actionId="action.ScaleDialog.002" onClick={preview} loading={busy} disabled={!runtimeAccess.enabled}>
             <Layers3 size={14} />
             {plan ? "重新预览" : "预览调整计划"}
           </Button>
-          <Button
+          <Button actionId="action.ScaleDialog.003"
             kind="primary"
             disabled={!runtimeAccess.enabled || !plan?.valid || !approved}
             loading={busy}
@@ -120,24 +121,24 @@ export default function ScaleDialog({
             }}
           >
             <SlidersHorizontal size={14} />
-            确认调整实例数
+            <UiText>{"确认调整实例数"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
-      {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}已填写的目标实例数仍保留。</InfoBox>}
-      <div className="scale-service-summary">
-        <div className="service-icon">
+      {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}<UiText>{"已填写的目标实例数仍保留。"}</UiText></InfoBox>}
+      <UiElement as="div" className="scale-service-summary">
+        <UiElement as="div" className="service-icon">
           <Layers3 size={21} />
-        </div>
-        <div>
-          <b>{service.name}</b>
-          <p>Kubernetes · {config.deploy_mode ?? "原生部署"}</p>
-        </div>
+        </UiElement>
+        <UiElement as="div">
+          <UiElement as="b">{service.name}</UiElement>
+          <UiElement as="p"><UiText>{"Kubernetes ·"}</UiText> {config.deploy_mode ?? "原生部署"}</UiElement>
+        </UiElement>
         <Badge status={service.status} />
-      </div>
-      <div className="scale-count-inputs">
+      </UiElement>
+      <UiElement as="div" className="scale-count-inputs">
         {Object.keys(current).map((key) => (
           <Field
             key={key}
@@ -145,7 +146,7 @@ export default function ScaleDialog({
             required
             hint={`当前目标 ${current[key as keyof ScaleCounts]} 个`}
           >
-            <input
+            <UiElement as="input"
               aria-label={`${names[key]}目标数`}
               type="number"
               min="1"
@@ -164,49 +165,54 @@ export default function ScaleDialog({
             />
           </Field>
         ))}
-      </div>
+      </UiElement>
       <InfoBox>
-        在线调整仅适用于已部署的原生 InferServiceSet。HPA、scalingPolicy
-        等已有控制策略由后端检查，避免多个控制器同时改写规模。预览不会修改当前配置；执行成功后保留新的配置修订。
+        <UiText>{"在线调整仅适用于已部署的原生 InferServiceSet。HPA、scalingPolicy 等已有控制策略由后端检查，避免多个控制器同时改写规模。预览不会修改当前配置；执行成功后保留新的配置修订。"}</UiText>
       </InfoBox>
       {plan && (
-        <section className="scale-plan" aria-label="实例数调整计划">
-          <div className="section-heading">
-            <h3>
+        <UiRegion name="layout.panel" as="section" className="scale-plan" aria-label="实例数调整计划">
+          <UiElement as="div" className="section-heading">
+            <UiElement as="h3">
               <CheckCircle2 size={15} />
-              目标规模预览
-            </h3>
-            {plan.demo && <span className="tag amber">模拟计划</span>}
-          </div>
-          <div className="scale-diff">
+              <UiText>{"目标规模预览"}</UiText>
+            </UiElement>
+            {plan.demo && <UiElement as="span" className="tag amber"><UiText>{"模拟计划"}</UiText></UiElement>}
+          </UiElement>
+          <UiElement as="div" className="scale-diff">
             {Object.entries(plan.counts).map(([key, value]) => (
-              <div key={key}>
-                <span>{names[key] ?? key}</span>
-                <b>{current[key as keyof ScaleCounts] ?? "—"}</b>
+              <UiElement as="div" key={key}>
+                <UiElement as="span">{names[key] ?? key}</UiElement>
+                <UiElement as="b">{current[key as keyof ScaleCounts] ?? "—"}</UiElement>
                 <ArrowRight size={15} />
-                <strong>{value}</strong>
-                <small>个实例</small>
-              </div>
+                <UiElement as="strong">{value}</UiElement>
+                <UiElement as="small"><UiText>{"个实例"}</UiText></UiElement>
+              </UiElement>
             ))}
-          </div>
-          {plan.message && <p className="scale-plan-message">{plan.message}</p>}
+          </UiElement>
+          {plan.message && <UiElement as="p" className="scale-plan-message">{plan.message}</UiElement>}
           {plan.user_config && (
-            <details className="command-preview">
-              <summary>查看目标原生配置</summary>
-              <pre>{JSON.stringify(plan.user_config, null, 2)}</pre>
-            </details>
+            <UiElement as="details" className="command-preview">
+              <UiElement as="summary"><UiText>{"查看目标原生配置"}</UiText></UiElement>
+              <UiElement as="pre">{JSON.stringify(plan.user_config, null, 2)}</UiElement>
+            </UiElement>
           )}
-          <label className="scale-consent">
-            <input
+          <UiElement as="label" className="scale-consent">
+            <UiElement as="input"
               type="checkbox"
               checked={approved}
               disabled={!plan.valid || busy}
               onChange={(event) => setApproved(event.target.checked)}
             />
-            <span>我已核对目标规模，确认按此计划调整实例数。</span>
-          </label>
-        </section>
+            <UiElement as="span"><UiText>{"我已核对目标规模，确认按此计划调整实例数。"}</UiText></UiElement>
+          </UiElement>
+        </UiRegion>
       )}
     </Modal>
   );
 }
+
+const ScaleDialog = withUiSlot("component.ScaleDialog", DefaultScaleDialog);
+export default ScaleDialog;
+
+// Reference package implementation exports.
+export { DefaultScaleDialog };

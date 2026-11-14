@@ -2472,7 +2472,7 @@ td strong {
   font-size: var(--font-size-caption);
   color: var(--accent);
 }
-.service-detail-heading {
+.page-heading.service-detail-heading {
   margin-bottom: 15px;
 }
 .heading-with-icon {
@@ -2485,7 +2485,7 @@ td strong {
   align-items: center;
   gap: 12px;
 }
-.title-row h1 {
+.heading-with-icon .title-row h1 {
   font-size: var(--font-size-title);
 }
 .service-subheading {

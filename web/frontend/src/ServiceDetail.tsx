@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, UiSlot, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePollingQuery } from "./usePollingQuery";
 import { readNotice } from "./readState";
@@ -49,7 +50,7 @@ import {
   serviceReplicaPlan,
 } from "./servicePresentation";
 
-export default function ServiceDetail({
+function DefaultServiceDetail({
   service,
   nodes,
   onBack,
@@ -230,46 +231,46 @@ export default function ServiceDetail({
     service.resources_may_exist === true;
   return (
     <>
-      <button className="back-link" onClick={onBack}>
+      <UiButton actionContext={{service, canOperate}} actionId="services.back" className="back-link" onClick={onBack}>
         <ArrowLeft size={14} />
-        返回推理服务
-      </button>
-      <div className="page-heading service-detail-heading">
-        <div>
-          <div className="heading-with-icon">
-            <div className="service-icon large">
+        <UiText>{"返回推理服务"}</UiText>
+      </UiButton>
+      <UiElement as="div" className="page-heading service-detail-heading">
+        <UiElement as="div">
+          <UiElement as="div" className="heading-with-icon">
+            <UiElement as="div" className="service-icon large">
               <Box size={27} />
-            </div>
-            <div>
-              <div className="title-row">
-                <h1>{service.name}</h1>
+            </UiElement>
+            <UiElement as="div">
+              <UiElement as="div" className="title-row">
+                <UiElement as="h1">{service.name}</UiElement>
                 <Badge status={displayedStatus}>
                   {readinessGate && liveStatus && !targetReady && servingReady
                     ? readinessGate.state === "degraded" ? "部分资源异常" : readinessGate.state === "unknown" ? "容量待确认" : "容量未齐"
                     : undefined}
                 </Badge>
-              </div>
-              <p>
+              </UiElement>
+              <UiElement as="p">
                 {knownText(service.model) && (
                   <>
                     {service.model}
-                    <span className="inline-divider" />
+                    <UiElement as="span" className="inline-divider" />
                   </>
                 )}
                 {service.runtime === "kubernetes" ? "Kubernetes" : "Docker"}
                 {knownText(service.engine) && (
                   <>
-                    <span className="inline-divider" />
+                    <UiElement as="span" className="inline-divider" />
                     {service.engine}
                   </>
                 )}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="heading-actions">
+              </UiElement>
+            </UiElement>
+          </UiElement>
+        </UiElement>
+        <UiElement as="div" className="heading-actions">
           {service.runtime === "kubernetes" && (
-            <Button
+            <Button actionContext={{service, canOperate}} actionId="services.undeploy"
               disabled={
                 !canExecute ||
                 !service.resources_may_exist ||
@@ -285,11 +286,11 @@ export default function ServiceDetail({
               onClick={() => onAction(service, "undeploy")}
             >
               <Trash2 size={14} />
-              卸载部署
+              <UiText>{"卸载部署"}</UiText>
             </Button>
           )}
           {service.runtime === "kubernetes" && (
-            <Button
+            <Button actionContext={{service, canOperate}} actionId="services.scale"
               disabled={
                 !canExecute ||
                 !["running", "starting", "partial"].includes(service.status)
@@ -298,31 +299,31 @@ export default function ServiceDetail({
               onClick={() => onAction(service, "scale")}
             >
               <SlidersHorizontal size={14} />
-              调整实例数
+              <UiText>{"调整实例数"}</UiText>
             </Button>
           )}
-          <Button
+          <Button actionContext={{service, canOperate}} actionId="services.export"
             disabled={!canOperate || service.config_redacted}
             onClick={exportService}
           >
             <Download size={14} />
-            导出配置
+            <UiText>{"导出配置"}</UiText>
           </Button>
-          {templatesEnabled && <Button
+          {templatesEnabled && <Button actionContext={{service, canOperate}} actionId="services.template.create"
             disabled={!canOperate || service.config_redacted}
             onClick={() => onAction(service, "template")}
           >
             <FileJson size={14} />
-            保存为模板
+            <UiText>{"保存为模板"}</UiText>
           </Button>}
-          <Button
+          <Button actionContext={{service, canOperate}} actionId="services.edit"
             onClick={() => onEdit(service)}
             disabled={
               !canOperate || !runtimeAccess.enabled || !["draft", "stopped"].includes(service.status)
             }
           >
             <Settings2 size={14} />
-            编辑
+            <UiText>{"编辑"}</UiText>
           </Button>
           {[
             "running",
@@ -335,7 +336,7 @@ export default function ServiceDetail({
             "removing",
           ].includes(service.status) || dockerRecoveryPending ? (
             <>
-              <Button
+              <Button actionContext={{service, canOperate}} actionId="services.restart"
                 disabled={
                   !canExecute ||
                   dockerRecoveryPending ||
@@ -358,9 +359,9 @@ export default function ServiceDetail({
                 onClick={() => onAction(service, "restart")}
               >
                 <RefreshCw size={14} />
-                重启
+                <UiText>{"重启"}</UiText>
               </Button>
-              <Button
+              <Button actionContext={{service, canOperate}} actionId="services.stop"
                 disabled={
                   !canExecute ||
                   (continueStop && stopChecking) ||
@@ -386,7 +387,7 @@ export default function ServiceDetail({
               </Button>
             </>
           ) : (
-            <Button
+            <Button actionContext={{service, canOperate}} actionId="services.deploy"
               kind="primary"
               disabled={!canExecute}
               title={readOnlyReason || undefined}
@@ -396,30 +397,30 @@ export default function ServiceDetail({
               {service.needs_rebuild ? "重建并应用配置" : "部署服务"}
             </Button>
           )}
-        </div>
-      </div>
-      <div className="service-subheading">
-        <span>
-          服务 ID：<code>{service.id}</code>
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="service-subheading">
+        <UiElement as="span">
+          <UiText>{"服务 ID："}</UiText><UiElement as="code">{service.id}</UiElement>
           <Copy value={service.id} />
-        </span>
+        </UiElement>
         {recordTime(service.created_at) && (
-          <span>创建时间：{when(service.created_at)}</span>
+          <UiElement as="span"><UiText>{"创建时间："}</UiText>{when(service.created_at)}</UiElement>
         )}
         {recordTime(service.updated_at) && (
-          <span>最近更新：{when(service.updated_at)}</span>
+          <UiElement as="span"><UiText>{"最近更新："}</UiText>{when(service.updated_at)}</UiElement>
         )}
-        <Button
+        <Button actionContext={{service, canOperate}} actionId="services.job.open"
           kind="text"
           disabled={!service.last_job_id}
           title={service.last_job_id ? "读取已保存的最近任务" : "尚无部署任务"}
           onClick={() => onAction(service, "job")}
         >
           <FileClock size={13} />
-          查看最近任务
+          <UiText>{"查看最近任务"}</UiText>
         </Button>
-      </div>
-      <div className="detail-tab-bar">
+      </UiElement>
+      <UiElement as="div" className="detail-tab-bar">
         {tabs
           .filter(
             ([id]) =>
@@ -428,7 +429,7 @@ export default function ServiceDetail({
               && (canOperate || !["config", "revisions", "playground"].includes(id)),
           )
           .map(([id, label, Icon]) => (
-            <button
+            <UiButton actionContext={{service, canOperate}} actionId="services.tab.select"
               key={id}
               className={tab === id ? "active" : ""}
               onClick={() => {
@@ -439,126 +440,126 @@ export default function ServiceDetail({
             >
               <Icon size={15} />
               {label}
-            </button>
+            </UiButton>
           ))}
-      </div>
+      </UiElement>
       {error && <ErrorBox message={error} />}
       {readOnlyReason && <InfoBox>{readOnlyReason}</InfoBox>}
       {tabNotice && <InfoBox>{tabNotice}</InfoBox>}
       {service.last_error && <ErrorBox message={service.last_error} />}
-      {tab === "aigw" && gatewaysEnabled && runtimeAccess.enabled && <NativeAigwModelsPanel service={service} />}
+      {tab === "aigw" && gatewaysEnabled && runtimeAccess.enabled && <UiSlot name="tab.service.aigw" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{<NativeAigwModelsPanel service={service} />}</UiSlot>}
       {dockerRecoveryPending && (
         <InfoBox>
-          部署未完成，但可能已有受管资源。请先停止这些资源，确认停止后再重建并应用配置。
+          <UiText>{"部署未完成，但可能已有受管资源。请先停止这些资源，确认停止后再重建并应用配置。"}</UiText>
         </InfoBox>
       )}
-      {tab === "overview" && (
-        <div className="detail-overview-grid">
-          <section className="panel">
-            <div className="panel-head">
-              <h2>服务信息</h2>
-              <span className="small-caption">声明配置</span>
-            </div>
-            <dl className="description-list">
-              <dt>运行环境</dt>
-              <dd>
+      {tab === "overview" && <UiSlot name="tab.service.overview" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
+        <UiElement as="div" className="detail-overview-grid">
+          <UiRegion name="layout.panel" as="section" className="panel">
+            <UiElement as="div" className="panel-head">
+              <UiElement as="h2"><UiText>{"服务信息"}</UiText></UiElement>
+              <UiElement as="span" className="small-caption"><UiText>{"声明配置"}</UiText></UiElement>
+            </UiElement>
+            <UiElement as="dl" className="description-list">
+              <UiElement as="dt"><UiText>{"运行环境"}</UiText></UiElement>
+              <UiElement as="dd">
                 {service.runtime === "kubernetes"
                   ? "Kubernetes 集群"
                   : "多节点 Docker"}
-              </dd>
+              </UiElement>
               {knownText(configs.deploy_mode) && (
                 <>
-                  <dt>部署模式</dt>
-                  <dd>
+                  <UiElement as="dt"><UiText>{"部署模式"}</UiText></UiElement>
+                  <UiElement as="dd">
                     {configs.deploy_mode}
-                    <span className="tag small">
+                    <UiElement as="span" className="tag small">
                       {service.scenario === "hybrid" ? "PD 混部" : "PD 分离"}
-                    </span>
-                  </dd>
+                    </UiElement>
+                  </UiElement>
                 </>
               )}
               {knownText(service.engine) && (
                 <>
-                  <dt>推理引擎</dt>
-                  <dd>{service.engine}</dd>
+                  <UiElement as="dt"><UiText>{"推理引擎"}</UiText></UiElement>
+                  <UiElement as="dd">{service.engine}</UiElement>
                 </>
               )}
               {knownText(service.motor_profile) && (
                 <>
-                  <dt>引擎适配配置</dt>
-                  <dd className="mono">{service.motor_profile}</dd>
+                  <UiElement as="dt"><UiText>{"引擎适配配置"}</UiText></UiElement>
+                  <UiElement as="dd" className="mono">{service.motor_profile}</UiElement>
                 </>
               )}
               {knownText(configs.hardware_type) && (
                 <>
-                  <dt>硬件规格</dt>
-                  <dd>{configs.hardware_type}</dd>
+                  <UiElement as="dt"><UiText>{"硬件规格"}</UiText></UiElement>
+                  <UiElement as="dd">{configs.hardware_type}</UiElement>
                 </>
               )}
               {!!replicaPlan.length && (
                 <>
-                  <dt>实例规划</dt>
-                  <dd>
+                  <UiElement as="dt"><UiText>{"实例规划"}</UiText></UiElement>
+                  <UiElement as="dd">
                     {replicaPlan.filter((item) => item.value > 0).length
                       ? replicaPlan
                           .filter((item) => item.value > 0)
                           .map((item) => (
-                            <span
+                            <UiElement as="span"
                               key={item.key}
                               className="service-replica-item"
                             >
-                              <span className={`role-bullet ${item.key}`} />
+                              <UiElement as="span" className={`role-bullet ${item.key}`} />
                               {item.value} {item.label}
-                            </span>
+                            </UiElement>
                           ))
                       : "0 个实例"}
-                  </dd>
+                  </UiElement>
                 </>
               )}
               {isResourceInteger(service.device_count) && (
                 <>
-                  <dt>NPU 逻辑设备</dt>
-                  <dd>{service.device_count} 个</dd>
+                  <UiElement as="dt"><UiText>{"NPU 逻辑设备"}</UiText></UiElement>
+                  <UiElement as="dd">{service.device_count} <UiText>{"个"}</UiText></UiElement>
                 </>
               )}
               {!!service.node_names?.length && (
                 <>
-                  <dt>部署节点</dt>
-                  <dd>{service.node_names.join("、")}</dd>
+                  <UiElement as="dt"><UiText>{"部署节点"}</UiText></UiElement>
+                  <UiElement as="dd">{service.node_names.join("、")}</UiElement>
                 </>
               )}
               {knownText(service.image) && (
                 <>
-                  <dt>服务镜像</dt>
-                  <dd className="mono break-word">{service.image}</dd>
+                  <UiElement as="dt"><UiText>{"服务镜像"}</UiText></UiElement>
+                  <UiElement as="dd" className="mono break-word">{service.image}</UiElement>
                 </>
               )}
               {knownText(configs.weight_mount_path) && (
                 <>
-                  <dt>权重目录</dt>
-                  <dd className="mono">{configs.weight_mount_path}</dd>
+                  <UiElement as="dt"><UiText>{"权重目录"}</UiText></UiElement>
+                  <UiElement as="dd" className="mono">{configs.weight_mount_path}</UiElement>
                 </>
               )}
-            </dl>
-          </section>
-          <div className="detail-overview-side">
-            {service.runtime === "kubernetes" ? runtimeAccess.enabled && <KubernetesEndpoints service={service} /> : <section className="panel">
-              <div className="panel-head">
-                <h2>访问入口</h2>
+            </UiElement>
+          </UiRegion>
+          <UiElement as="div" className="detail-overview-side">
+            {service.runtime === "kubernetes" ? runtimeAccess.enabled && <KubernetesEndpoints service={service} /> : <UiRegion name="layout.panel" as="section" className="panel">
+              <UiElement as="div" className="panel-head">
+                <UiElement as="h2"><UiText>{"访问入口"}</UiText></UiElement>
                 <ArrowUpRight size={16} />
-              </div>
+              </UiElement>
               {knownText(service.endpoint) ? (
                 <>
-                  <div className="endpoint-box">
-                    <code>{service.endpoint}</code>
+                  <UiElement as="div" className="endpoint-box">
+                    <UiElement as="code">{service.endpoint}</UiElement>
                     <Copy value={service.endpoint} />
-                  </div>
-                  <p className="panel-note">
+                  </UiElement>
+                  <UiElement as="p" className="panel-note">
                     {runtimeAccess.enabled ? "通过 Coordinator 访问推理接口，服务协议以实际配置为准。" : "此为已保存的地址；运行时未启用，平台当前不验证连通性。"}
-                  </p>
+                  </UiElement>
                   {canExecute && (
-                    <Button kind="text" onClick={() => setTab("playground")}>
-                      发起一次推理
+                    <Button actionContext={{service, canOperate}} actionId="inference.open" kind="text" onClick={() => setTab("playground")}>
+                      <UiText>{"发起一次推理"}</UiText>
                       <ChevronRight size={14} />
                     </Button>
                   )}
@@ -569,34 +570,34 @@ export default function ServiceDetail({
                   description="完成管理面部署后显示实际服务地址。"
                 />
               )}
-            </section>}
-            {runtimeAccess.enabled && <section className="panel">
-              <div className="panel-head">
-                <h2>目标容量与就绪状态</h2>
-                <button
+            </UiRegion>}
+            {runtimeAccess.enabled && <UiRegion name="layout.panel" as="section" className="panel">
+              <UiElement as="div" className="panel-head">
+                <UiElement as="h2"><UiText>{"目标容量与就绪状态"}</UiText></UiElement>
+                <UiButton actionContext={{service, canOperate}} actionId="services.readiness.refresh"
                   className="icon-btn"
                   onClick={() => void reload()}
                   aria-label="刷新服务就绪状态"
                 >
                   <RefreshCw size={14} />
-                </button>
-              </div>
+                </UiButton>
+              </UiElement>
               {loading ? (
                 <Spinner />
               ) : readinessGate ? (
                 <>
-                  <div className="service-readiness-summary">
-                    <div className={`readiness-symbol ${targetReady ? "ready" : ""}`}>
+                  <UiElement as="div" className="service-readiness-summary">
+                    <UiElement as="div" className={`readiness-symbol ${targetReady ? "ready" : ""}`}>
                       {targetReady ? <CheckCircle2 size={26} /> : <Clock3 size={26} />}
-                    </div>
-                    <div>
-                      <b>{readinessTitle}</b>
-                      <p>分别核对{service.runtime === "kubernetes" ? "受管 Pod" : "受管容器"}、目标角色数量和 Coordinator 原生就绪结果。</p>
-                      {service.runtime === "kubernetes" && readinessGate.expected_source === "native_owned_role_target" && <p>当前目标来自已核验归属的原生角色资源；声明配置单独展示。</p>}
-                      {recordTime(readinessGate.observed_at) && <small>读取时间 {when(readinessGate.observed_at)}</small>}
-                    </div>
-                  </div>
-                  <div className="service-readiness-capacity" aria-label="目标角色容量">
+                    </UiElement>
+                    <UiElement as="div">
+                      <UiElement as="b">{readinessTitle}</UiElement>
+                      <UiElement as="p"><UiText>{"分别核对"}</UiText>{service.runtime === "kubernetes" ? "受管 Pod" : "受管容器"}<UiText>{"、目标角色数量和 Coordinator 原生就绪结果。"}</UiText></UiElement>
+                      {service.runtime === "kubernetes" && readinessGate.expected_source === "native_owned_role_target" && <UiElement as="p"><UiText>{"当前目标来自已核验归属的原生角色资源；声明配置单独展示。"}</UiText></UiElement>}
+                      {recordTime(readinessGate.observed_at) && <UiElement as="small"><UiText>{"读取时间"}</UiText> {when(readinessGate.observed_at)}</UiElement>}
+                    </UiElement>
+                  </UiElement>
+                  <UiElement as="div" className="service-readiness-capacity" aria-label="目标角色容量">
                     {capacityRoles.filter(({ key }) => {
                       const expected = readinessGate.expected[key];
                       const observed = readinessGate.observed[key];
@@ -604,26 +605,26 @@ export default function ServiceDetail({
                         ? service.runtime === "kubernetes" && ((isResourceInteger(expected) && expected > 0) || (isResourceInteger(observed) && observed > 0))
                         : isResourceInteger(expected) && expected > 0;
                     }).map(({ key, label }) => (
-                      <span key={key}>
+                      <UiElement as="span" key={key}>
                         {label}
-                        <b>{isResourceInteger(readinessGate.observed[key])
+                        <UiElement as="b">{isResourceInteger(readinessGate.observed[key])
                           ? `${readinessGate.observed[key]} / ${isResourceInteger(readinessGate.expected[key]) ? readinessGate.expected[key] : "目标待确认"}`
-                          : isResourceInteger(readinessGate.expected[key]) ? `等待核对（目标 ${readinessGate.expected[key]}）` : "等待核对"}</b>
-                      </span>
+                          : isResourceInteger(readinessGate.expected[key]) ? `等待核对（目标 ${readinessGate.expected[key]}）` : "等待核对"}</UiElement>
+                      </UiElement>
                     ))}
-                  </div>
-                  {!!readinessGate.issues.length && <ul className="service-readiness-issues">{readinessGate.issues.map((issue, index) => (
-                    <li key={`${issue.source}-${index}`}>{issue.detail}</li>
-                  ))}</ul>}
-                  <details className="service-readiness-native">
-                    <summary>Coordinator 检查详情</summary>
-                    <p>{readiness === true ? "原生就绪检查通过" : readiness === false ? "原生就绪检查尚未通过" : "本次未取得原生就绪结果"}；该结果不单独代表目标实例数量已齐全。</p>
-                    {knownText(observations?.readiness?.message) && <p>{observations!.readiness!.message}</p>}
-                  </details>
+                  </UiElement>
+                  {!!readinessGate.issues.length && <UiElement as="ul" className="service-readiness-issues">{readinessGate.issues.map((issue, index) => (
+                    <UiElement as="li" key={`${issue.source}-${index}`}>{issue.detail}</UiElement>
+                  ))}</UiElement>}
+                  <UiElement as="details" className="service-readiness-native">
+                    <UiElement as="summary"><UiText>{"Coordinator 检查详情"}</UiText></UiElement>
+                    <UiElement as="p">{readiness === true ? "原生就绪检查通过" : readiness === false ? "原生就绪检查尚未通过" : "本次未取得原生就绪结果"}<UiText>{"；该结果不单独代表目标实例数量已齐全。"}</UiText></UiElement>
+                    {knownText(observations?.readiness?.message) && <UiElement as="p">{observations!.readiness!.message}</UiElement>}
+                  </UiElement>
                 </>
               ) : readiness !== null ? (
-                <div className="readiness-status">
-                  <div
+                <UiElement as="div" className="readiness-status">
+                  <UiElement as="div"
                     className={`readiness-symbol ${readiness ? "ready" : ""}`}
                   >
                     {readiness ? (
@@ -631,144 +632,144 @@ export default function ServiceDetail({
                     ) : (
                       <Clock3 size={26} />
                     )}
-                  </div>
-                  <div>
-                    <b>{readiness ? "Coordinator 原生检查通过" : "Coordinator 原生检查尚未通过"}</b>
-                    <p>
+                  </UiElement>
+                  <UiElement as="div">
+                    <UiElement as="b">{readiness ? "Coordinator 原生检查通过" : "Coordinator 原生检查尚未通过"}</UiElement>
+                    <UiElement as="p">
                       {knownText(observations?.readiness?.message)
                         ? observations!.readiness!.message
                         : "仅表示原生接口检查结果，目标实例容量与实际推理需分别核对。"}
-                    </p>
-                    {readAt && <small>读取时间 {when(readAt)}</small>}
-                  </div>
-                </div>
+                    </UiElement>
+                    {readAt && <UiElement as="small"><UiText>{"读取时间"}</UiText> {when(readAt)}</UiElement>}
+                  </UiElement>
+                </UiElement>
               ) : (
-                <div className="not-observed">
-                  <span className="status-dot muted" />
+                <UiElement as="div" className="not-observed">
+                  <UiElement as="span" className="status-dot muted" />
                   {unsubmitted
                     ? "完成部署后可检查引擎就绪状态。"
                     : "本次就绪检查未完成，请核对服务状态后刷新。"}
-                </div>
+                </UiElement>
               )}
               {!readinessGate && instanceSummary && (
-                <div className="observed-counts">
-                  <span>
-                    已发现实例
-                    <b>{instanceSummary.registered}</b>
-                  </span>
+                <UiElement as="div" className="observed-counts">
+                  <UiElement as="span">
+                    <UiText>{"已发现实例"}</UiText>
+                    <UiElement as="b">{instanceSummary.registered}</UiElement>
+                  </UiElement>
                   {instanceSummary.healthy !== null && (
-                    <span>
-                      健康实例
-                      <b>{instanceSummary.healthy}</b>
-                    </span>
+                    <UiElement as="span">
+                      <UiText>{"健康实例"}</UiText>
+                      <UiElement as="b">{instanceSummary.healthy}</UiElement>
+                    </UiElement>
                   )}
-                </div>
+                </UiElement>
               )}
               {(observations?.errors?.length ?? 0) > 0 && (
-                <div className="inline-observation-error">
+                <UiElement as="div" className="inline-observation-error">
                   {observations?.errors
                     .map((x) => (typeof x === "string" ? x : JSON.stringify(x)))
                     .join("；")}
-                </div>
+                </UiElement>
               )}
-            </section>}
-          </div>
-        </div>
-      )}
-      {tab === "topology" && (
-        <section className="panel">
-          <div className="panel-head">
-            <h2>
-              角色与节点布局{" "}
-              <span className="count-pill">{service.placements.length}</span>
-            </h2>
-            <span className="small-caption">
+            </UiRegion>}
+          </UiElement>
+        </UiElement>
+      )}</UiSlot>}
+      {tab === "topology" && <UiSlot name="tab.service.topology" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
+        <UiRegion name="layout.panel" as="section" className="panel">
+          <UiElement as="div" className="panel-head">
+            <UiElement as="h2">
+              <UiText>{"角色与节点布局"}</UiText>{" "}
+              <UiElement as="span" className="count-pill">{service.placements.length}</UiElement>
+            </UiElement>
+            <UiElement as="span" className="small-caption">
               {service.runtime === "kubernetes"
                 ? "执行入口与集群调度分开管理"
                 : "声明布局 · 实际状态见 Motor 实例"}
-            </span>
-          </div>
-          <div className="topology-flow">
-            <div className="topology-entry">
-              <div className="topology-node-icon">
+            </UiElement>
+          </UiElement>
+          <UiElement as="div" className="topology-flow">
+            <UiElement as="div" className="topology-entry">
+              <UiElement as="div" className="topology-node-icon">
                 <Send size={22} />
-              </div>
-              <b>客户端请求</b>
-              <small>OpenAI / Anthropic API</small>
-            </div>
-            <div className="topology-line" />
-            <div className="topology-central">
-              <div className="topology-node-icon red">
+              </UiElement>
+              <UiElement as="b"><UiText>{"客户端请求"}</UiText></UiElement>
+              <UiElement as="small"><UiText>{"OpenAI / Anthropic API"}</UiText></UiElement>
+            </UiElement>
+            <UiElement as="div" className="topology-line" />
+            <UiElement as="div" className="topology-central">
+              <UiElement as="div" className="topology-node-icon red">
                 <Layers3 size={24} />
-              </div>
-              <b>Motor 管理面</b>
-              <small>Coordinator · Controller</small>
-            </div>
-            <div className="topology-line" />
-            <div className="topology-engines">
+              </UiElement>
+              <UiElement as="b"><UiText>{"Motor 管理面"}</UiText></UiElement>
+              <UiElement as="small"><UiText>{"Coordinator · Controller"}</UiText></UiElement>
+            </UiElement>
+            <UiElement as="div" className="topology-line" />
+            <UiElement as="div" className="topology-engines">
               {service.placements
                 .filter((p) => p.role !== "coordinator_controller")
                 .map((p, i) => (
-                  <div className="topology-instance" key={i}>
-                    <span className={`role-chip role-${p.role}`}>
+                  <UiElement as="div" className="topology-instance" key={i}>
+                    <UiElement as="span" className={`role-chip role-${p.role}`}>
                       {roleName(p.role)}
-                    </span>
-                    <b>{p.instance_name}</b>
-                    <small>
+                    </UiElement>
+                    <UiElement as="b">{p.instance_name}</UiElement>
+                    <UiElement as="small">
                       {nodes.find((n) => n.id === p.node_id)?.name ?? p.node_id}
-                    </small>
-                  </div>
+                    </UiElement>
+                  </UiElement>
                 ))}
               {service.placements.every(
                 (p) => p.role === "coordinator_controller",
               ) && (
-                <span className="small-caption">由集群调度原生工作负载</span>
+                <UiElement as="span" className="small-caption"><UiText>{"由集群调度原生工作负载"}</UiText></UiElement>
               )}
-            </div>
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>角色 / 实例</th>
-                  <th>
+            </UiElement>
+          </UiElement>
+          <UiElement as="div" className="table-wrap">
+            <UiElement as="table">
+              <UiElement as="thead">
+                <UiElement as="tr">
+                  <UiElement as="th"><UiText>{"角色 / 实例"}</UiText></UiElement>
+                  <UiElement as="th">
                     {service.runtime === "kubernetes" ? "执行 Agent" : "节点"}
-                  </th>
-                  <th>NPU 设备</th>
-                  {hasPortPlan && <th>端口配置</th>}
-                </tr>
-              </thead>
-              <tbody>
+                  </UiElement>
+                  <UiElement as="th"><UiText>{"NPU 设备"}</UiText></UiElement>
+                  {hasPortPlan && <UiElement as="th"><UiText>{"端口配置"}</UiText></UiElement>}
+                </UiElement>
+              </UiElement>
+              <UiElement as="tbody">
                 {service.placements.map((p, i) => (
-                  <tr key={i}>
-                    <td>
-                      <span className={`role-chip role-${p.role}`}>
+                  <UiElement as="tr" key={i}>
+                    <UiElement as="td">
+                      <UiElement as="span" className={`role-chip role-${p.role}`}>
                         {roleName(p.role)}
-                      </span>
-                      <span className="cell-secondary">{p.instance_name}</span>
-                    </td>
-                    <td>
-                      <strong>
+                      </UiElement>
+                      <UiElement as="span" className="cell-secondary">{p.instance_name}</UiElement>
+                    </UiElement>
+                    <UiElement as="td">
+                      <UiElement as="strong">
                         {nodes.find((n) => n.id === p.node_id)?.name ??
                           p.node_id}
-                      </strong>
-                      <span className="cell-secondary">
+                      </UiElement>
+                      <UiElement as="span" className="cell-secondary">
                         {nodes.find((n) => n.id === p.node_id)?.address ?? ""}
-                      </span>
-                    </td>
-                    <td>
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="td">
                       {p.devices.length ? (
                         p.devices.map((d) => (
-                          <span className="device-tag" key={d}>
+                          <UiElement as="span" className="device-tag" key={d}>
                             {d}
-                          </span>
+                          </UiElement>
                         ))
                       ) : (
-                        <span className="muted-text">不分配</span>
+                        <UiElement as="span" className="muted-text"><UiText>{"不分配"}</UiText></UiElement>
                       )}
-                    </td>
+                    </UiElement>
                     {hasPortPlan && (
-                      <td>
+                      <UiElement as="td">
                         {(
                           [
                             ["NodeManager", p.ports?.node_manager],
@@ -784,48 +785,48 @@ export default function ServiceDetail({
                               value <= 65535,
                           )
                           .map(([label, value]) => (
-                            <span
+                            <UiElement as="span"
                               key={label}
                               className="service-port-item mono small-caption"
                             >
                               {label} {value}
-                            </span>
+                            </UiElement>
                           ))}
-                      </td>
+                      </UiElement>
                     )}
-                  </tr>
+                  </UiElement>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-      {tab === "config" && (
-        <section className="panel">
-          <div className="panel-head">
-            <div className="tab-list compact">
-              <button
+              </UiElement>
+            </UiElement>
+          </UiElement>
+        </UiRegion>
+      )}</UiSlot>}
+      {tab === "config" && <UiSlot name="tab.service.config" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
+        <UiRegion name="layout.panel" as="section" className="panel">
+          <UiElement as="div" className="panel-head">
+            <UiElement as="div" className="tab-list compact">
+              <UiButton actionContext={{service, canOperate}} actionId="services.config.user"
                 className={configTab === "user" ? "active" : ""}
                 onClick={() => setConfigTab("user")}
               >
-                user_config.json
-              </button>
-              <button
+                <UiText>{"user_config.json"}</UiText>
+              </UiButton>
+              <UiButton actionContext={{service, canOperate}} actionId="services.config.env"
                 className={configTab === "env" ? "active" : ""}
                 onClick={() => setConfigTab("env")}
               >
-                env.json
-              </button>
+                <UiText>{"env.json"}</UiText>
+              </UiButton>
               {(service.runtime === "kubernetes" ||
                 Boolean(service.extra_manifests?.length)) && (
-                <button
+                <UiButton actionContext={{service, canOperate}} actionId="services.config.extra"
                   className={configTab === "extra" ? "active" : ""}
                   onClick={() => setConfigTab("extra")}
                 >
-                  高级清单
-                </button>
+                  <UiText>{"高级清单"}</UiText>
+                </UiButton>
               )}
-            </div>
+            </UiElement>
             <Copy
               value={JSON.stringify(
                 configTab === "user"
@@ -838,8 +839,8 @@ export default function ServiceDetail({
               )}
               label="复制完整配置"
             />
-          </div>
-          <pre className="json-view">
+          </UiElement>
+          <UiElement as="pre" className="json-view">
             {JSON.stringify(
               configTab === "user"
                 ? service.user_config
@@ -849,53 +850,53 @@ export default function ServiceDetail({
               null,
               2,
             )}
-          </pre>
-        </section>
-      )}
-      {tab === "revisions" && (
-        <section className="panel">
-          <div className="panel-head">
-            <h2>
-              配置修订 {hasSuccess && <span className="count-pill">{revisions.length}</span>}
-            </h2>
-            <Button onClick={() => void reload()}>
+          </UiElement>
+        </UiRegion>
+      )}</UiSlot>}
+      {tab === "revisions" && <UiSlot name="tab.service.revisions" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
+        <UiRegion name="layout.panel" as="section" className="panel">
+          <UiElement as="div" className="panel-head">
+            <UiElement as="h2">
+              <UiText>{"配置修订"}</UiText> {hasSuccess && <UiElement as="span" className="count-pill">{revisions.length}</UiElement>}
+            </UiElement>
+            <Button actionContext={{service, canOperate}} actionId="services.revisions.refresh" onClick={() => void reload()}>
               <RefreshCw size={14} />
-              刷新
+              <UiText>{"刷新"}</UiText>
             </Button>
-          </div>
+          </UiElement>
           {loading && !hasSuccess ? (
             <Spinner />
           ) : hasSuccess && revisions.length ? (
-            <div className="revision-list">
+            <UiElement as="div" className="revision-list">
               {revisions.map((r, i) => (
-                <details key={r.id}>
-                  <summary>
-                    <span className="revision-mark">
+                <UiElement as="details" key={r.id}>
+                  <UiElement as="summary">
+                    <UiElement as="span" className="revision-mark">
                       <FileClock size={17} />
-                    </span>
-                    <div>
-                      <b>修订 {revisions.length - i}</b>
-                      <small>
-                        {when(r.created_at)} ·{" "}
+                    </UiElement>
+                    <UiElement as="div">
+                      <UiElement as="b"><UiText>{"修订"}</UiText> {revisions.length - i}</UiElement>
+                      <UiElement as="small">
+                        {when(r.created_at)} <UiText>{"·"}</UiText>{" "}
                         {r.runtime === "kubernetes" ? "Kubernetes" : "Docker"}
-                      </small>
-                    </div>
-                    <span className="mono muted-text">
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="span" className="mono muted-text">
                       {String(r.id).slice(0, 12)}
-                    </span>
+                    </UiElement>
                     <ChevronRight size={16} />
-                  </summary>
-                  <div className="revision-actions">
-                    <Button
+                  </UiElement>
+                  <UiElement as="div" className="revision-actions">
+                    <Button actionContext={{service, canOperate}} actionId="services.revisions.export"
                       onClick={() =>
                         download(r, `${service.name}-revision-${r.id}.json`)
                       }
                     >
                       <Download size={13} />
-                      导出此修订
+                      <UiText>{"导出此修订"}</UiText>
                     </Button>
-                  </div>
-                  <pre className="json-view">
+                  </UiElement>
+                  <UiElement as="pre" className="json-view">
                     {JSON.stringify(
                       {
                         user_config: r.user_config,
@@ -909,62 +910,62 @@ export default function ServiceDetail({
                       null,
                       2,
                     )}
-                  </pre>
-                </details>
+                  </UiElement>
+                </UiElement>
               ))}
-            </div>
+            </UiElement>
           ) : (
             <Empty
               title={hasSuccess ? "暂无配置修订" : readNotice({ loaded: false, refreshing: loading, error })}
               description={hasSuccess ? "每次保存配置都会保留一个可追溯版本。" : "尚未取得本服务的配置修订，请重试。"}
             />
           )}
-        </section>
-      )}
-      {tab === "logs" && logsEnabled && runtimeAccess.enabled && (
-        <section className="panel log-panel">
-          <div className="panel-head">
-            <div>
-              <h2>
-                运行日志 {hasSuccess && !unsubmitted && <span className="count-pill">{logs.length}</span>}
-              </h2>
-            </div>
-            <div className="inline-controls">
+        </UiRegion>
+      )}</UiSlot>}
+      {tab === "logs" && logsEnabled && runtimeAccess.enabled && <UiSlot name="tab.service.logs" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
+        <UiRegion name="layout.panel" as="section" className="panel log-panel">
+          <UiElement as="div" className="panel-head">
+            <UiElement as="div">
+              <UiElement as="h2">
+                <UiText>{"运行日志"}</UiText> {hasSuccess && !unsubmitted && <UiElement as="span" className="count-pill">{logs.length}</UiElement>}
+              </UiElement>
+            </UiElement>
+            <UiElement as="div" className="inline-controls">
               <RuntimeLogFilters service={service} nodes={nodes} nodeId={logNode} role={logRole} onChange={(nodeId, role) => setLogFilters({ serviceId: service.id, nodeId, role })} />
-              <input
+              <UiElement as="input"
                 className="small-input"
                 placeholder="搜索当前日志窗口"
                 value={logQuery}
                 onChange={(e) => setLogQuery(e.target.value)}
               />
-              <label className="checkbox-label">
-                <input
+              <UiElement as="label" className="checkbox-label">
+                <UiElement as="input"
                   type="checkbox"
                   checked={autoLog}
                   disabled={unsubmitted}
                   onChange={(e) => setAutoLog(e.target.checked)}
                 />
-                自动刷新
-              </label>
-              <Button
+                <UiText>{"自动刷新"}</UiText>
+              </UiElement>
+              <Button actionContext={{service, canOperate}} actionId="logs.export"
                 onClick={() => download(logs, `${service.name}-logs.json`)}
                 disabled={!hasSuccess || !logs.length || unsubmitted}
               >
                 <Download size={14} />
-                导出
+                <UiText>{"导出"}</UiText>
               </Button>
-              <Button
+              <Button actionContext={{service, canOperate}} actionId="logs.refresh"
                 onClick={() => void reload()}
                 loading={loading}
                 disabled={unsubmitted}
               >
                 <RefreshCw size={14} />
-                刷新
+                <UiText>{"刷新"}</UiText>
               </Button>
-            </div>
-          </div>
-          {hasSuccess && logPartial && <InfoBox>部分日志来源未完整返回，当前窗口可能缺少记录；请按执行节点、角色筛选后重试，并查看 Agent 诊断。</InfoBox>}
-          <div className="log-view">
+            </UiElement>
+          </UiElement>
+          {hasSuccess && logPartial && <InfoBox><UiText>{"部分日志来源未完整返回，当前窗口可能缺少记录；请按执行节点、角色筛选后重试，并查看 Agent 诊断。"}</UiText></InfoBox>}
+          <UiElement as="div" className="log-view">
             {hasSuccess && logs.length ? (
               logs
                 .filter((l) => matchesLog(l, logQuery))
@@ -972,20 +973,20 @@ export default function ServiceDetail({
                   <RuntimeLogLine key={i} line={l} />
                 ))
             ) : (
-              <div className="log-empty">
+              <UiElement as="div" className="log-empty">
                 <TerminalSquare size={30} />
-                <span>
+                <UiElement as="span">
                   {unsubmitted
                     ? "服务尚未提交部署，暂无容器/Pod运行日志"
                     : !hasSuccess
                       ? readNotice({ loaded: false, refreshing: loading, error })
                       : "暂无可读取的运行日志"}
-                </span>
-              </div>
+                </UiElement>
+              </UiElement>
             )}
-          </div>
-          <div className="log-footer">
-            <span
+          </UiElement>
+          <UiElement as="div" className="log-footer">
+            <UiElement as="span"
               className={`status-dot ${autoLog && !unsubmitted ? "green" : "muted"}`}
             />
             {unsubmitted
@@ -993,78 +994,78 @@ export default function ServiceDetail({
               : autoLog
                 ? "每次读取完成后等待 4 秒"
                 : "按需读取"}
-            <span>近期窗口上限 300 行，非完整归档 · 节点与角色在服务端筛选</span>
-          </div>
-        </section>
-      )}
-      {tab === "monitor" && runtimeAccess.enabled && (
+            <UiElement as="span"><UiText>{"近期窗口上限 300 行，非完整归档 · 节点与角色在服务端筛选"}</UiText></UiElement>
+          </UiElement>
+        </UiRegion>
+      )}</UiSlot>}
+      {tab === "monitor" && runtimeAccess.enabled && <UiSlot name="tab.service.monitor" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
         <ServiceMetricsPanel key={`${service.id}:${service.config_revision}:${service.deployed_digest}:${service.last_job_id}`} service={service} />
-      )}
-      {tab === "playground" && runtimeAccess.enabled && (
+      )}</UiSlot>}
+      {tab === "playground" && runtimeAccess.enabled && <UiSlot name="tab.service.playground" model={{service, nodes, canOperate, canExecute, tab, setTab, prompt, setPrompt, maxTokens, setMaxTokens, runInference, answer, inferBusy, configTab, setConfigTab, revisions, logs, observations, onEdit, onAction, notify}}>{(
         <>
-        {readinessGate && !targetReady && <div className="service-capacity-guidance"><InfoBox>
-          <strong>{readinessTitle}</strong>
-          <p>{servingReady
+        {readinessGate && !targetReady && <UiElement as="div" className="service-capacity-guidance"><InfoBox>
+          <UiElement as="strong">{readinessTitle}</UiElement>
+          <UiElement as="p">{servingReady
             ? "当前原生接口已有可用实例，可手动调试；可用容量尚未达到声明目标，调试成功不代表全部目标实例已就绪。"
             : nativeReady === true
               ? "Coordinator 接口已通过检查，尚未确认所需推理角色可用。平台保留手动调试入口，请结合实例状态判断实际返回。"
-              : "当前尚未确认原生服务就绪。平台保留手动调试入口，请结合目标容量和运行日志判断实际返回。"}</p>
-        </InfoBox></div>}
-        <div className="playground-grid">
-          <section className="panel">
-            <div className="panel-head">
-              <h2>推理请求</h2>
-              <span className="tag">Chat Completions</span>
-            </div>
-            <div className="playground-form">
+              : "当前尚未确认原生服务就绪。平台保留手动调试入口，请结合目标容量和运行日志判断实际返回。"}</UiElement>
+        </InfoBox></UiElement>}
+        <UiElement as="div" className="playground-grid">
+          <UiRegion name="layout.panel" as="section" className="panel">
+            <UiElement as="div" className="panel-head">
+              <UiElement as="h2"><UiText>{"推理请求"}</UiText></UiElement>
+              <UiElement as="span" className="tag"><UiText>{"Chat Completions"}</UiText></UiElement>
+            </UiElement>
+            <UiElement as="div" className="playground-form">
               {knownText(service.model) && (
-                <label className="field">
-                  <span className="field-label">模型</span>
-                  <input value={service.model} readOnly />
-                </label>
+                <UiElement as="label" className="field">
+                  <UiElement as="span" className="field-label"><UiText>{"模型"}</UiText></UiElement>
+                  <UiElement as="input" value={service.model} readOnly />
+                </UiElement>
               )}
-              <label className="field">
-                <span className="field-label">输入消息</span>
-                <textarea
+              <UiElement as="label" className="field">
+                <UiElement as="span" className="field-label"><UiText>{"输入消息"}</UiText></UiElement>
+                <UiElement as="textarea"
                   rows={8}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="输入你的问题…"
                 />
-              </label>
-              <label className="field">
-                <span className="field-label">最大生成 Token</span>
-                <input
+              </UiElement>
+              <UiElement as="label" className="field">
+                <UiElement as="span" className="field-label"><UiText>{"最大生成 Token"}</UiText></UiElement>
+                <UiElement as="input"
                   type="number"
                   value={maxTokens}
                   min="1"
                   max="8192"
                   onChange={(e) => setMaxTokens(Number(e.target.value))}
                 />
-              </label>
-              <Button
+              </UiElement>
+              <Button actionContext={{service, canOperate}} actionId="inference.submit"
                 kind="primary"
                 disabled={!canExecute || !prompt.trim() || unsubmitted || (service.runtime === "docker" && !service.endpoint)}
                 onClick={runInference}
                 loading={inferBusy}
               >
                 <Send size={15} />
-                发送请求
+                <UiText>{"发送请求"}</UiText>
               </Button>
-              {inferBusy && <Button onClick={() => {
+              {inferBusy && <Button actionContext={{service, canOperate}} actionId="inference.cancel-wait" onClick={() => {
                 inference.current?.abort();
                 setError("已停止浏览器等待。服务端可能已接受请求，平台不会自动重发。");
-              }}>停止等待</Button>}
-              <p className="small-caption">
+              }}><UiText>{"停止等待"}</UiText></Button>}
+              <UiElement as="p" className="small-caption">
                 {service.runtime === "kubernetes" ? "请求经执行 Agent 解析并访问实际 Coordinator Pod 地址，不依赖尚未确认的外部入口。" : "请求由服务端访问已保存的 Coordinator 地址。"}
-              </p>
-              <p className="small-caption">思考模型的思考与正文共用生成额度。仅返回思考或回答被截断时，可按需提高最大生成 Token；平台不会自动重发。</p>
-            </div>
-          </section>
-          <section className="panel">
-            <div className="panel-head">
-              <h2>模型响应</h2>
-            </div>
+              </UiElement>
+              <UiElement as="p" className="small-caption"><UiText>{"思考模型的思考与正文共用生成额度。仅返回思考或回答被截断时，可按需提高最大生成 Token；平台不会自动重发。"}</UiText></UiElement>
+            </UiElement>
+          </UiRegion>
+          <UiRegion name="layout.panel" as="section" className="panel">
+            <UiElement as="div" className="panel-head">
+              <UiElement as="h2"><UiText>{"模型响应"}</UiText></UiElement>
+            </UiElement>
             {inferBusy ? (
               <Spinner label="正在等待模型响应" />
             ) : answer ? (
@@ -1076,10 +1077,16 @@ export default function ServiceDetail({
                 icon={<Send size={26} />}
               />
             )}
-          </section>
-        </div>
+          </UiRegion>
+        </UiElement>
         </>
-      )}
+      )}</UiSlot>}
     </>
   );
 }
+
+const ServiceDetail = withUiSlot("component.ServiceDetail", DefaultServiceDetail);
+export default ServiceDetail;
+
+// Reference package implementation exports.
+export { DefaultServiceDetail };

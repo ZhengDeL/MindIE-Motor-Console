@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "example.operations-ui",
+  "name": "Operations UI reference pack",
+  "description": "Independent service workflow, button, actions, icons and language providers using the public browser SDK.",
+  "version": "1.0.0",
+  "sdkVersion": "1.0.0",
+  "entrypoint": "entry.mjs",
+  "provides": [
+    { "slot": "page.services", "version": "1.0.0" },
+    { "slot": "component.ServiceEditor", "version": "1.0.0" },
+    { "slot": "ui.button", "version": "1.0.0" },
+    { "slot": "ui.actions", "version": "1.0.0" },
+    { "slot": "ui.icons", "version": "1.0.0" },
+    { "slot": "ui.i18n", "version": "1.0.0" }
+  ],
+  "requires": []
+}

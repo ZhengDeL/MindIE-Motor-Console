@@ -1,0 +1,3473 @@
+{
+  "schemaVersion": 1,
+  "actions": [
+    {
+      "id": "action.Accounts.001",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.002",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.003",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.004",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.005",
+      "component": "Accounts.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Accounts.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.006",
+      "component": "Accounts.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Accounts.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.007",
+      "component": "Accounts.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Accounts.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.008",
+      "component": "Accounts.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Accounts.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.009",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Accounts.010",
+      "component": "Accounts.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.Accounts.010",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.001",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.002",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.003",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.004",
+      "component": "AgentDetails.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AgentDetails.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.005",
+      "component": "AgentDetails.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AgentDetails.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.006",
+      "component": "AgentDetails.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AgentDetails.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.007",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.008",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentDetails.009",
+      "component": "AgentDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentDetails.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.001",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.002",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.003",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.004",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.005",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.006",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.007",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutDialog.008",
+      "component": "AgentRolloutDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutDialog.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutForms.001",
+      "component": "AgentRolloutForms.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutForms.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.001",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.002",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AgentRolloutStatus.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.003",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.004",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.005",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.006",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.007",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AgentRolloutStatus.008",
+      "component": "AgentRolloutStatus.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.AgentRolloutStatus.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.menu.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / menu / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.menu.close",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / menu / close",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.edit",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / edit",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.export",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / export",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.template.create",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / template / create",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.restart",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "重启当前服务",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.delete",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "删除服务配置记录",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.manage",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / manage",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.deploy",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "打开部署/重建预检与确认",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.stop",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "停止当前服务的受管资源",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.create",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "打开创建推理服务工作流",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "console.reconnect",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "console / reconnect",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.home",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / home",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.mobile.close",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / mobile / close",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.page",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / page",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.plugin",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / plugin",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.help",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / help",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.mobile.close",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / mobile / close",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.sidebar.toggle",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / sidebar / toggle",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.mobile.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / mobile / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.home",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / home",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.back",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / back",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "console.activity",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "console / activity",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.session.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "auth / session / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.password.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "auth / password / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.logout",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "撤销当前登录会话",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.settings",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / settings",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.search",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / search",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.job.open",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / job / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "navigation.audit",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / audit",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.settings",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "navigation / settings",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.catalog.refresh",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "plugins / catalog / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "navigation.settings",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "navigation / settings",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.catalog.refresh",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "plugins / catalog / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.refresh",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.refresh",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "services / refresh",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "navigation.settings",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "navigation / settings",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.deploy.cancel",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "services / deploy / cancel",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.deploy.confirm",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "提交已审阅的部署计划",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "notifications.dismiss",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "notifications / dismiss",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "logs.refresh",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "logs / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "logs.export",
+      "component": "App.tsx",
+      "renderer": "Button",
+      "description": "logs / export",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AppearanceSettings.001",
+      "component": "AppearanceSettings.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AppearanceSettings.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.AppearanceSettings.002",
+      "component": "AppearanceSettings.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.AppearanceSettings.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.001",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.002",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.003",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.004",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.005",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.BrandingSettings.006",
+      "component": "BrandingSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.BrandingSettings.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.001",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.CapabilitiesPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.002",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.CapabilitiesPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.003",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.CapabilitiesPage.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.004",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.CapabilitiesPage.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.005",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.CapabilitiesPage.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.006",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.CapabilitiesPage.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CapabilitiesPage.007",
+      "component": "CapabilitiesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.CapabilitiesPage.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ClusterNodes.001",
+      "component": "ClusterNodes.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ClusterNodes.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ClusterNodes.002",
+      "component": "ClusterNodes.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.ClusterNodes.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ClusterNodes.003",
+      "component": "ClusterNodes.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ClusterNodes.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.CommunityPluginPage.001",
+      "component": "CommunityPluginPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.CommunityPluginPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.DeferredPanel.001",
+      "component": "DeferredPanel.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.DeferredPanel.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.001",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.002",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.003",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.004",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.005",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.006",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.007",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.008",
+      "component": "GatewaysPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.GatewaysPage.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.009",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.010",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.010",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.011",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.011",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.012",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.012",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.GatewaysPage.013",
+      "component": "GatewaysPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.GatewaysPage.013",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.001",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.002",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.003",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.004",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.005",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.006",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.007",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.008",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImageOperations.009",
+      "component": "ImageOperations.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImageOperations.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImagesPage.001",
+      "component": "ImagesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImagesPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ImagesPage.002",
+      "component": "ImagesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ImagesPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.001",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.002",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.003",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.004",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.005",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.006",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.InfrastructureSettings.007",
+      "component": "InfrastructureSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.InfrastructureSettings.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.IntegrationImages.001",
+      "component": "IntegrationImages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.IntegrationImages.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.IntegrationImages.002",
+      "component": "IntegrationImages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.IntegrationImages.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.IntegrationModels.001",
+      "component": "IntegrationModels.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.IntegrationModels.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.001",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.002",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.003",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.004",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.005",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.JobProgress.006",
+      "component": "JobProgress.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.JobProgress.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.KubernetesEndpoints.001",
+      "component": "KubernetesEndpoints.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.KubernetesEndpoints.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.KubernetesEndpoints.002",
+      "component": "KubernetesEndpoints.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.KubernetesEndpoints.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.password.visibility",
+      "component": "LoginPage.tsx",
+      "renderer": "UiButton",
+      "description": "auth / password / visibility",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "appearance.mode.toggle",
+      "component": "LoginPage.tsx",
+      "renderer": "UiButton",
+      "description": "appearance / mode / toggle",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.submit-button",
+      "component": "LoginPage.tsx",
+      "renderer": "Button",
+      "description": "auth / submit-button",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.NodeResourceDetails.001",
+      "component": "NodeResourceDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.NodeResourceDetails.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.menu.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / menu / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.summary.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / summary / open",
+      "context": [
+        "principal",
+        "page",
+        "node",
+        "canAdminister"
+      ]
+    },
+    {
+      "id": "nodes.cluster.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / cluster / open",
+      "context": [
+        "principal",
+        "page",
+        "node",
+        "canAdminister"
+      ]
+    },
+    {
+      "id": "nodes.probe",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "探测所选节点连接",
+      "context": [
+        "principal",
+        "page",
+        "node",
+        "canAdminister"
+      ]
+    },
+    {
+      "id": "nodes.remove",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "移除所选节点连接",
+      "context": [
+        "principal",
+        "page",
+        "node",
+        "canAdminister"
+      ]
+    },
+    {
+      "id": "nodes.sort",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / sort",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "agents.rollout.history",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "agents / rollout / history",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "agents.rollout.open",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "agents / rollout / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.connect.open",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "nodes / connect / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.details.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / details / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.details.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / details / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.resources.open",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / resources / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.page.previous",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / page / previous",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.page.next",
+      "component": "NodesPage.tsx",
+      "renderer": "UiButton",
+      "description": "nodes / page / next",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.dialog.dismiss",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "nodes / dialog / dismiss",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.connect.cancel",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "nodes / connect / cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.connect",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "保存节点连接配置",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.connect.cancel",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "nodes / connect / cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "nodes.connect.submit",
+      "component": "NodesPage.tsx",
+      "renderer": "Button",
+      "description": "提交节点连接表单",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.001",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.002",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.003",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.004",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.005",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.006",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.007",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.008",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.009",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.010",
+      "component": "OverviewPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.OverviewPage.010",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.011",
+      "component": "OverviewPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.OverviewPage.011",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.012",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.012",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.013",
+      "component": "OverviewPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.OverviewPage.013",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.014",
+      "component": "OverviewPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.OverviewPage.014",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.015",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.015",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.016",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.016",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.OverviewPage.017",
+      "component": "OverviewPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.OverviewPage.017",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Pagination.001",
+      "component": "Pagination.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Pagination.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Pagination.002",
+      "component": "Pagination.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Pagination.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.Pagination.003",
+      "component": "Pagination.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.Pagination.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.PlacementPlanDialog.001",
+      "component": "PlacementPlanDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.PlacementPlanDialog.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.PlacementPlanDialog.002",
+      "component": "PlacementPlanDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.PlacementPlanDialog.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.PlacementPlanDialog.003",
+      "component": "PlacementPlanDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.PlacementPlanDialog.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.refresh",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.import.open",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / import / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.select.review",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / select / review",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.deselect.review",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / deselect / review",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.deselect.cancel",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / deselect / cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.deselect",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / deselect",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.import.cancel",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / import / cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.import",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "校验并导入服务端插件包",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.select.cancel",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "plugins / server / select / cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.server.select",
+      "component": "PluginPackages.tsx",
+      "renderer": "Button",
+      "description": "保存服务端插件版本选择",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.PluginSettings.001",
+      "component": "PluginSettings.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.PluginSettings.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.RecordDetails.001",
+      "component": "RecordDetails.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.RecordDetails.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.RecordDetails.002",
+      "component": "RecordDetails.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.RecordDetails.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.RecordDetails.003",
+      "component": "RecordDetails.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.RecordDetails.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ScaleDialog.001",
+      "component": "ScaleDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ScaleDialog.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ScaleDialog.002",
+      "component": "ScaleDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ScaleDialog.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ScaleDialog.003",
+      "component": "ScaleDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ScaleDialog.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.back",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / back",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.undeploy",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "移除当前服务的受管部署",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.scale",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "预览并调整服务实例数",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.export",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / export",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.template.create",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / template / create",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.edit",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / edit",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.restart",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "重启当前服务",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.stop",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "停止当前服务的受管资源",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.deploy",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "打开部署/重建预检与确认",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.job.open",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / job / open",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.tab.select",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / tab / select",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "inference.open",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "inference / open",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.readiness.refresh",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / readiness / refresh",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.config.user",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / user",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.env",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / env",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.extra",
+      "component": "ServiceDetail.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / extra",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.revisions.refresh",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / revisions / refresh",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "services.revisions.export",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "services / revisions / export",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "canOperate"
+      ]
+    },
+    {
+      "id": "logs.export",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "logs / export",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "logs.refresh",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "logs / refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "inference.submit",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "发送真实推理请求",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "inference.cancel-wait",
+      "component": "ServiceDetail.tsx",
+      "renderer": "Button",
+      "description": "取消浏览器等待并保留服务端结果未知语义",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "services.editor.close",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / editor / close",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.previous",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / editor / previous",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.next",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / editor / next",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.draft.save",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "保存服务草稿及任意原生配置字段",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.plan",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "保存草稿并读取真实部署预检",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.deploy.confirm",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "提交已审阅的部署计划",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.step",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / editor / step",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.runtime",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / editor / runtime",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.template-source",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / editor / template-source",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.editor.template",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / editor / template",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.user",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / user",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.env",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / env",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.extra",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / config / extra",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.template.save",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / template / save",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.config.import",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / config / import",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.layout.generate",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / layout / generate",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.layout.remove",
+      "component": "ServiceEditor.tsx",
+      "renderer": "UiButton",
+      "description": "services / layout / remove",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.layout.generate",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / layout / generate",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.layout.add",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "services / layout / add",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "services.plan",
+      "component": "ServiceEditor.tsx",
+      "renderer": "Button",
+      "description": "保存草稿并读取真实部署预检",
+      "context": [
+        "principal",
+        "page",
+        "service",
+        "runtime",
+        "step"
+      ]
+    },
+    {
+      "id": "action.ServiceMetricsPanel.001",
+      "component": "ServiceMetricsPanel.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ServiceMetricsPanel.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SettingsPage.001",
+      "component": "SettingsPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SettingsPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SettingsPage.002",
+      "component": "SettingsPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SettingsPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SettingsPage.003",
+      "component": "SettingsPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SettingsPage.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.001",
+      "component": "SystemLogs.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemLogs.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.002",
+      "component": "SystemLogs.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemLogs.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.003",
+      "component": "SystemLogs.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemLogs.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.004",
+      "component": "SystemLogs.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemLogs.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.005",
+      "component": "SystemLogs.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemLogs.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.006",
+      "component": "SystemLogs.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemLogs.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.007",
+      "component": "SystemLogs.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemLogs.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.008",
+      "component": "SystemLogs.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemLogs.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemLogs.009",
+      "component": "SystemLogs.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemLogs.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.001",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.002",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemMaintenance.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.003",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemMaintenance.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.004",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemMaintenance.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.005",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.006",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.007",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.008",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.SystemMaintenance.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.009",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.010",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.010",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.011",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.011",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.SystemMaintenance.012",
+      "component": "SystemMaintenance.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.SystemMaintenance.012",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.001",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.002",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.003",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.004",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.005",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.006",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.007",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.007",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.008",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.008",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.009",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.009",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.010",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.010",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.011",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.011",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.012",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.012",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.013",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.013",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.014",
+      "component": "TemplatesPage.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.TemplatesPage.014",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.015",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.015",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.016",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.016",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.017",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.017",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.TemplatesPage.018",
+      "component": "TemplatesPage.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.TemplatesPage.018",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "ui.packages.refresh",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 ui.packages.refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.ui.import",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "校验并导入离线 UI 制品",
+      "context": [
+        "principal",
+        "page"
+      ]
+    },
+    {
+      "id": "ui.packages.restore-defaults",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 ui.packages.restore-defaults",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "ui.packages.review",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 ui.packages.review",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "ui.selection.cancel",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 ui.selection.cancel",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "plugins.ui.select",
+      "component": "UiPluginPackages.tsx",
+      "renderer": "Button",
+      "description": "按预期修订保存下次启动 UI 槽位选择",
+      "context": [
+        "principal",
+        "page"
+      ]
+    },
+    {
+      "id": "action.UndeployDialog.001",
+      "component": "UndeployDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.UndeployDialog.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.UndeployDialog.002",
+      "component": "UndeployDialog.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.UndeployDialog.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.001",
+      "component": "ui.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.ui.001",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.002",
+      "component": "ui.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.ui.002",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.003",
+      "component": "ui.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.ui.003",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.004",
+      "component": "ui.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ui.004",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.005",
+      "component": "ui.tsx",
+      "renderer": "Button",
+      "description": "组件本地动作 action.ui.005",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "action.ui.006",
+      "component": "ui.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 action.ui.006",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "ui.generation.refresh",
+      "component": "uiPluginSdk.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 ui.generation.refresh",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
+      "id": "auth.login",
+      "component": "workflow",
+      "renderer": "action",
+      "context": [
+        "principal",
+        "page"
+      ],
+      "description": "提交账号登录表单"
+    },
+    {
+      "id": "auth.setup",
+      "component": "workflow",
+      "renderer": "action",
+      "context": [
+        "principal",
+        "page"
+      ],
+      "description": "提交首次管理员设置表单"
+    }
+  ]
+}

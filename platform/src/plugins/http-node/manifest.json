@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "reference.http-node",
+  "version": "1.0.0",
+  "sdk": "^1.0.0",
+  "entry": "index.js",
+  "provides": [{ "contract": "console.http.transport", "version": "1.0.0" }],
+  "requires": [{ "contract": "console.http.handler", "range": "^1.0.0" }]
+}

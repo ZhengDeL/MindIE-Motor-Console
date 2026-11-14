@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useBranding } from "./brandingState";
 import { useEffect, useRef, useState } from "react";
 import { Check, Clock3, ShieldCheck, Upload } from "./icons";
@@ -77,7 +78,7 @@ const ipv4 = (value: string) =>
     .split(".")
     .every((part) => Number(part) <= 255 && String(Number(part)) === part);
 
-export default function AgentRolloutDialog({
+function DefaultAgentRolloutDialog({
   initialView = "new",
   canAdminister,
   onClose,
@@ -592,7 +593,7 @@ export default function AgentRolloutDialog({
   if (!canAdminister)
     return (
       <Modal title="Agent 推送" onClose={close}>
-        <InfoBox>只有系统管理员可以推送和管理 Agent 安装任务。</InfoBox>
+        <InfoBox><UiText>{"只有系统管理员可以推送和管理 Agent 安装任务。"}</UiText></InfoBox>
       </Modal>
     );
   return (
@@ -609,25 +610,25 @@ export default function AgentRolloutDialog({
       onClose={close}
       footer={
         <>
-          <span className="rollout-footer-note">
+          <UiElement as="span" className="rollout-footer-note">
             {view === "job"
               ? "关闭窗口后，后台任务继续执行。"
               : "SSH 凭据仅在本窗口内存中使用。"}
-          </span>
-          <Button onClick={close}>关闭</Button>
+          </UiElement>
+          <Button actionId="action.AgentRolloutDialog.001" onClick={close}><UiText>{"关闭"}</UiText></Button>
           {view === "wizard" && step > 0 && (
-            <Button
+            <Button actionId="action.AgentRolloutDialog.002"
               disabled={locked}
               onClick={() => {
                 setStep(step - 1);
                 setError("");
               }}
             >
-              上一步
+              <UiText>{"上一步"}</UiText>
             </Button>
           )}
           {view === "wizard" && step < 2 && (
-            <Button
+            <Button actionId="action.AgentRolloutDialog.003"
               kind="primary"
               disabled={locked}
               onClick={() => {
@@ -640,12 +641,12 @@ export default function AgentRolloutDialog({
                 }
               }}
             >
-              下一步
+              <UiText>{"下一步"}</UiText>
             </Button>
           )}
           {view === "wizard" && step === 2 && (
             <>
-              <Button
+              <Button actionId="action.AgentRolloutDialog.004"
                 loading={busy === "preflight"}
                 disabled={locked && busy !== "preflight"}
                 kind={plan?.can_execute && !expired ? "default" : "primary"}
@@ -655,7 +656,7 @@ export default function AgentRolloutDialog({
                 {plan ? "重新预检" : "执行预检"}
               </Button>
               {plan && (
-                <Button
+                <Button actionId="action.AgentRolloutDialog.005"
                   kind="primary"
                   disabled={locked || !plan.can_execute || expired}
                   onClick={() => {
@@ -664,13 +665,13 @@ export default function AgentRolloutDialog({
                     setStep(3);
                   }}
                 >
-                  下一步：确认安装
+                  <UiText>{"下一步：确认安装"}</UiText>
                 </Button>
               )}
             </>
           )}
           {view === "wizard" && step === 3 && (
-            <Button
+            <Button actionId="action.AgentRolloutDialog.006"
               kind="primary"
               loading={busy === "execute"}
               disabled={
@@ -683,57 +684,57 @@ export default function AgentRolloutDialog({
               onClick={() => void execute()}
             >
               <Upload size={15} />
-              安装并接入
+              <UiText>{"安装并接入"}</UiText>
             </Button>
           )}
         </>
       }
     >
-      <div className="rollout-shell" ref={shell}>
-        <div className="rollout-tabs" role="group" aria-label="Agent 推送视图">
-          <Button
+      <UiElement as="div" className="rollout-shell" ref={shell}>
+        <UiElement as="div" className="rollout-tabs" role="group" aria-label="Agent 推送视图">
+          <Button actionId="action.AgentRolloutDialog.007"
             kind={view !== "history" ? "primary" : "default"}
             disabled={locked}
             onClick={newRollout}
           >
             <Upload size={14} />
-            新建推送
+            <UiText>{"新建推送"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.AgentRolloutDialog.008"
             kind={view === "history" ? "primary" : "default"}
             disabled={locked}
             onClick={showHistory}
           >
             <Clock3 size={14} />
-            推送记录
+            <UiText>{"推送记录"}</UiText>
           </Button>
-        </div>
+        </UiElement>
         {view === "wizard" && (
-          <div
+          <UiElement as="div"
             className="wizard-steps rollout-wizard-steps"
             aria-label="安装步骤"
           >
             {steps.map(([title, subtitle], index) => (
-              <div
+              <UiElement as="div"
                 className={`${step === index ? "current" : ""} ${step > index ? "done" : ""}`}
                 key={title}
                 aria-current={step === index ? "step" : undefined}
               >
-                <span className="step-dot">
+                <UiElement as="span" className="step-dot">
                   {step > index ? <Check size={16} /> : index + 1}
-                </span>
-                <span>
-                  <b>{title}</b>
-                  <small>{subtitle}</small>
-                </span>
-                {index < 3 && <i className="step-line" />}
-              </div>
+                </UiElement>
+                <UiElement as="span">
+                  <UiElement as="b">{title}</UiElement>
+                  <UiElement as="small">{subtitle}</UiElement>
+                </UiElement>
+                {index < 3 && <UiElement as="i" className="step-line" />}
+              </UiElement>
             ))}
-          </div>
+          </UiElement>
         )}
         {error && <ErrorBox message={error} />}
         {view === "wizard" && (
-          <fieldset className="rollout-inputs" disabled={locked}>
+          <UiElement as="fieldset" className="rollout-inputs" disabled={locked}>
             {view === "wizard" && step === 0 && (
               <IdentityFields
                 spec={spec}
@@ -774,7 +775,7 @@ export default function AgentRolloutDialog({
                 setApproved={setApproved}
               />
             )}
-          </fieldset>
+          </UiElement>
         )}
         {view === "history" && (
           <RolloutHistory
@@ -805,7 +806,13 @@ export default function AgentRolloutDialog({
             {credentialFields()}
           </RolloutJobDetails>
         )}
-      </div>
+      </UiElement>
     </Modal>
   );
 }
+
+const AgentRolloutDialog = withUiSlot("component.AgentRolloutDialog", DefaultAgentRolloutDialog);
+export default AgentRolloutDialog;
+
+// Reference package implementation exports.
+export { DefaultAgentRolloutDialog };

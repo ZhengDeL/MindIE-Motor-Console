@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "reference.python-bridge",
+  "version": "1.0.0",
+  "sdk": "^1.0.0",
+  "entry": "index.js",
+  "provides": [{ "contract": "console.http.handler", "version": "1.0.0" }],
+  "requires": []
+}

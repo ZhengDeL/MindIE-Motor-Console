@@ -242,8 +242,8 @@ class AgentRolloutManager:
                     row = db.resources.get(PLANS,identifier)
                     if row != plan:
                         raise RolloutError("plan_changed_or_consumed")
-                    self.store._put(db, PLANS, {**plan, "_consumed": True})
-                    self.store._put(db, JOBS, job)
+                    db.resources.put(PLANS, {**plan, "_consumed": True})
+                    db.resources.put(JOBS, job)
                     self.store.audit("执行 Agent 推送", job["id"], "accepted", "凭据仅在当前进程内存；重启不自动重放", connection=db)
                 self._materials[job["id"]] = material
                 self._events[job["id"]] = threading.Event()
@@ -478,8 +478,8 @@ class AgentRolloutManager:
             job.pop("error_code", None)
             step = next(s for s in job["steps"] if s["id"] == "connect")
             step.update(status="completed", finished_at=now())
-            self.store._put(db, "nodes", node)
-            self.store._put(db, JOBS, job)
+            db.resources.put("nodes", node)
+            db.resources.put(JOBS, job)
             self.store.audit("接入已安装 Agent", node["id"], "success", "已校验真实 TLS、访问凭据、协议与固定 Motor 配置；保留既有节点 ID",
                              metadata={"job_id": job["id"], "node_id": node["id"], "runtime": spec["runtime"]}, connection=db)
         return {"verified": True, "node_id": job["node_id"]}

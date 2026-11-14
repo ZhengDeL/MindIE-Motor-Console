@@ -1,0 +1,9 @@
+.operations-services .btn { margin-inline: 4px; border-radius: 2px; }
+.operations-services table { width: 100%; border-collapse: collapse; }
+.operations-services th, .operations-services td { padding: 12px; text-align: start; }
+.operations-raw-editor textarea { width: 100%; font-family: monospace; line-height: 1.5; }
+.operations-editor-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: #0006; }
+.operations-raw-editor { max-height: calc(100vh - 48px); width: min(960px, 100%); display: flex; flex-direction: column; background: var(--surface, #fff); color: var(--text, #17283e); }
+.operations-raw-editor .modal-body { overflow: auto; }
+.operations-raw-editor pre { max-height: 240px; overflow: auto; white-space: pre-wrap; }
+@media (prefers-reduced-motion: reduce) { .operations-services *, .operations-raw-editor * { transition: none; } }

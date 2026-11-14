@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useId, useRef, useState } from "react";
 import { api, when } from "./api";
 import type { Service, ServiceMetrics } from "./api";
@@ -14,7 +15,7 @@ type View = { payload: ServiceMetrics | null; snapshot: MetricSnapshot | null; p
 const initial = (): View => ({ payload: null, snapshot: null, points: [] });
 const timeLabel = (at: number) => new Date(at).toLocaleTimeString("zh-CN", { hour12: false });
 
-function RateChart({ points, field, title, unit }: {
+function DefaultRateChart({ points, field, title, unit }: {
   points: MetricPoint[]; field: "completionRate" | "generationRate"; title: string; unit: string;
 }) {
   const id = useId();
@@ -33,29 +34,29 @@ function RateChart({ points, field, title, unit }: {
     current += `${current ? " L" : "M"}${x(point).toFixed(2)},${y(point[field]!).toFixed(2)}`;
   }
   if (current) paths.push(current);
-  return <section className="panel service-metric-chart">
-    <div className="panel-head"><h2>{title}</h2><span className="small-caption">{unit}</span></div>
+  return <UiRegion name="layout.panel" as="section" className="panel service-metric-chart">
+    <UiElement as="div" className="panel-head"><UiElement as="h2">{title}</UiElement><UiElement as="span" className="small-caption">{unit}</UiElement></UiElement>
     {valid.length ? <>
-      <svg viewBox="0 0 600 210" role="img" aria-labelledby={`${id}-title ${id}-description`}>
-        <title id={`${id}-title`}>{title}</title>
-        <desc id={`${id}-description`}>本次查看期间最近十分钟，{valid.length} 个有效窗口值；缺失或重置的窗口断开显示。数值单位 {unit}。</desc>
-        {[0, max / 2, max].map((value) => <g key={value} className="service-metric-grid">
-          <line x1="48" x2="580" y1={y(value)} y2={y(value)} />
-          <text x="39" y={y(value) + 4} textAnchor="end">{metricNumber(value)}</text>
-        </g>)}
-        {paths.map((path, index) => <path key={index} d={path} className="service-metric-line" />)}
-        {valid.map((point) => <circle key={point.at} cx={x(point)} cy={y(point[field]!)} r="3" className="service-metric-point">
-          <title>{timeLabel(point.at)} · {metricNumber(point[field]!)} {unit}</title>
-        </circle>)}
-        <text className="service-metric-axis" x="48" y="200">{timeLabel(firstAt)}</text>
-        <text className="service-metric-axis" x="580" y="200" textAnchor="end">{timeLabel(lastAt)}</text>
-      </svg>
-      <div className="service-metric-chart-caption">最近 10 分钟 · 本次查看期间的实际采样</div>
+      <UiElement as="svg" viewBox="0 0 600 210" role="img" aria-labelledby={`${id}-title ${id}-description`}>
+        <UiElement as="title" id={`${id}-title`}>{title}</UiElement>
+        <UiElement as="desc" id={`${id}-description`}><UiText>{"本次查看期间最近十分钟，"}</UiText>{valid.length} <UiText>{"个有效窗口值；缺失或重置的窗口断开显示。数值单位"}</UiText> {unit}<UiText>{"。"}</UiText></UiElement>
+        {[0, max / 2, max].map((value) => <UiElement as="g" key={value} className="service-metric-grid">
+          <UiElement as="line" x1="48" x2="580" y1={y(value)} y2={y(value)} />
+          <UiElement as="text" x="39" y={y(value) + 4} textAnchor="end">{metricNumber(value)}</UiElement>
+        </UiElement>)}
+        {paths.map((path, index) => <UiElement as="path" key={index} d={path} className="service-metric-line" />)}
+        {valid.map((point) => <UiElement as="circle" key={point.at} cx={x(point)} cy={y(point[field]!)} r="3" className="service-metric-point">
+          <UiElement as="title">{timeLabel(point.at)} <UiText>{"·"}</UiText> {metricNumber(point[field]!)} {unit}</UiElement>
+        </UiElement>)}
+        <UiElement as="text" className="service-metric-axis" x="48" y="200">{timeLabel(firstAt)}</UiElement>
+        <UiElement as="text" className="service-metric-axis" x="580" y="200" textAnchor="end">{timeLabel(lastAt)}</UiElement>
+      </UiElement>
+      <UiElement as="div" className="service-metric-chart-caption"><UiText>{"最近 10 分钟 · 本次查看期间的实际采样"}</UiText></UiElement>
     </> : <Empty title="暂无有效速率样本" description="服务运行并取得两次有效采样后，才能计算速率；未取得的数据不会绘成 0。" icon={<Activity size={24} />} />}
-  </section>;
+  </UiRegion>;
 }
 
-export default function ServiceMetricsPanel({ service }: { service: Service }) {
+function DefaultServiceMetricsPanel({ service }: { service: Service }) {
   const runtimeAccess = useRuntimeAccess(service.runtime);
   const [view, setView] = useState<View>(initial);
   const [auto, setAuto] = useState(true);
@@ -116,41 +117,48 @@ export default function ServiceMetricsPanel({ service }: { service: Service }) {
   const reasons = fresh && view.snapshot ? Object.entries(view.snapshot.finishes) : [];
   const idle = point?.running === 0 && point.waiting === 0;
   if (!runtimeAccess.enabled) return <InfoBox>{runtimeAccess.reason}</InfoBox>;
-  return <div className="service-metrics-panel">
-    <div className="section-heading service-metrics-heading">
-      <div><h2>服务指标</h2><p>只读采集 Coordinator 指标，不进入推理请求链路。</p></div>
-      <div className="service-metrics-controls">
-        <label><input type="checkbox" checked={auto} onChange={(event) => setAuto(event.target.checked)} />读取完成后 10 秒刷新</label>
-        <Button onClick={() => void load()} loading={reading}><RefreshCw size={14} />刷新指标</Button>
-      </div>
-    </div>
-    <div className="service-metrics-freshness" role="status" aria-live="polite">
-      <span className={`status-dot ${fresh ? "green" : "muted"}`} />
-      <span>{fresh ? "采样有效" : error ? "本次采样未成功" : view.snapshot ? "采样已过期" : "等待首个采样"}</span>
-      {payload?.sampled_at && <span>采集于 {when(payload.sampled_at)}</span>}
-      {!auto && <span>自动刷新已暂停</span>}
-      {payload?.state === "demo" && <strong>演示数据</strong>}
-    </div>
+  return <UiElement as="div" className="service-metrics-panel">
+    <UiElement as="div" className="section-heading service-metrics-heading">
+      <UiElement as="div"><UiElement as="h2"><UiText>{"服务指标"}</UiText></UiElement><UiElement as="p"><UiText>{"只读采集 Coordinator 指标，不进入推理请求链路。"}</UiText></UiElement></UiElement>
+      <UiElement as="div" className="service-metrics-controls">
+        <UiElement as="label"><UiElement as="input" type="checkbox" checked={auto} onChange={(event) => setAuto(event.target.checked)} /><UiText>{"读取完成后 10 秒刷新"}</UiText></UiElement>
+        <Button actionId="action.ServiceMetricsPanel.001" onClick={() => void load()} loading={reading}><RefreshCw size={14} /><UiText>{"刷新指标"}</UiText></Button>
+      </UiElement>
+    </UiElement>
+    <UiElement as="div" className="service-metrics-freshness" role="status" aria-live="polite">
+      <UiElement as="span" className={`status-dot ${fresh ? "green" : "muted"}`} />
+      <UiElement as="span">{fresh ? "采样有效" : error ? "本次采样未成功" : view.snapshot ? "采样已过期" : "等待首个采样"}</UiElement>
+      {payload?.sampled_at && <UiElement as="span"><UiText>{"采集于"}</UiText> {when(payload.sampled_at)}</UiElement>}
+      {!auto && <UiElement as="span"><UiText>{"自动刷新已暂停"}</UiText></UiElement>}
+      {payload?.state === "demo" && <UiElement as="strong"><UiText>{"演示数据"}</UiText></UiElement>}
+    </UiElement>
     {error && (payload?.state === "warming" ? <InfoBox>{error}</InfoBox> : <ErrorBox message={error} />)}
     {!payload && reading && <Spinner label="正在读取首个服务采样" />}
-    {!!cards.length && <div className="service-metrics-cards">{cards.map((card) => <div className="metric-card" key={card.label}>
-      <span>{card.label}</span><strong>{metricNumber(card.value!)}<small>{card.unit}</small></strong>
-    </div>)}</div>}
+    {!!cards.length && <UiElement as="div" className="service-metrics-cards">{cards.map((card) => <UiElement as="div" className="metric-card" key={card.label}>
+      <UiElement as="span">{card.label}</UiElement><UiElement as="strong">{metricNumber(card.value!)}<UiElement as="small">{card.unit}</UiElement></UiElement>
+    </UiElement>)}</UiElement>}
     {fresh && !cards.length && <Empty title="本次未返回可展示的引擎指标" description="原始采样已保留；缺失或格式无效的指标不会显示为 0。" icon={<Activity size={24} />} />}
-    {point?.notice && <p className="service-metrics-notice">{point.notice}</p>}
-    {idle && <p className="service-metrics-notice">当前采样没有运行或等待请求。有效窗口中的速率 0 表示该窗口内计数没有增长。</p>}
-    {!fresh && view.points.length > 0 && <p className="service-metrics-notice">下方保留本次查看期间的历史采样；过期数据不作为当前数值展示。</p>}
-    <div className="service-metrics-charts">
+    {point?.notice && <UiElement as="p" className="service-metrics-notice">{point.notice}</UiElement>}
+    {idle && <UiElement as="p" className="service-metrics-notice"><UiText>{"当前采样没有运行或等待请求。有效窗口中的速率 0 表示该窗口内计数没有增长。"}</UiText></UiElement>}
+    {!fresh && view.points.length > 0 && <UiElement as="p" className="service-metrics-notice"><UiText>{"下方保留本次查看期间的历史采样；过期数据不作为当前数值展示。"}</UiText></UiElement>}
+    <UiElement as="div" className="service-metrics-charts">
       <RateChart points={view.points} field="completionRate" title="引擎完成速率" unit="次/s" />
       <RateChart points={view.points} field="generationRate" title="引擎生成吞吐" unit="tokens/s" />
-    </div>
-    {!!reasons.length && <section className="panel service-metrics-reasons">
-      <div className="panel-head"><h2>引擎结束原因累计计数</h2><span className="small-caption">原生 finished_reason</span></div>
-      <dl>{reasons.map(([reason, count]) => <div key={reason}><dt>{reasonLabels[reason as keyof typeof reasonLabels]}</dt><dd>{metricNumber(count!)}<small>次</small></dd></div>)}</dl>
-    </section>}
-    <p className="service-metrics-scope">统计口径：Coordinator 返回的 P/D 引擎计数，阶段可能分别计数，不等同于用户请求 QPS。完成计数仅统计 stop、length、repetition，{payload?.metrics_view === "dp" ? "按各引擎端点的计数增量计算速率；端点变化或计数重置时重新建立基线。" : "按两次有效采样间的计数增量计算速率。"}{payload?.metrics_view === "full" && "当前为汇总视图，单个端点重启可能无法独立识别。"}趋势仅保留本次查看期间最多 120 次采样，离开页面后清空。</p>
-    {fresh && payload?.metrics_text && <section className="panel service-metrics-raw">
-      <details><summary>查看原始采样</summary><pre className="metrics-view">{payload.metrics_text}</pre></details>
-    </section>}
-  </div>;
+    </UiElement>
+    {!!reasons.length && <UiRegion name="layout.panel" as="section" className="panel service-metrics-reasons">
+      <UiElement as="div" className="panel-head"><UiElement as="h2"><UiText>{"引擎结束原因累计计数"}</UiText></UiElement><UiElement as="span" className="small-caption"><UiText>{"原生 finished_reason"}</UiText></UiElement></UiElement>
+      <UiElement as="dl">{reasons.map(([reason, count]) => <UiElement as="div" key={reason}><UiElement as="dt">{reasonLabels[reason as keyof typeof reasonLabels]}</UiElement><UiElement as="dd">{metricNumber(count!)}<UiElement as="small"><UiText>{"次"}</UiText></UiElement></UiElement></UiElement>)}</UiElement>
+    </UiRegion>}
+    <UiElement as="p" className="service-metrics-scope"><UiText>{"统计口径：Coordinator 返回的 P/D 引擎计数，阶段可能分别计数，不等同于用户请求 QPS。完成计数仅统计 stop、length、repetition，"}</UiText>{payload?.metrics_view === "dp" ? "按各引擎端点的计数增量计算速率；端点变化或计数重置时重新建立基线。" : "按两次有效采样间的计数增量计算速率。"}{payload?.metrics_view === "full" && "当前为汇总视图，单个端点重启可能无法独立识别。"}<UiText>{"趋势仅保留本次查看期间最多 120 次采样，离开页面后清空。"}</UiText></UiElement>
+    {fresh && payload?.metrics_text && <UiRegion name="layout.panel" as="section" className="panel service-metrics-raw">
+      <UiElement as="details"><UiElement as="summary"><UiText>{"查看原始采样"}</UiText></UiElement><UiElement as="pre" className="metrics-view">{payload.metrics_text}</UiElement></UiElement>
+    </UiRegion>}
+  </UiElement>;
 }
+
+const RateChart = withUiSlot("component.RateChart", DefaultRateChart);
+const ServiceMetricsPanel = withUiSlot("component.ServiceMetricsPanel", DefaultServiceMetricsPanel);
+export default ServiceMetricsPanel;
+
+// Reference package implementation exports.
+export { DefaultRateChart, DefaultServiceMetricsPanel };

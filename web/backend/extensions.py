@@ -694,10 +694,14 @@ class GrafanaIntegration:
             "ETag": '"' + hashlib.sha256(body).hexdigest() + '"'})
 
 
-def create_extension_router(store, secrets, lock, upstream, *, enabled=None):
+_UNSET_PROVIDER = object()
+
+
+def create_extension_router(store, secrets, lock, upstream, *, enabled=None, grafana_provider=_UNSET_PROVIDER):
     router = APIRouter(prefix="/api/extensions", tags=["extensions"])
     selected = enabled or (lambda _identifier: True)
-    grafana = GrafanaIntegration(store, secrets, lock, upstream) if selected("grafana") else None
+    grafana = ((GrafanaIntegration(store, secrets, lock, upstream) if grafana_provider is _UNSET_PROVIDER
+                else grafana_provider) if selected("grafana") else None)
     registry = ExtensionRegistry()
     if grafana:
         registry.register(grafana)

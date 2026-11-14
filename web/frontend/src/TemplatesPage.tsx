@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { TEMPLATE_FORMAT } from "./brand";
 import { readCount, readNotice } from "./readState";
 import { assertProductImport, isNativeMotorConfig } from "./productImports";
@@ -122,7 +123,7 @@ function importedTemplate(value: unknown): TemplateInput {
   });
 }
 
-export function TemplateEditor({
+function DefaultTemplateEditor({
   template,
   initial,
   title,
@@ -231,20 +232,20 @@ export function TemplateEditor({
       closeDisabled={busy}
       footer={
         <>
-          <Button disabled={busy} onClick={close}>
-            取消
+          <Button actionId="action.TemplatesPage.001" disabled={busy} onClick={close}>
+            <UiText>{"取消"}</UiText>
           </Button>
-          <Button kind="primary" loading={busy} onClick={() => void save()}>
-            保存模板
+          <Button actionId="action.TemplatesPage.002" kind="primary" loading={busy} onClick={() => void save()}>
+            <UiText>{"保存模板"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
       {conflict && original && (
-        <div className="template-conflict">
-          <span>当前内容已保留。重新加载会替换本次未保存的编辑。</span>
-          <Button
+        <UiElement as="div" className="template-conflict">
+          <UiElement as="span"><UiText>{"当前内容已保留。重新加载会替换本次未保存的编辑。"}</UiText></UiElement>
+          <Button actionId="action.TemplatesPage.003"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -260,13 +261,13 @@ export function TemplateEditor({
               }
             }}
           >
-            重新加载模板
+            <UiText>{"重新加载模板"}</UiText>
           </Button>
-        </div>
+        </UiElement>
       )}
-      <div className="form-two">
+      <UiElement as="div" className="form-two">
         <Field label="模板名称" required>
-          <input
+          <UiElement as="input"
             aria-label="模板名称"
             disabled={busy}
             maxLength={100}
@@ -289,13 +290,13 @@ export function TemplateEditor({
               })
             }
           >
-            <option value="">创建时选择</option>
-            <option value="docker">Docker</option>
-            <option value="kubernetes">Kubernetes</option>
+            <UiElement as="option" value=""><UiText>{"创建时选择"}</UiText></UiElement>
+            <UiElement as="option" value="docker"><UiText>{"Docker"}</UiText></UiElement>
+            <UiElement as="option" value="kubernetes"><UiText>{"Kubernetes"}</UiText></UiElement>
           </Select>
         </Field>
         <Field label="模板说明">
-          <input
+          <UiElement as="input"
             aria-label="模板说明"
             disabled={busy}
             maxLength={1000}
@@ -307,7 +308,7 @@ export function TemplateEditor({
           />
         </Field>
         <Field label="标签" hint="多个标签用逗号分隔">
-          <input
+          <UiElement as="input"
             aria-label="模板标签"
             disabled={busy}
             value={tags}
@@ -323,7 +324,7 @@ export function TemplateEditor({
               : "保留原绑定；留空时由服务端匹配当前兼容配置"
           }
         >
-          <input
+          <UiElement as="input"
             aria-label="模板 Motor 兼容配置"
             disabled={busy}
             readOnly={Boolean(original)}
@@ -333,34 +334,33 @@ export function TemplateEditor({
             }
           />
         </Field>
-        <div className="template-snapshot-note">
-          仅保存原始配置、环境变量与高级清单。模板不包含节点布局、部署审批、Agent
-          凭据或运行状态。
-        </div>
-      </div>
-      <div className="editor-toolbar template-editor-toolbar">
-        <div className="tab-list compact">
+        <UiElement as="div" className="template-snapshot-note">
+          <UiText>{"仅保存原始配置、环境变量与高级清单。模板不包含节点布局、部署审批、Agent 凭据或运行状态。"}</UiText>
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="editor-toolbar template-editor-toolbar">
+        <UiElement as="div" className="tab-list compact">
           {[
             ["user", "服务配置"],
             ["env", "环境变量"],
             ["extra", "高级清单"],
           ].map(([id, label]) => (
-            <button
+            <UiButton actionId="action.TemplatesPage.004"
               key={id}
               disabled={busy}
               className={tab === id ? "active" : ""}
               onClick={() => setTab(id)}
             >
               {label}
-            </button>
+            </UiButton>
           ))}
-        </div>
-        <div className="template-editor-actions">
-          <Button disabled={busy} onClick={() => file.current?.click()}>
+        </UiElement>
+        <UiElement as="div" className="template-editor-actions">
+          <Button actionId="action.TemplatesPage.005" disabled={busy} onClick={() => file.current?.click()}>
             <Upload size={14} />
-            导入 JSON
+            <UiText>{"导入 JSON"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.TemplatesPage.006"
             disabled={busy}
             onClick={() => {
               try {
@@ -375,11 +375,11 @@ export function TemplateEditor({
             }}
           >
             <Download size={14} />
-            导出 JSON
+            <UiText>{"导出 JSON"}</UiText>
           </Button>
-        </div>
-      </div>
-      <input
+        </UiElement>
+      </UiElement>
+      <UiElement as="input"
         hidden
         ref={file}
         type="file"
@@ -398,8 +398,7 @@ export function TemplateEditor({
       />
       {tab === "extra" && (
         <InfoBox>
-          高级清单会原样保存。只有 Kubernetes
-          服务可使用这些清单，部署前需重新预检与审查；模板保存不授予部署权限。
+          <UiText>{"高级清单会原样保存。只有 Kubernetes 服务可使用这些清单，部署前需重新预检与审查；模板保存不授予部署权限。"}</UiText>
         </InfoBox>
       )}
       <JsonEditor
@@ -426,7 +425,7 @@ export function TemplateEditor({
   );
 }
 
-export default function TemplatesPage({
+function DefaultTemplatesPage({
   canOperate,
   onUse,
   notify,
@@ -545,49 +544,49 @@ export default function TemplatesPage({
   return (
     <>
       {error && !view && <ErrorBox message={error} />}
-      <section className="panel">
-        <div className="table-toolbar template-library-toolbar">
+      <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="table-toolbar template-library-toolbar">
           <SearchInput
             value={query}
             onChange={setQuery}
             placeholder="搜索模板名称、说明或标签"
           />
           <Select ariaLabel="筛选模板来源" value={source} onChange={setSource}>
-            <option value="all">全部来源</option>
-            <option value="official">官方模板</option>
-            <option value="custom">自定义模板</option>
+            <UiElement as="option" value="all"><UiText>{"全部来源"}</UiText></UiElement>
+            <UiElement as="option" value="official"><UiText>{"官方模板"}</UiText></UiElement>
+            <UiElement as="option" value="custom"><UiText>{"自定义模板"}</UiText></UiElement>
           </Select>
           <Select
             ariaLabel="筛选模板运行环境"
             value={runtime}
             onChange={setRuntime}
           >
-            <option value="all">全部运行环境</option>
-            <option value="docker">Docker</option>
-            <option value="kubernetes">Kubernetes</option>
-            <option value="unrestricted">创建时选择</option>
+            <UiElement as="option" value="all"><UiText>{"全部运行环境"}</UiText></UiElement>
+            <UiElement as="option" value="docker"><UiText>{"Docker"}</UiText></UiElement>
+            <UiElement as="option" value="kubernetes"><UiText>{"Kubernetes"}</UiText></UiElement>
+            <UiElement as="option" value="unrestricted"><UiText>{"创建时选择"}</UiText></UiElement>
           </Select>
-          <span className="toolbar-right-note" role="status">{readCount({ loaded: hasSuccess, refreshing: loading, error: readError }, displayed.length, "个模板")}</span>
-          <Button loading={loading} onClick={() => void load()}>
+          <UiElement as="span" className="toolbar-right-note" role="status">{readCount({ loaded: hasSuccess, refreshing: loading, error: readError }, displayed.length, "个模板")}</UiElement>
+          <Button actionId="action.TemplatesPage.007" loading={loading} onClick={() => void load()}>
             <RefreshCw size={14} />
-            刷新
+            <UiText>{"刷新"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.TemplatesPage.008"
             disabled={!canOperate}
             onClick={() => importFile.current?.click()}
           >
             <Upload size={14} />
-            导入模板
+            <UiText>{"导入模板"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.TemplatesPage.009"
             kind="primary"
             disabled={!canOperate}
             onClick={() => setEditor({})}
           >
             <Plus size={14} />
-            新建模板
+            <UiText>{"新建模板"}</UiText>
           </Button>
-          <input
+          <UiElement as="input"
             ref={importFile}
             hidden
             type="file"
@@ -608,73 +607,73 @@ export default function TemplatesPage({
               }
             }}
           />
-        </div>
+        </UiElement>
         {loading && !hasSuccess ? (
           <Spinner label="正在读取模板" />
         ) : displayed.length ? (
-          <div className="table-wrap">
-            <table className="templates-table">
-              <thead>
-                <tr>
-                  <th>模板名称 / 说明</th>
-                  <th>来源</th>
-                  <th>运行环境</th>
-                  <th>引擎 / 硬件</th>
-                  <th>最近更新</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
+          <UiElement as="div" className="table-wrap">
+            <UiElement as="table" className="templates-table">
+              <UiElement as="thead">
+                <UiElement as="tr">
+                  <UiElement as="th"><UiText>{"模板名称 / 说明"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"来源"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"运行环境"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"引擎 / 硬件"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"最近更新"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"操作"}</UiText></UiElement>
+                </UiElement>
+              </UiElement>
+              <UiElement as="tbody">
                 {displayed.map((template) => (
-                  <tr key={template.id}>
-                    <td>
-                      <button
+                  <UiElement as="tr" key={template.id}>
+                    <UiElement as="td">
+                      <UiButton actionId="action.TemplatesPage.010"
                         className="text-link template-name"
                         onClick={() => void read(template, "view")}
                       >
                         {template.name}
-                      </button>
+                      </UiButton>
                       {template.description && (
-                        <span className="cell-secondary template-description">
+                        <UiElement as="span" className="cell-secondary template-description">
                           {template.description}
-                        </span>
+                        </UiElement>
                       )}
-                      <div className="template-tags">
+                      <UiElement as="div" className="template-tags">
                         {(template.tags ?? []).map((tag) => (
-                          <span key={tag} className="tag small">
+                          <UiElement as="span" key={tag} className="tag small">
                             {tag}
-                          </span>
+                          </UiElement>
                         ))}
-                      </div>
-                    </td>
-                    <td>
-                      <span
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="td">
+                      <UiElement as="span"
                         className={`tag small ${templateSource(template) === "custom" ? "template-custom-tag" : ""}`}
                       >
                         {templateSource(template) === "custom"
                           ? "自定义"
                           : "官方只读"}
-                      </span>
-                    </td>
-                    <td>{runtimeLabel(template.runtime)}</td>
-                    <td>
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="td">{runtimeLabel(template.runtime)}</UiElement>
+                    <UiElement as="td">
                       {template.engine}
-                      {template.hardware && <span className="cell-secondary">
+                      {template.hardware && <UiElement as="span" className="cell-secondary">
                         {template.hardware}
-                      </span>}
-                    </td>
-                    <td className="tabular nowrap">
+                      </UiElement>}
+                    </UiElement>
+                    <UiElement as="td" className="tabular nowrap">
                       {recordTime(template.updated_at) &&
                         when(template.updated_at!)}
-                      <span className="cell-secondary">
+                      <UiElement as="span" className="cell-secondary">
                         {templateSource(template) === "custom"
                           ? `修订 ${template.revision}`
                           : "固定上游版本"}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="row-actions template-row-actions">
-                        <button
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="td">
+                      <UiElement as="div" className="row-actions template-row-actions">
+                        <UiButton actionId="action.TemplatesPage.011"
                           disabled={
                             !canOperate ||
                             Boolean(busy) ||
@@ -682,9 +681,9 @@ export default function TemplatesPage({
                           }
                           onClick={() => void read(template, "use")}
                         >
-                          使用模板
-                        </button>
-                        <button
+                          <UiText>{"使用模板"}</UiText>
+                        </UiButton>
+                        <UiButton actionId="action.TemplatesPage.012"
                           disabled={
                             !canOperate ||
                             Boolean(busy) ||
@@ -692,17 +691,17 @@ export default function TemplatesPage({
                           }
                           onClick={() => void read(template, "copy")}
                         >
-                          复制
-                        </button>
+                          <UiText>{"复制"}</UiText>
+                        </UiButton>
                         {templateSource(template) === "custom" && (
                           <>
-                            <button
+                            <UiButton actionId="action.TemplatesPage.013"
                               disabled={!canOperate || Boolean(busy)}
                               onClick={() => void read(template, "edit")}
                             >
-                              编辑
-                            </button>
-                            <button
+                              <UiText>{"编辑"}</UiText>
+                            </UiButton>
+                            <UiButton actionId="action.TemplatesPage.014"
                               className="danger-text"
                               disabled={!canOperate || Boolean(busy)}
                               onClick={() => {
@@ -710,17 +709,17 @@ export default function TemplatesPage({
                                 setRemoveError("");
                               }}
                             >
-                              删除
-                            </button>
+                              <UiText>{"删除"}</UiText>
+                            </UiButton>
                           </>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </UiElement>
+                    </UiElement>
+                  </UiElement>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </UiElement>
+            </UiElement>
+          </UiElement>
         ) : (
           <Empty
             title={!hasSuccess ? readNotice({ loaded: false, refreshing: loading, error: readError }) : items.length ? "没有匹配的模板" : "暂无模板"}
@@ -732,11 +731,11 @@ export default function TemplatesPage({
             icon={<FileJson size={25} />}
           />
         )}
-      </section>
+      </UiRegion>
       {!canOperate && (
-        <div className="subtle-note">
-          当前账号仅可查看模板元数据，完整配置与模板变更需要运维操作员或管理员权限。
-        </div>
+        <UiElement as="div" className="subtle-note">
+          <UiText>{"当前账号仅可查看模板元数据，完整配置与模板变更需要运维操作员或管理员权限。"}</UiText>
+        </UiElement>
       )}
       {editor && canOperate && (
         <TemplateEditor
@@ -761,55 +760,55 @@ export default function TemplatesPage({
           onClose={() => setView(null)}
           footer={
             <>
-              <Button onClick={() => setView(null)}>关闭</Button>
-              <Button
+              <Button actionId="action.TemplatesPage.015" onClick={() => setView(null)}><UiText>{"关闭"}</UiText></Button>
+              <Button actionId="action.TemplatesPage.016"
                 disabled={!canOperate || view.config_redacted || Boolean(busy)}
                 onClick={() => void read(view, "export")}
               >
                 <Download size={14} />
-                导出 JSON
+                <UiText>{"导出 JSON"}</UiText>
               </Button>
-              <Button
+              <Button actionId="action.TemplatesPage.017"
                 disabled={!canOperate || view.config_redacted || Boolean(busy)}
                 onClick={() => void read(view, "copy")}
               >
                 <CopyIcon size={14} />
-                复制为自定义模板
+                <UiText>{"复制为自定义模板"}</UiText>
               </Button>
-              <Button
+              <Button actionId="action.TemplatesPage.018"
                 kind="primary"
                 disabled={!canOperate || view.config_redacted || Boolean(busy)}
                 onClick={() => void read(view, "use")}
               >
-                使用模板
+                <UiText>{"使用模板"}</UiText>
               </Button>
             </>
           }
         >
           {error && <ErrorBox message={error} />}
-          <div className="template-view-meta">
-            <span>运行环境：{runtimeLabel(view.runtime)}</span>
-            {view.engine && <span>推理引擎：{view.engine}</span>}
-            {view.hardware && <span>硬件：{view.hardware}</span>}
-          </div>
+          <UiElement as="div" className="template-view-meta">
+            <UiElement as="span"><UiText>{"运行环境："}</UiText>{runtimeLabel(view.runtime)}</UiElement>
+            {view.engine && <UiElement as="span"><UiText>{"推理引擎："}</UiText>{view.engine}</UiElement>}
+            {view.hardware && <UiElement as="span"><UiText>{"硬件："}</UiText>{view.hardware}</UiElement>}
+          </UiElement>
           {view.description && (
-            <p className="template-view-description">{view.description}</p>
+            <UiElement as="p" className="template-view-description">{view.description}</UiElement>
           )}
           {canOperate && !view.config_redacted ? (
             <>
-              <div className="editor-toolbar">
-                <b>完整模板 JSON</b>
+              <UiElement as="div" className="editor-toolbar">
+                <UiElement as="b"><UiText>{"完整模板 JSON"}</UiText></UiElement>
                 <Copy
                   label="复制完整模板 JSON"
                   value={JSON.stringify(templateInput(view), null, 2)}
                 />
-              </div>
-              <pre className="json-view template-json-view">
+              </UiElement>
+              <UiElement as="pre" className="json-view template-json-view">
                 {JSON.stringify(templateInput(view), null, 2)}
-              </pre>
+              </UiElement>
             </>
           ) : (
-            <InfoBox>当前账号没有读取完整模板配置的权限。</InfoBox>
+            <InfoBox><UiText>{"当前账号没有读取完整模板配置的权限。"}</UiText></InfoBox>
           )}
         </Modal>
       )}
@@ -818,14 +817,14 @@ export default function TemplatesPage({
           title={`删除模板 ${removing.name}？`}
           description={
             <>
-              <p>
-                删除后将无法再从模板库选择此模板。已经创建的服务保留各自配置，不受影响。
-              </p>
-              <div className="confirm-resource">
+              <UiElement as="p">
+                <UiText>{"删除后将无法再从模板库选择此模板。已经创建的服务保留各自配置，不受影响。"}</UiText>
+              </UiElement>
+              <UiElement as="div" className="confirm-resource">
                 <FileJson size={17} />
-                <b>{removing.name}</b>
-                <span>修订 {removing.revision}</span>
-              </div>
+                <UiElement as="b">{removing.name}</UiElement>
+                <UiElement as="span"><UiText>{"修订"}</UiText> {removing.revision}</UiElement>
+              </UiElement>
             </>
           }
           confirmText="删除模板"
@@ -856,3 +855,10 @@ export default function TemplatesPage({
     </>
   );
 }
+
+export const TemplateEditor = withUiSlot("component.TemplateEditor", DefaultTemplateEditor);
+const TemplatesPage = withUiSlot("component.TemplatesPage", DefaultTemplatesPage);
+export default TemplatesPage;
+
+// Reference package implementation exports.
+export { DefaultTemplateEditor, DefaultTemplatesPage };

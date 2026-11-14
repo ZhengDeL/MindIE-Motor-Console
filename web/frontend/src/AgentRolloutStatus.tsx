@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import type { ReactNode } from "react";
 import { AlertCircle, Check, Loader2, RefreshCw } from "./icons";
 import { when } from "./api";
@@ -20,7 +21,7 @@ const badgeStatus = (job: AgentRolloutJob) =>
         ? "warning"
         : job.status;
 
-export function PlanReview({
+function DefaultPlanReview({
   spec,
   connection,
   plan,
@@ -42,40 +43,39 @@ export function PlanReview({
   setApproved: (value: boolean) => void;
 }) {
   return (
-    <div className="rollout-section">
-      <dl className="rollout-summary">
-        <dt>目标</dt>
-        <dd>
-          {spec.name} · {spec.address} ·{" "}
+    <UiElement as="div" className="rollout-section">
+      <UiElement as="dl" className="rollout-summary">
+        <UiElement as="dt"><UiText>{"目标"}</UiText></UiElement>
+        <UiElement as="dd">
+          {spec.name} <UiText>{"·"}</UiText> {spec.address} <UiText>{"·"}</UiText>{" "}
           {spec.runtime === "docker" ? "Docker" : "Kubernetes"}
-        </dd>
-        <dt>安装标识</dt>
-        <dd>
-          <code>{spec.installation_name}</code>
-        </dd>
-        <dt>SSH 身份</dt>
-        <dd>
-          {connection.username}@{connection.host}:{connection.port} ·{" "}
+        </UiElement>
+        <UiElement as="dt"><UiText>{"安装标识"}</UiText></UiElement>
+        <UiElement as="dd">
+          <UiElement as="code">{spec.installation_name}</UiElement>
+        </UiElement>
+        <UiElement as="dt"><UiText>{"SSH 身份"}</UiText></UiElement>
+        <UiElement as="dd">
+          {connection.username}<UiText>{"@"}</UiText>{connection.host}<UiText>{":"}</UiText>{connection.port} <UiText>{"·"}</UiText>{" "}
           {connection.privilege === "root" ? "root" : "sudo -n"}
-        </dd>
-        <dt>Agent 地址</dt>
-        <dd>
-          <code>{spec.agent_url}</code>
-        </dd>
-        <dt>资源上限</dt>
-        <dd>
-          {spec.cpus} 核 · {spec.memory} 内存 · {spec.pids} 进程
-        </dd>
-      </dl>
+        </UiElement>
+        <UiElement as="dt"><UiText>{"Agent 地址"}</UiText></UiElement>
+        <UiElement as="dd">
+          <UiElement as="code">{spec.agent_url}</UiElement>
+        </UiElement>
+        <UiElement as="dt"><UiText>{"资源上限"}</UiText></UiElement>
+        <UiElement as="dd">
+          {spec.cpus} <UiText>{"核 ·"}</UiText> {spec.memory} <UiText>{"内存 ·"}</UiText> {spec.pids} <UiText>{"进程"}</UiText>
+        </UiElement>
+      </UiElement>
       {!plan ? (
         <InfoBox>
-          预检只检查 SSH 身份、运行时、端口、镜像与已存在安装，不创建 Agent
-          容器。点击“执行预检”生成有时效的安装计划。
+          <UiText>{"预检只检查 SSH 身份、运行时、端口、镜像与已存在安装，不创建 Agent 容器。点击“执行预检”生成有时效的安装计划。"}</UiText>
         </InfoBox>
       ) : (
         <>
-          <div className="rollout-plan-heading">
-            <h3>预检结果</h3>
+          <UiElement as="div" className="rollout-plan-heading">
+            <UiElement as="h3"><UiText>{"预检结果"}</UiText></UiElement>
             <Badge
               status={plan.can_execute && !expired ? "success" : "warning"}
             >
@@ -85,10 +85,10 @@ export function PlanReview({
                   ? "可以安装"
                   : "已阻止安装"}
             </Badge>
-          </div>
-          <div className="check-list">
+          </UiElement>
+          <UiElement as="div" className="check-list">
             {plan.checks.map((check) => (
-              <div key={check.id}>
+              <UiElement as="div" key={check.id}>
                 <Badge
                   status={check.status === "passed" ? "success" : check.status}
                 >
@@ -98,70 +98,68 @@ export function PlanReview({
                       ? "需关注"
                       : "失败"}
                 </Badge>
-                <div>
-                  <b>{check.title}</b>
-                  <p>{check.message}</p>
-                </div>
-              </div>
+                <UiElement as="div">
+                  <UiElement as="b">{check.title}</UiElement>
+                  <UiElement as="p">{check.message}</UiElement>
+                </UiElement>
+              </UiElement>
             ))}
-          </div>
+          </UiElement>
           {plan.existing_installation.length > 0 && (
-            <div className="rollout-existing">
+            <UiElement as="div" className="rollout-existing">
               <InfoBox>
-                发现已有
-                Agent，禁止覆盖。请检查原安装或通过“接入节点”连接，勿更换标识绕过预检。
+                <UiText>{"发现已有 Agent，禁止覆盖。请检查原安装或通过“接入节点”连接，勿更换标识绕过预检。"}</UiText>
               </InfoBox>
-              <ul>
+              <UiElement as="ul">
                 {plan.existing_installation.map((item) => (
-                  <li key={item.container_id}>
-                    <b>{item.name}</b> · {item.runtime} · {item.state}
-                  </li>
+                  <UiElement as="li" key={item.container_id}>
+                    <UiElement as="b">{item.name}</UiElement> <UiText>{"·"}</UiText> {item.runtime} <UiText>{"·"}</UiText> {item.state}
+                  </UiElement>
                 ))}
-              </ul>
-            </div>
+              </UiElement>
+            </UiElement>
           )}
-          <h3>计划执行步骤</h3>
-          <ol className="rollout-planned-steps">
+          <UiElement as="h3"><UiText>{"计划执行步骤"}</UiText></UiElement>
+          <UiElement as="ol" className="rollout-planned-steps">
             {plan.steps.map((item) => (
-              <li key={item.id}>{item.title}</li>
+              <UiElement as="li" key={item.id}>{item.title}</UiElement>
             ))}
-          </ol>
-          <p className="rollout-muted">
-            有效期至 {when(plan.expires_at)}；计划摘要{" "}
-            <code>{plan.digest}</code>
-          </p>
+          </UiElement>
+          <UiElement as="p" className="rollout-muted">
+            <UiText>{"有效期至"}</UiText> {when(plan.expires_at)}<UiText>{"；计划摘要"}</UiText>{" "}
+            <UiElement as="code">{plan.digest}</UiElement>
+          </UiElement>
           {step === 3 && (
             <>
               <InfoBox>
-                将安装 Agent 并验证 HTTPS
-                连接。遇到失败可能保留已创建资源；请从任务记录核对结果。此操作不会重新部署现有推理服务。
+                <UiText>{"将安装 Agent 并验证 HTTPS 连接。遇到失败可能保留已创建资源；请从任务记录核对结果。此操作不会重新部署现有推理服务。"}</UiText>
               </InfoBox>
               <Field label={`输入节点名称“${plan.spec.name}”确认安装`} required>
-                <input
+                <UiElement as="input"
                   autoComplete="off"
                   value={confirmation}
                   onChange={(event) => setConfirmation(event.target.value)}
                 />
               </Field>
-              <label className="rollout-checkbox">
-                <input
+              <UiElement as="label" className="rollout-checkbox">
+                <UiElement as="input"
                   type="checkbox"
                   checked={approved}
                   onChange={(event) => setApproved(event.target.checked)}
                 />
-                <span>
-                  我已核对目标、主机指纹、镜像来源与预检计划，授权执行本次安装。
-                </span>
-              </label>
+                <UiElement as="span">
+                  <UiText>{"我已核对目标、主机指纹、镜像来源与预检计划，授权执行本次安装。"}</UiText>
+                </UiElement>
+              </UiElement>
             </>
           )}
         </>
       )}
-    </div>
+    </UiElement>
   );
 }
 
-export function RolloutHistory({
+function DefaultRolloutHistory({
   submissionUncertain,
   busy,
   locked,
@@ -181,78 +179,77 @@ export function RolloutHistory({
   openJob: (id: string) => Promise<void>;
 }) {
   return (
-    <div className="rollout-section">
+    <UiElement as="div" className="rollout-section">
       {submissionUncertain && (
         <InfoBox>
-          安装请求的结果尚未确认。SSH
-          凭据已清空，请先在任务记录中核对进度；确认目标状态前请勿再次推送。
+          <UiText>{"安装请求的结果尚未确认。SSH 凭据已清空，请先在任务记录中核对进度；确认目标状态前请勿再次推送。"}</UiText>
         </InfoBox>
       )}
-      <div className="rollout-plan-heading">
-        <h3>最近 50 个安装任务</h3>
-        <Button
+      <UiElement as="div" className="rollout-plan-heading">
+        <UiElement as="h3"><UiText>{"最近 50 个安装任务"}</UiText></UiElement>
+        <Button actionId="action.AgentRolloutStatus.001"
           loading={busy === "history"}
           disabled={locked && busy !== "history"}
           onClick={() => void loadHistory()}
         >
           <RefreshCw size={14} />
-          刷新记录
+          <UiText>{"刷新记录"}</UiText>
         </Button>
-      </div>
+      </UiElement>
       {!historyLoaded ? (
         <Spinner label="读取推送记录" />
       ) : jobs.length ? (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>节点 / 环境</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
+        <UiElement as="div" className="table-wrap">
+          <UiElement as="table">
+            <UiElement as="thead">
+              <UiElement as="tr">
+                <UiElement as="th"><UiText>{"节点 / 环境"}</UiText></UiElement>
+                <UiElement as="th"><UiText>{"状态"}</UiText></UiElement>
+                <UiElement as="th"><UiText>{"创建时间"}</UiText></UiElement>
+                <UiElement as="th"><UiText>{"操作"}</UiText></UiElement>
+              </UiElement>
+            </UiElement>
+            <UiElement as="tbody">
               {jobs.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <b>{item.name}</b>
-                    <span className="cell-secondary">
-                      {item.address} ·{" "}
+                <UiElement as="tr" key={item.id}>
+                  <UiElement as="td">
+                    <UiElement as="b">{item.name}</UiElement>
+                    <UiElement as="span" className="cell-secondary">
+                      {item.address} <UiText>{"·"}</UiText>{" "}
                       {item.runtime === "docker" ? "Docker" : "Kubernetes"}
-                    </span>
-                  </td>
-                  <td>
+                    </UiElement>
+                  </UiElement>
+                  <UiElement as="td">
                     <Badge status={badgeStatus(item)}>
                       {agentRolloutStatus(item)}
                     </Badge>
-                  </td>
-                  <td>{when(item.created_at)}</td>
-                  <td>
-                    <button
+                  </UiElement>
+                  <UiElement as="td">{when(item.created_at)}</UiElement>
+                  <UiElement as="td">
+                    <UiButton actionId="action.AgentRolloutStatus.002"
                       className="text-link"
                       disabled={locked}
                       onClick={() => void openJob(item.id)}
                     >
-                      查看进度
-                    </button>
-                  </td>
-                </tr>
+                      <UiText>{"查看进度"}</UiText>
+                    </UiButton>
+                  </UiElement>
+                </UiElement>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </UiElement>
+          </UiElement>
+        </UiElement>
       ) : (
         <Empty
           title={error ? "尚未取得推送记录" : "暂无推送记录"}
           description={error ? "请检查错误提示后刷新记录；读取失败不代表任务不存在。" : "通过本向导安装的 Agent 会保留任务与连接结果。"}
         />
       )}
-    </div>
+    </UiElement>
   );
 }
 
-export function RolloutJobDetails({
+function DefaultRolloutJobDetails({
   job,
   busy,
   locked,
@@ -280,44 +277,44 @@ export function RolloutJobDetails({
   children: ReactNode;
 }) {
   return (
-    <div className="rollout-section" aria-live="polite">
-      <div className="rollout-plan-heading">
-        <h3>{job.name}</h3>
+    <UiElement as="div" className="rollout-section" aria-live="polite">
+      <UiElement as="div" className="rollout-plan-heading">
+        <UiElement as="h3">{job.name}</UiElement>
         <Badge status={badgeStatus(job)}>{agentRolloutStatus(job)}</Badge>
-      </div>
-      <dl className="rollout-summary">
-        <dt>目标</dt>
-        <dd>
-          {job.address} · {job.runtime === "docker" ? "Docker" : "Kubernetes"}
-        </dd>
-        <dt>Agent 地址</dt>
-        <dd>
-          <code>{job.agent_url}</code>
-        </dd>
-        <dt>任务编号</dt>
-        <dd>
-          <code>{job.id}</code>
-        </dd>
-        <dt>最近更新</dt>
-        <dd>{when(job.updated_at)}</dd>
-      </dl>
+      </UiElement>
+      <UiElement as="dl" className="rollout-summary">
+        <UiElement as="dt"><UiText>{"目标"}</UiText></UiElement>
+        <UiElement as="dd">
+          {job.address} <UiText>{"·"}</UiText> {job.runtime === "docker" ? "Docker" : "Kubernetes"}
+        </UiElement>
+        <UiElement as="dt"><UiText>{"Agent 地址"}</UiText></UiElement>
+        <UiElement as="dd">
+          <UiElement as="code">{job.agent_url}</UiElement>
+        </UiElement>
+        <UiElement as="dt"><UiText>{"任务编号"}</UiText></UiElement>
+        <UiElement as="dd">
+          <UiElement as="code">{job.id}</UiElement>
+        </UiElement>
+        <UiElement as="dt"><UiText>{"最近更新"}</UiText></UiElement>
+        <UiElement as="dd">{when(job.updated_at)}</UiElement>
+      </UiElement>
       {job.connection && (
-        <dl className="rollout-summary">
-          <dt>原始 SSH 目标</dt>
-          <dd>
-            {job.connection.username}@{job.connection.host}:
+        <UiElement as="dl" className="rollout-summary">
+          <UiElement as="dt"><UiText>{"原始 SSH 目标"}</UiText></UiElement>
+          <UiElement as="dd">
+            {job.connection.username}<UiText>{"@"}</UiText>{job.connection.host}<UiText>{":"}</UiText>
             {job.connection.port}
-          </dd>
-          <dt>固定主机指纹</dt>
-          <dd>
-            <code>{job.connection.host_key_sha256}</code>
-          </dd>
-        </dl>
+          </UiElement>
+          <UiElement as="dt"><UiText>{"固定主机指纹"}</UiText></UiElement>
+          <UiElement as="dd">
+            <UiElement as="code">{job.connection.host_key_sha256}</UiElement>
+          </UiElement>
+        </UiElement>
       )}
-      <div className="job-steps rollout-job-steps">
+      <UiElement as="div" className="job-steps rollout-job-steps">
         {job.steps.map((item, index) => (
-          <div key={item.id}>
-            <span className={`job-step-dot ${item.status}`}>
+          <UiElement as="div" key={item.id}>
+            <UiElement as="span" className={`job-step-dot ${item.status}`}>
               {item.status === "completed" ? (
                 <Check size={14} />
               ) : item.status === "running" ? (
@@ -327,18 +324,18 @@ export function RolloutJobDetails({
               ) : (
                 index + 1
               )}
-            </span>
-            <div>
-              <b>{item.title}</b>
-              <p>
+            </UiElement>
+            <UiElement as="div">
+              <UiElement as="b">{item.title}</UiElement>
+              <UiElement as="p">
                 {item.message ||
                   (item.status === "pending"
                     ? "等待执行"
                     : item.status === "running"
                       ? "正在执行"
                       : "")}
-              </p>
-            </div>
+              </UiElement>
+            </UiElement>
             <Badge status={item.status ?? "pending"}>
               {{
                 pending: "等待执行",
@@ -348,57 +345,56 @@ export function RolloutJobDetails({
                 skipped: "已跳过",
               }[item.status ?? "pending"] ?? "待核对"}
             </Badge>
-          </div>
+          </UiElement>
         ))}
-      </div>
+      </UiElement>
       {job.status === "completed" && job.connection_verified && (
         <InfoBox>
-          Agent 已完成安装并通过实际连接验证，可在节点列表中管理。
+          <UiText>{"Agent 已完成安装并通过实际连接验证，可在节点列表中管理。"}</UiText>
         </InfoBox>
       )}
       {job.status === "installed_unconnected" && (
         <InfoBox>
-          Agent 已安装，控制台尚未完成连接。请检查 HTTPS
-          入口、防火墙和证书信任，再点击“重试连接”；无需重新安装。
+          <UiText>{"Agent 已安装，控制台尚未完成连接。请检查 HTTPS 入口、防火墙和证书信任，再点击“重试连接”；无需重新安装。"}</UiText>
         </InfoBox>
       )}
       {job.resources_may_exist &&
         !(job.status === "completed" && job.connection_verified) && (
           <InfoBox>
-            目标可能保留安装资源。取消或失败不会自动卸载，请按任务步骤核对后处理。
+            <UiText>{"目标可能保留安装资源。取消或失败不会自动卸载，请按任务步骤核对后处理。"}</UiText>
           </InfoBox>
         )}
       {job.error_code && (
-        <p className="rollout-muted">
-          错误代码：<code>{job.error_code}</code>
-        </p>
+        <UiElement as="p" className="rollout-muted">
+          <UiText>{"错误代码："}</UiText><UiElement as="code">{job.error_code}</UiElement>
+        </UiElement>
       )}
-      <div className="rollout-job-actions">
-        <Button disabled={locked} onClick={() => void openJob(job.id)}>
+      <UiElement as="div" className="rollout-job-actions">
+        <Button actionId="action.AgentRolloutStatus.003" disabled={locked} onClick={() => void openJob(job.id)}>
           <RefreshCw size={14} />
-          刷新状态
+          <UiText>{"刷新状态"}</UiText>
         </Button>
         {job.can_connect && (
-          <Button
+          <Button actionId="action.AgentRolloutStatus.004"
             kind="primary"
             loading={busy === "connect"}
             disabled={locked}
             onClick={() => void jobAction("connect")}
           >
-            重试连接
+            <UiText>{"重试连接"}</UiText>
           </Button>
         )}
         {job.can_cancel && (
-          <Button
+          <Button actionId="action.AgentRolloutStatus.005"
             loading={busy === "cancel"}
             disabled={locked}
             onClick={() => void jobAction("cancel")}
           >
-            取消后续步骤
+            <UiText>{"取消后续步骤"}</UiText>
           </Button>
         )}
         {job.can_recover && !recovering && (
-          <Button
+          <Button actionId="action.AgentRolloutStatus.006"
             disabled={locked}
             onClick={() => {
               clearCredentials();
@@ -406,46 +402,51 @@ export function RolloutJobDetails({
               setRecovering(true);
             }}
           >
-            恢复核对
+            <UiText>{"恢复核对"}</UiText>
           </Button>
         )}
-      </div>
+      </UiElement>
       {recovering && job.can_recover && (
-        <fieldset className="rollout-inputs rollout-recovery" disabled={locked}>
+        <UiElement as="fieldset" className="rollout-inputs rollout-recovery" disabled={locked}>
           <InfoBox>
-            使用原始 SSH
-            目标与固定主机指纹，只读核对既有安装并恢复连接；不会重装、重启或覆盖
-            Agent。请重新提供本次使用的凭据。
+            <UiText>{"使用原始 SSH 目标与固定主机指纹，只读核对既有安装并恢复连接；不会重装、重启或覆盖 Agent。请重新提供本次使用的凭据。"}</UiText>
           </InfoBox>
           {children}
-          <label className="rollout-checkbox">
-            <input
+          <UiElement as="label" className="rollout-checkbox">
+            <UiElement as="input"
               type="checkbox"
               checked={recoveryConfirmed}
               onChange={(event) => setRecoveryConfirmed(event.target.checked)}
             />
-            <span>已核对原始目标与固定主机指纹，同意只读检查现有安装。</span>
-          </label>
-          <div className="rollout-job-actions">
-            <Button
+            <UiElement as="span"><UiText>{"已核对原始目标与固定主机指纹，同意只读检查现有安装。"}</UiText></UiElement>
+          </UiElement>
+          <UiElement as="div" className="rollout-job-actions">
+            <Button actionId="action.AgentRolloutStatus.007"
               onClick={() => {
                 clearCredentials();
                 setRecovering(false);
               }}
             >
-              取消核对
+              <UiText>{"取消核对"}</UiText>
             </Button>
-            <Button
+            <Button actionId="action.AgentRolloutStatus.008"
               kind="primary"
               loading={busy === "recover"}
               disabled={!recoveryConfirmed || locked}
               onClick={() => void recover()}
             >
-              执行只读核对
+              <UiText>{"执行只读核对"}</UiText>
             </Button>
-          </div>
-        </fieldset>
+          </UiElement>
+        </UiElement>
       )}
-    </div>
+    </UiElement>
   );
 }
+
+export const PlanReview = withUiSlot("component.PlanReview", DefaultPlanReview);
+export const RolloutHistory = withUiSlot("component.RolloutHistory", DefaultRolloutHistory);
+export const RolloutJobDetails = withUiSlot("component.RolloutJobDetails", DefaultRolloutJobDetails);
+
+// Reference package implementation exports.
+export { DefaultPlanReview, DefaultRolloutHistory, DefaultRolloutJobDetails };

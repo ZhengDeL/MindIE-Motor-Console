@@ -170,9 +170,11 @@ class Principal:
 
 
 class AuthManager:
-    def __init__(self, store, *, settings: AuthSettings | None = None, legacy_token: str = "", clock=None, hasher=None):
+    def __init__(self, store, *, settings: AuthSettings | None = None, legacy_token: str = "", clock=None, hasher=None, audit_provider=None):
         self.store, self.settings = store, settings or AuthSettings.from_env()
         self.legacy_token, self.clock = legacy_token, clock or time.time
+        self._session_provider = self._policy_provider = None
+        self._audit_provider = audit_provider
         register_secret(legacy_token)
         register_secret(self.settings.bootstrap_token)
         self.hasher = hasher or PasswordHasher()
@@ -180,6 +182,30 @@ class AuthManager:
         if self.settings.allow_legacy_token and len(legacy_token) < 24:
             raise ValueError("Explicit compatibility credentials require at least 24 characters")
         self.dummy_hash = self.hasher.hash(secrets.token_urlsafe(40))
+
+    def bind_security(self, session, policy):
+        if self._session_provider is not None or self._policy_provider is not None:
+            raise RuntimeError("Security providers are immutable for this host generation")
+        self._session_provider, self._policy_provider = session, policy
+
+    @property
+    def session_cookie_name(self):
+        return self._session_provider.cookie_name if self._session_provider is not None else self.settings.cookie_name
+
+    def revoke_session(self, unit, token_hash):
+        if self._session_provider is not None:
+            return self._session_provider.revoke(unit, token_hash)
+        return unit.accounts.revoke_session(token_hash)
+
+    def revoke_user_sessions(self, unit, user_id):
+        if self._session_provider is not None:
+            return self._session_provider.revoke_user(unit, user_id)
+        return unit.accounts.revoke_user_sessions(user_id)
+
+    def session_window(self, unit, token_hash):
+        if self._session_provider is not None:
+            return self._session_provider.window(unit, token_hash)
+        return unit.accounts.get_session_window(token_hash).fetchone()
 
     @contextmanager
     def transaction(self, *, write=False):
@@ -191,6 +217,12 @@ class AuthManager:
                         "actor": actor_identity(actor), "request_id": context_fields().get("request_id", ""),
                         "action": "auth." + action, "target": target, "status": status, "detail": ""})
         db.audit.append(event, target_snapshot=target_snapshot)
+
+    def security_event(self, unit, actor, action, target, status="success", **options):
+        return self._event(unit, actor, action, target, status, **options)
+
+    def throttle(self, request, account):
+        return self._throttle(request, account)
 
     @staticmethod
     def _public(row):
@@ -205,6 +237,8 @@ class AuthManager:
             return not db.accounts.exists_any().fetchone()
 
     def check_origin(self, request: Request):
+        if self._session_provider is not None:
+            return self._session_provider.check_origin(request)
         origin = request.headers.get("origin")
         if origin is None:
             referer = request.headers.get("referer", "")
@@ -237,6 +271,11 @@ class AuthManager:
             _error(429, "登录尝试过多，请稍后重试", headers={"Retry-After": str(self.settings.throttle_window)})
 
     def _new_session(self, db, user) -> tuple[str, float]:
+        if self._session_provider is not None:
+            return self._session_provider.issue(db, user)
+        return self._issue_local_session(db, user)
+
+    def _issue_local_session(self, db, user) -> tuple[str, float]:
         raw, now = secrets.token_urlsafe(32), self.clock()
         expires = now + self.settings.session_ttl
         db.accounts.prune_expired_sessions(now, now - self.settings.idle_timeout)
@@ -244,22 +283,43 @@ class AuthManager:
         db.accounts.trim_user_sessions(user['id'])
         return raw, expires
 
+    def csrf(self, raw: str) -> str:
+        if self._session_provider is not None:
+            return self._session_provider.csrf(raw)
+        return self._csrf_local(raw)
+
     @staticmethod
-    def csrf(raw: str) -> str:
+    def _csrf_local(raw: str) -> str:
         return hmac.new(raw.encode(), b"motor-console-csrf-v1", hashlib.sha256).hexdigest()
 
     def set_cookie(self, response: Response, raw: str):
+        if self._session_provider is not None:
+            return self._session_provider.set_cookie(response, raw)
+        return self._set_local_cookie(response, raw)
+
+    def _set_local_cookie(self, response: Response, raw: str):
         response.set_cookie(self.settings.cookie_name, raw, max_age=self.settings.session_ttl,
                             secure=self.settings.secure_cookie, httponly=True, samesite="lax", path="/")
         response.headers["Cache-Control"] = "no-store"
 
     def clear_cookie(self, response: Response):
+        if self._session_provider is not None:
+            return self._session_provider.clear_cookie(response)
+        return self._clear_local_cookie(response)
+
+    def _clear_local_cookie(self, response: Response):
         response.delete_cookie(self.settings.cookie_name, path="/", secure=self.settings.secure_cookie, httponly=True, samesite="lax")
 
     def authenticate(self, request: Request, *, required=True) -> Principal | None:
+        if self._session_provider is not None:
+            from .provider_host.authorization import authenticate_session
+            return authenticate_session(self._session_provider, request, required=required)
+        return self._authenticate_local(request, required=required)
+
+    def _authenticate_local(self, request: Request, *, required=True) -> Principal | None:
         # A present browser cookie has priority: a stale/forged cookie cannot
         # silently downgrade to an unrelated shared machine credential.
-        raw = request.cookies.get(self.settings.cookie_name)
+        raw = request.cookies.get(self.session_cookie_name)
         if raw and len(raw) <= 256:
             now = self.clock()
             with self.transaction(write=True) as db:
@@ -281,12 +341,14 @@ class AuthManager:
         return None
 
     def authorize(self, request: Request, allowed_roles=ROLES, *, csrf=True, account_only=False) -> Principal:
+        if self._policy_provider is not None:
+            return self._policy_provider.authorize(request, allowed_roles, csrf=csrf, account_only=account_only)
         principal = self.authenticate(request)
         if principal.role not in allowed_roles or account_only and principal.kind != "session":
             _error(403, "当前账号无权执行此操作")
         if csrf and request.method not in SAFE_METHODS and principal.kind == "session":
             self.check_origin(request)
-            expected = self.csrf(request.cookies[self.settings.cookie_name])
+            expected = self.csrf(request.cookies[self.session_cookie_name])
             if not hmac.compare_digest(request.headers.get("x-csrf-token", "").encode(), expected.encode()):
                 _error(403, "CSRF 校验失败，请刷新页面后重试")
         return principal
@@ -330,9 +392,9 @@ class AuthManager:
                 self._event(db, "anonymous", "login", "account", "denied")
                 result = None
             else:
-                old = request.cookies.get(self.settings.cookie_name, "")
+                old = request.cookies.get(self.session_cookie_name, "")
                 if old:
-                    db.accounts.revoke_session(_digest(old))
+                    self.revoke_session(db, _digest(old))
                 raw, expires = self._new_session(db, current)
                 self._event(db, current["id"], "login", current["id"])
                 result = (current, raw, expires)
@@ -364,7 +426,7 @@ class AuthManager:
 
     def _require_live_admin(self, db, principal):
         row = db.accounts.get_admin_status(principal.user_id).fetchone()
-        session = db.accounts.get_session_window(principal.session_id).fetchone()
+        session = self.session_window(db, principal.session_id)
         if (not row or row["role"] != "admin" or row["disabled"] or not session
                 or self.clock() >= session["expires_at"] or self.clock() - session["last_seen"] >= self.settings.idle_timeout):
             _error(403, "管理员会话已失效")
@@ -390,7 +452,7 @@ class AuthManager:
                     _error(409, "不能删除、禁用或降级最后一个有效本地管理员")
             if new_password is not None and user["auth_source"] != "local":
                 _error(409, "外部身份账号的密码由身份提供方管理")
-            db.accounts.revoke_user_sessions(user_id)
+            self.revoke_user_sessions(db, user_id)
             if delete:
                 db.accounts.delete_identities(user_id)
                 db.accounts.delete_user(user_id)
@@ -415,11 +477,11 @@ class AuthManager:
         encoded = self.hasher.hash(new_password)
         with self.transaction(write=True) as db:
             current = db.accounts.get_user(actor.user_id).fetchone()
-            session = db.accounts.has_session(actor.session_id).fetchone()
+            session = self.session_window(db, actor.session_id)
             if not current or current["disabled"] or current["auth_version"] != user["auth_version"] or not session:
                 _error(409, "账号状态已变化，请重新登录")
             db.accounts.update_password(encoded, self.clock(), actor.user_id)
-            db.accounts.revoke_user_sessions(actor.user_id)
+            self.revoke_user_sessions(db, actor.user_id)
             self._event(db, actor.user_id, "password_change", actor.user_id)
         self.clear_cookie(response)
         return {"ok": True, "reauthenticate": True}
@@ -452,12 +514,12 @@ class AuthManager:
                 user_id = user["id"]
                 if user["role"] != role:
                     db.accounts.set_role(role, now, user_id)
-                    db.accounts.revoke_user_sessions(user_id)
+                    self.revoke_user_sessions(db, user_id)
                 db.accounts.set_display(display_name[:100] or user['display_name'], now, user_id)
             user = db.accounts.get_user(user_id).fetchone()
-            previous = request.cookies.get(self.settings.cookie_name)
+            previous = request.cookies.get(self.session_cookie_name)
             if previous:
-                db.accounts.revoke_session(_digest(previous))
+                self.revoke_session(db, _digest(previous))
             raw, expires = self._new_session(db, user)
             self._event(db, user_id, "oidc_login", user_id)
         return self._login_result(user, raw, expires, response)
@@ -519,7 +581,7 @@ def create_auth_router(manager: AuthManager) -> APIRouter:
         response.headers["Cache-Control"] = "no-store"
         return {"setup_required": manager.setup_required(), "authenticated": bool(principal),
                 "user": principal.as_dict() if principal else None,
-                "csrf_token": manager.csrf(request.cookies[manager.settings.cookie_name]) if principal and principal.kind == "session" else None,
+                "csrf_token": manager.csrf(request.cookies[manager.session_cookie_name]) if principal and principal.kind == "session" else None,
                 "expires_at": _stamp(principal.expires_at) if principal and principal.expires_at else None,
                 "permissions": permissions_for(principal.role) if principal else [], "sso": manager.sso_status}
 
@@ -535,8 +597,8 @@ def create_auth_router(manager: AuthManager) -> APIRouter:
     def logout(request: Request, response: Response):
         actor = manager.authorize(request, account_only=True)
         with manager.transaction(write=True) as db:
-            db.accounts.revoke_session(actor.session_id)
-            manager._event(db, actor.user_id, "logout", actor.user_id)
+            manager.revoke_session(db, actor.session_id)
+            manager.security_event(db, actor.user_id, "logout", actor.user_id)
         manager.clear_cookie(response)
         return {"ok": True}
 

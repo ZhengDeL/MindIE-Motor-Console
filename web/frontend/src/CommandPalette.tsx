@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowRight, Box, Search, Server } from "./icons";
 import type { ConsoleIcon } from "./icons";
@@ -11,7 +12,7 @@ export type QuickAction = { id: string; label: string; description: string; icon
 type Result = { id: string; label: string; description: string; group: string; icon: ConsoleIcon;
   keywords: string; status?: string; run: () => void };
 
-export default function CommandPalette({ groups, services, nodes, actions, externalPages = [], onNavigate, onOpenService, onLocateNode, onClose }: {
+function DefaultCommandPalette({ groups, services, nodes, actions, externalPages = [], onNavigate, onOpenService, onLocateNode, onClose }: {
   groups: readonly NavigationGroup[]; services: readonly Service[]; nodes: readonly NodeInfo[];
   actions: readonly QuickAction[]; onNavigate: (page: ConsolePage) => void;
   externalPages?: readonly QuickAction[];
@@ -51,8 +52,8 @@ export default function CommandPalette({ groups, services, nodes, actions, exter
   useEffect(() => { document.getElementById(`${listId}-${selected}`)?.scrollIntoView({ block: "nearest" }); }, [listId, selected]);
   const choose = (item: Result) => { onClose(); item.run(); };
   return <Modal title="快速查找" subtitle="定位已加载的服务与执行 Agent，或跳转控制台页面。" onClose={onClose}>
-    <div className="command-menu">
-      <div className="command-search"><Search size={20} /><input ref={input} role="combobox" aria-label="搜索资源或页面"
+    <UiElement as="div" className="command-menu">
+      <UiElement as="div" className="command-search"><Search size={20} /><UiElement as="input" ref={input} role="combobox" aria-label="搜索资源或页面"
         aria-autocomplete="list" aria-expanded="true" aria-controls={listId}
         aria-activedescendant={results.length ? `${listId}-${selected}` : undefined}
         autoComplete="off" spellCheck={false} maxLength={120} value={query}
@@ -64,21 +65,27 @@ export default function CommandPalette({ groups, services, nodes, actions, exter
             event.preventDefault();
             if (results.length) setActive((value) => (value + (event.key === "ArrowDown" ? 1 : -1) + results.length) % results.length);
           } else if (event.key === "Enter" && results[selected]) { event.preventDefault(); choose(results[selected]); }
-        }} /><kbd>Esc</kbd></div>
-      <div className="command-results" id={listId} role="listbox" aria-label="匹配的资源和页面">
-        {results.map((item, index) => <div key={item.id}>
-          {(index === 0 || results[index - 1].group !== item.group) && <div className="command-group" aria-hidden="true">{item.group}</div>}
-          <div id={`${listId}-${index}`} role="option" aria-selected={index === selected}
+        }} /><UiElement as="kbd"><UiText>{"Esc"}</UiText></UiElement></UiElement>
+      <UiElement as="div" className="command-results" id={listId} role="listbox" aria-label="匹配的资源和页面">
+        {results.map((item, index) => <UiElement as="div" key={item.id}>
+          {(index === 0 || results[index - 1].group !== item.group) && <UiElement as="div" className="command-group" aria-hidden="true">{item.group}</UiElement>}
+          <UiElement as="div" id={`${listId}-${index}`} role="option" aria-selected={index === selected}
             className={`command-option ${index === selected ? "active" : ""}`} onMouseMove={() => setActive(index)}
             onMouseDown={(event) => event.preventDefault()} onClick={() => choose(item)}>
-            <span className="command-option-icon"><item.icon size={18} /></span>
-            <span className="command-option-content"><b>{item.label}</b><small>{item.description}</small></span>
+            <UiElement as="span" className="command-option-icon"><item.icon size={18} /></UiElement>
+            <UiElement as="span" className="command-option-content"><UiElement as="b">{item.label}</UiElement><UiElement as="small">{item.description}</UiElement></UiElement>
             {item.status && <Badge status={item.status} />}<ArrowRight size={14} />
-          </div>
-        </div>)}
-        {!results.length && <div className="command-empty"><Search size={25} /><b>未找到匹配项</b><p>试试服务名称、模型、执行 Agent 名称、IP 或页面名称。</p></div>}
-      </div>
-      <div className="command-footer"><span><kbd>↑</kbd><kbd>↓</kbd>选择 <kbd>Enter</kbd>打开</span><span>{results.length ? `${results.length} 个匹配项` : "支持中英文关键词"}</span></div>
-    </div>
+          </UiElement>
+        </UiElement>)}
+        {!results.length && <UiElement as="div" className="command-empty"><Search size={25} /><UiElement as="b"><UiText>{"未找到匹配项"}</UiText></UiElement><UiElement as="p"><UiText>{"试试服务名称、模型、执行 Agent 名称、IP 或页面名称。"}</UiText></UiElement></UiElement>}
+      </UiElement>
+      <UiElement as="div" className="command-footer"><UiElement as="span"><UiElement as="kbd"><UiText>{"↑"}</UiText></UiElement><UiElement as="kbd"><UiText>{"↓"}</UiText></UiElement><UiText>{"选择"}</UiText> <UiElement as="kbd"><UiText>{"Enter"}</UiText></UiElement><UiText>{"打开"}</UiText></UiElement><UiElement as="span">{results.length ? `${results.length} 个匹配项` : "支持中英文关键词"}</UiElement></UiElement>
+    </UiElement>
   </Modal>;
 }
+
+const CommandPalette = withUiSlot("component.CommandPalette", DefaultCommandPalette);
+export default CommandPalette;
+
+// Reference package implementation exports.
+export { DefaultCommandPalette };

@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useId, useRef, useState } from "react";
 import { isValidElement } from "react";
 import type { ReactNode } from "react";
@@ -110,7 +111,7 @@ function isDetail(value: NodeDetail, id: string): boolean {
   );
 }
 
-export default function AgentDetails({
+function DefaultAgentDetails({
   node,
   canAdminister,
   demo,
@@ -310,8 +311,8 @@ export default function AgentDetails({
         closeDisabled={saving}
         footer={
           canAdminister && tab === "registration" ? (
-            <div className="agent-details-footer">
-              <span className="agent-details-footer-state" role="status">
+            <UiElement as="div" className="agent-details-footer">
+              <UiElement as="span" className="agent-details-footer-state" role="status">
                 {saving
                   ? "正在保存平台登记信息…"
                   : saved
@@ -323,12 +324,12 @@ export default function AgentDetails({
                         : detail
                           ? "登记信息未修改"
                           : "详情尚未加载"}
-              </span>
-              <div className="agent-details-footer-actions">
-                <Button onClick={close} disabled={saving}>
-                  取消
+              </UiElement>
+              <UiElement as="div" className="agent-details-footer-actions">
+                <Button actionId="action.AgentDetails.001" onClick={close} disabled={saving}>
+                  <UiText>{"取消"}</UiText>
                 </Button>
-                <Button
+                <Button actionId="action.AgentDetails.002"
                   onClick={reset}
                   disabled={
                     !detail ||
@@ -337,9 +338,9 @@ export default function AgentDetails({
                     (!dirty && review === "none")
                   }
                 >
-                  还原修改
+                  <UiText>{"还原修改"}</UiText>
                 </Button>
-                <Button
+                <Button actionId="action.AgentDetails.003"
                   kind="primary"
                   loading={saving}
                   disabled={
@@ -352,34 +353,34 @@ export default function AgentDetails({
                   }
                   onClick={() => void save()}
                 >
-                  保存登记信息
+                  <UiText>{"保存登记信息"}</UiText>
                 </Button>
-              </div>
-            </div>
+              </UiElement>
+            </UiElement>
           ) : undefined
         }
       >
-        <div className="agent-details">
-          <div className="agent-details-summary">
-            <span className="agent-details-symbol">
+        <UiElement as="div" className="agent-details">
+          <UiElement as="div" className="agent-details-summary">
+            <UiElement as="span" className="agent-details-symbol">
               <Server size={24} />
-            </span>
-            <div>
-              <b>{detail?.name || node.name}</b>
-              <span>
-                执行 Agent · <code>{node.id}</code>
+            </UiElement>
+            <UiElement as="div">
+              <UiElement as="b">{detail?.name || node.name}</UiElement>
+              <UiElement as="span">
+                <UiText>{"执行 Agent ·"}</UiText> <UiElement as="code">{node.id}</UiElement>
                 {detail && ` · 配置版本 ${detail.configuration_revision}`}
-              </span>
-            </div>
+              </UiElement>
+            </UiElement>
             <Badge status={detail?.status || node.status} />
-          </div>
-          <div
+          </UiElement>
+          <UiElement as="div"
             className="agent-details-tabs"
             role="tablist"
             aria-label="Agent 详情分类"
           >
             {tabs.map((item, index) => (
-              <button
+              <UiButton actionId="action.AgentDetails.004"
                 key={item.id}
                 id={`${id}-${item.id}`}
                 type="button"
@@ -404,9 +405,9 @@ export default function AgentDetails({
               >
                 <item.icon size={15} />
                 {item.label}
-              </button>
+              </UiButton>
             ))}
-            <button
+            <UiButton actionId="action.AgentDetails.005"
               className="agent-details-reload"
               type="button"
               disabled={loading || saving}
@@ -414,27 +415,27 @@ export default function AgentDetails({
               aria-label="读取最新 Agent 配置"
             >
               <RefreshCw size={15} />
-              <span>读取最新</span>
-            </button>
-          </div>
+              <UiElement as="span"><UiText>{"读取最新"}</UiText></UiElement>
+            </UiButton>
+          </UiElement>
           {dirty && tab !== "registration" && (
-            <div className="agent-details-pending" role="status">
-              <span>登记信息有未保存的修改。</span>
-              <button type="button" onClick={() => switchTab("registration")}>
-                返回登记信息
-              </button>
-            </div>
+            <UiElement as="div" className="agent-details-pending" role="status">
+              <UiElement as="span"><UiText>{"登记信息有未保存的修改。"}</UiText></UiElement>
+              <UiButton actionId="action.AgentDetails.006" type="button" onClick={() => switchTab("registration")}>
+                <UiText>{"返回登记信息"}</UiText>
+              </UiButton>
+            </UiElement>
           )}
           {error && <ErrorBox message={error} />}
           {loading && <Spinner label="正在读取 Agent 详情" />}
           {!loading && !detail && (
-            <div className="agent-details-load-failure">
-              <p>未取得可信的配置详情，暂不允许编辑。</p>
-              <Button onClick={() => void load(false)}>重新读取详情</Button>
-            </div>
+            <UiElement as="div" className="agent-details-load-failure">
+              <UiElement as="p"><UiText>{"未取得可信的配置详情，暂不允许编辑。"}</UiText></UiElement>
+              <Button actionId="action.AgentDetails.007" onClick={() => void load(false)}><UiText>{"重新读取详情"}</UiText></Button>
+            </UiElement>
           )}
           {detail && draft && !loading && (
-            <div
+            <UiElement as="div"
               id={`${id}-panel`}
               role="tabpanel"
               aria-labelledby={`${id}-${tab}`}
@@ -445,18 +446,17 @@ export default function AgentDetails({
               {tab === "registration" && (
                 <>
                   <InfoBox>
-                    这里修改平台登记信息，不会更改远端 Agent
-                    的运行参数、现有容器名称或原生模型配置。
+                    <UiText>{"这里修改平台登记信息，不会更改远端 Agent 的运行参数、现有容器名称或原生模型配置。"}</UiText>
                     {!canAdminister &&
                       " 当前账号仅可查看，修改需要系统管理员权限。"}
                   </InfoBox>
-                  <div className="form-two">
+                  <UiElement as="div" className="form-two">
                     <Field
                       label="Agent 名称"
                       required
                       hint="用于控制台识别，保留节点 ID 与已有服务关联"
                     >
-                      <input
+                      <UiElement as="input"
                         aria-label="Agent 名称"
                         value={draft.name}
                         maxLength={100}
@@ -465,7 +465,7 @@ export default function AgentDetails({
                       />
                     </Field>
                     <Field label="节点标签" hint="用逗号分隔，可用于分类与搜索">
-                      <input
+                      <UiElement as="input"
                         aria-label="节点标签"
                         value={draft.labels}
                         maxLength={2200}
@@ -476,14 +476,13 @@ export default function AgentDetails({
                         placeholder="production, ascend-a3"
                       />
                     </Field>
-                  </div>
-                  <section className="agent-details-section">
-                    <h3>模型部署网络</h3>
-                    <p>
-                      模型的部署与通信使用以下 IP 和网卡；Agent 的管理连接 URL
-                      在“连接信息”中单独维护。
-                    </p>
-                    <div className="form-two">
+                  </UiElement>
+                  <UiRegion name="layout.panel" as="section" className="agent-details-section">
+                    <UiElement as="h3"><UiText>{"模型部署网络"}</UiText></UiElement>
+                    <UiElement as="p">
+                      <UiText>{"模型的部署与通信使用以下 IP 和网卡；Agent 的管理连接 URL 在“连接信息”中单独维护。"}</UiText>
+                    </UiElement>
+                    <UiElement as="div" className="form-two">
                       <Field
                         label="模型部署 IPv4 地址"
                         required
@@ -494,7 +493,7 @@ export default function AgentDetails({
                               "当前不可修改部署地址"
                         }
                       >
-                        <input
+                        <UiElement as="input"
                           aria-label="模型部署 IPv4 地址"
                           value={draft.address}
                           maxLength={64}
@@ -513,7 +512,7 @@ export default function AgentDetails({
                               "当前不可修改网卡"
                         }
                       >
-                        <input
+                        <UiElement as="input"
                           aria-label="指定通信网卡"
                           value={draft.nic_name}
                           maxLength={15}
@@ -524,8 +523,8 @@ export default function AgentDetails({
                           placeholder="自动使用上报网卡"
                         />
                       </Field>
-                    </div>
-                    <dl className="agent-details-facts compact">
+                    </UiElement>
+                    <UiElement as="dl" className="agent-details-facts compact">
                       <Fact
                         label="网卡选择策略"
                         value={
@@ -542,87 +541,83 @@ export default function AgentDetails({
                         label="Agent 上报网卡"
                         value={detail.reported_nic_name}
                       />
-                    </dl>
+                    </UiElement>
                     {knownText(detail.configured_nic_name) &&
                       !knownText(detail.reported_nic_name) && (
-                        <p className="agent-details-network-note">
-                          登记值用于后续部署配置；宿主接口的实际采样由 Agent
-                          提供。
-                        </p>
+                        <UiElement as="p" className="agent-details-network-note">
+                          <UiText>{"登记值用于后续部署配置；宿主接口的实际采样由 Agent 提供。"}</UiText>
+                        </UiElement>
                       )}
                     {(!detail.edit_policy.address.allowed ||
                       !detail.edit_policy.nic_name.allowed) && (
-                      <p className="agent-details-policy">
-                        锁定部署 IP 或网卡是为了保护后续部署与管理指向；Agent
-                        不在正常推理请求链路中。
-                      </p>
+                      <UiElement as="p" className="agent-details-policy">
+                        <UiText>{"锁定部署 IP 或网卡是为了保护后续部署与管理指向；Agent 不在正常推理请求链路中。"}</UiText>
+                      </UiElement>
                     )}
-                  </section>
+                  </UiRegion>
                   {(detail.references.services.length > 0 ||
                     detail.references.jobs.length > 0 ||
                     (detail.references.resource_claim_count ?? 0) > 0) && (
-                    <section className="agent-details-section">
-                      <h3>已有引用</h3>
-                      <p>
-                        名称与标签可独立维护；部署网络的修改条件由服务与活动任务状态共同校验。
-                      </p>
-                      <p>
-                        服务引用{" "}
+                    <UiRegion name="layout.panel" as="section" className="agent-details-section">
+                      <UiElement as="h3"><UiText>{"已有引用"}</UiText></UiElement>
+                      <UiElement as="p">
+                        <UiText>{"名称与标签可独立维护；部署网络的修改条件由服务与活动任务状态共同校验。"}</UiText>
+                      </UiElement>
+                      <UiElement as="p">
+                        <UiText>{"服务引用"}</UiText>{" "}
                         {detail.references.service_count ??
                           detail.references.services.length}{" "}
-                        项 · 活动任务{" "}
+                        <UiText>{"项 · 活动任务"}</UiText>{" "}
                         {detail.references.job_count ??
                           detail.references.jobs.length}{" "}
-                        项
+                        <UiText>{"项"}</UiText>
                         {typeof detail.references.resource_claim_count ===
                           "number" &&
                           ` · 未释放的资源声明 ${detail.references.resource_claim_count} 项`}
-                      </p>
-                      <div className="agent-details-references">
+                      </UiElement>
+                      <UiElement as="div" className="agent-details-references">
                         {detail.references.services.map((service) => (
-                          <div key={service.id}>
-                            <span>推理服务</span>
-                            <b>{service.name || service.id}</b>
+                          <UiElement as="div" key={service.id}>
+                            <UiElement as="span"><UiText>{"推理服务"}</UiText></UiElement>
+                            <UiElement as="b">{service.name || service.id}</UiElement>
                             <Badge status={service.status} />
                             {service.resources_may_exist && (
-                              <small>可能保留资源</small>
+                              <UiElement as="small"><UiText>{"可能保留资源"}</UiText></UiElement>
                             )}
-                          </div>
+                          </UiElement>
                         ))}
                         {detail.references.jobs.map((job) => (
-                          <div key={job.id}>
-                            <span>活动任务</span>
-                            <code>{job.id}</code>
+                          <UiElement as="div" key={job.id}>
+                            <UiElement as="span"><UiText>{"活动任务"}</UiText></UiElement>
+                            <UiElement as="code">{job.id}</UiElement>
                             <Badge status={job.status} />
-                          </div>
+                          </UiElement>
                         ))}
-                      </div>
-                    </section>
+                      </UiElement>
+                    </UiRegion>
                   )}
                   {review === "confirm" && (
-                    <label className="agent-details-review">
-                      <input
+                    <UiElement as="label" className="agent-details-review">
+                      <UiElement as="input"
                         type="checkbox"
                         checked={confirmed}
                         onChange={(event) => setConfirmed(event.target.checked)}
                       />
-                      已读取最新版本并核对，按当前输入保存
-                    </label>
+                      <UiText>{"已读取最新版本并核对，按当前输入保存"}</UiText>
+                    </UiElement>
                   )}
                 </>
               )}
               {tab === "connection" && (
                 <>
                   <InfoBox>
-                    Agent
-                    提供管理、部署与观测接口，通常不参与模型正常推理请求转发。连接
-                    URL 与模型部署 IP 可属于不同的网络。
+                    <UiText>{"Agent 提供管理、部署与观测接口，通常不参与模型正常推理请求转发。连接 URL 与模型部署 IP 可属于不同的网络。"}</UiText>
                   </InfoBox>
-                  <dl className="agent-details-facts">
+                  <UiElement as="dl" className="agent-details-facts">
                     <Fact
                       label="Agent 连接地址（URL）"
                       value={
-                        <span className="tabular">{detail.agent_url}</span>
+                        <UiElement as="span" className="tabular">{detail.agent_url}</UiElement>
                       }
                     />
                     <Fact
@@ -639,43 +634,43 @@ export default function AgentDetails({
                           detail.agent_metadata.transport_security.client_certificate_required === true
                             ? "mTLS · 强制校验客户端证书" : "HTTPS · 服务端证书与访问令牌"
                       } />}
-                  </dl>
-                  <div className="agent-details-connection-summary">
+                  </UiElement>
+                  <UiElement as="div" className="agent-details-connection-summary">
                     {connectionSummary(detail)}
-                  </div>
-                  <section className="agent-details-section agent-details-connection-action">
-                    <div>
-                      <h3>连接与凭据轮换</h3>
-                      <p>
-                        新令牌仅用于本次校验后保存；不写入浏览器存储。更新连接前会校验目标身份与已有引用。
-                      </p>
-                    </div>
+                  </UiElement>
+                  <UiRegion name="layout.panel" as="section" className="agent-details-section agent-details-connection-action">
+                    <UiElement as="div">
+                      <UiElement as="h3"><UiText>{"连接与凭据轮换"}</UiText></UiElement>
+                      <UiElement as="p">
+                        <UiText>{"新令牌仅用于本次校验后保存；不写入浏览器存储。更新连接前会校验目标身份与已有引用。"}</UiText>
+                      </UiElement>
+                    </UiElement>
                     {canAdminister ? (
-                      <Button
+                      <Button actionId="action.AgentDetails.008"
                         disabled={!allowed("credentials")}
                         onClick={() => onCredentials(detail)}
                       >
-                        更新连接与凭据
+                        <UiText>{"更新连接与凭据"}</UiText>
                       </Button>
                     ) : (
-                      <span className="muted-text">当前账号只读</span>
+                      <UiElement as="span" className="muted-text"><UiText>{"当前账号只读"}</UiText></UiElement>
                     )}
-                  </section>
+                  </UiRegion>
                   {canAdminister && !detail.edit_policy.credentials.allowed && (
-                    <p className="agent-details-policy">
+                    <UiElement as="p" className="agent-details-policy">
                       {detail.edit_policy.credentials.reason}
-                    </p>
+                    </UiElement>
                   )}
                   {canAdminister && !detail.edit_policy.agent_url.allowed && (
-                    <p className="agent-details-policy">
+                    <UiElement as="p" className="agent-details-policy">
                       {detail.edit_policy.agent_url.reason}
-                    </p>
+                    </UiElement>
                   )}
                 </>
               )}
               {tab === "runtime" && (
                 <>
-                  <div className="agent-details-observation">
+                  <UiElement as="div" className="agent-details-observation">
                     <Badge
                       status={
                         nodeObservation(detail, now, demo).state === "fresh"
@@ -691,15 +686,14 @@ export default function AgentDetails({
                     </Badge>
                     {detail.collected_at &&
                       Number.isFinite(Date.parse(detail.collected_at)) && (
-                        <span>
-                          采于 {observationAge(detail.collected_at, now)}
-                        </span>
+                        <UiElement as="span">
+                          <UiText>{"采于"}</UiText> {observationAge(detail.collected_at, now)}
+                        </UiElement>
                       )}
-                  </div>
-                  <p className="agent-details-runtime-note">
-                    以下信息来自最近一次 Agent
-                    上报。读取登记配置不会触发宿主采样，可在节点列表执行连接探测更新。
-                  </p>
+                  </UiElement>
+                  <UiElement as="p" className="agent-details-runtime-note">
+                    <UiText>{"以下信息来自最近一次 Agent 上报。读取登记配置不会触发宿主采样，可在节点列表执行连接探测更新。"}</UiText>
+                  </UiElement>
                   {![
                     detail.architecture,
                     detail.os,
@@ -708,21 +702,20 @@ export default function AgentDetails({
                     detail.host_identity,
                     detail.daemon_id,
                   ].some(knownText) && (
-                    <div className="agent-runtime-setup">
+                    <UiElement as="div" className="agent-runtime-setup">
                       <Activity size={24} />
-                      <div>
-                        <b>运行信息待采集</b>
-                        <p>
-                          先检查 Agent
-                          连接，连接探测成功后将展示已采集的运行环境。
-                        </p>
-                      </div>
-                      <Button onClick={() => setTab("connection")}>
-                        检查连接配置
+                      <UiElement as="div">
+                        <UiElement as="b"><UiText>{"运行信息待采集"}</UiText></UiElement>
+                        <UiElement as="p">
+                          <UiText>{"先检查 Agent 连接，连接探测成功后将展示已采集的运行环境。"}</UiText>
+                        </UiElement>
+                      </UiElement>
+                      <Button actionId="action.AgentDetails.009" onClick={() => setTab("connection")}>
+                        <UiText>{"检查连接配置"}</UiText>
                       </Button>
-                    </div>
+                    </UiElement>
                   )}
-                  <dl className="agent-details-facts">
+                  <UiElement as="dl" className="agent-details-facts">
                     <Fact label="处理器架构" value={detail.architecture} />
                     <Fact label="操作系统" value={detail.os} />
                     <Fact label="Docker 版本" value={detail.docker_version} />
@@ -741,13 +734,13 @@ export default function AgentDetails({
                     {knownText(detail.host_identity) && (
                       <Fact
                         label="宿主身份"
-                        value={<code>{detail.host_identity}</code>}
+                        value={<UiElement as="code">{detail.host_identity}</UiElement>}
                       />
                     )}
                     {knownText(detail.daemon_id) && (
                       <Fact
                         label="Docker daemon"
-                        value={<code>{detail.daemon_id}</code>}
+                        value={<UiElement as="code">{detail.daemon_id}</UiElement>}
                       />
                     )}
                     <Fact
@@ -775,7 +768,7 @@ export default function AgentDetails({
                           value={when(detail.last_seen)}
                         />
                       )}
-                  </dl>
+                  </UiElement>
                   {detail.agent_metadata &&
                     (knownText(detail.agent_metadata.agent_version) ||
                       isResourceInteger(detail.agent_metadata.agent_protocol) ||
@@ -789,9 +782,9 @@ export default function AgentDetails({
                       knownText(
                         detail.agent_metadata.motor_profile?.commit,
                       )) && (
-                      <section className="agent-details-section">
-                        <h3>Agent 兼容信息</h3>
-                        <dl className="agent-details-facts">
+                      <UiRegion name="layout.panel" as="section" className="agent-details-section">
+                        <UiElement as="h3"><UiText>{"Agent 兼容信息"}</UiText></UiElement>
+                        <UiElement as="dl" className="agent-details-facts">
                           <Fact
                             label="Agent 版本"
                             value={detail.agent_metadata.agent_version}
@@ -829,30 +822,30 @@ export default function AgentDetails({
                             <Fact
                               label="原生适配基线"
                               value={
-                                <code>
+                                <UiElement as="code">
                                   {detail.agent_metadata.motor_profile.commit}
-                                </code>
+                                </UiElement>
                               }
                             />
                           )}
-                        </dl>
-                      </section>
+                        </UiElement>
+                      </UiRegion>
                     )}
                   {detail.error && <ErrorBox message={detail.error} />}
                   {!!detail.collection_errors?.length && (
-                    <div className="agent-details-collection-errors">
+                    <UiElement as="div" className="agent-details-collection-errors">
                       {detail.collection_errors.map((item, index) => (
-                        <p key={index}>
-                          <b>{item.source}</b> · {item.message}
-                        </p>
+                        <UiElement as="p" key={index}>
+                          <UiElement as="b">{item.source}</UiElement> <UiText>{"·"}</UiText> {item.message}
+                        </UiElement>
                       ))}
-                    </div>
+                    </UiElement>
                   )}
                 </>
               )}
-            </div>
+            </UiElement>
           )}
-        </div>
+        </UiElement>
       </Modal>
       {discard && (
         <Confirm
@@ -879,12 +872,19 @@ function factAvailable(value: ReactNode): boolean {
   return false;
 }
 
-function Fact({ label, value }: { label: string; value: ReactNode }) {
+function DefaultFact({ label, value }: { label: string; value: ReactNode }) {
   if (!factAvailable(value)) return null;
   return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{typeof value === "boolean" ? (value ? "是" : "否") : value}</dd>
-    </div>
+    <UiElement as="div">
+      <UiElement as="dt">{label}</UiElement>
+      <UiElement as="dd">{typeof value === "boolean" ? (value ? "是" : "否") : value}</UiElement>
+    </UiElement>
   );
 }
+
+const AgentDetails = withUiSlot("component.AgentDetails", DefaultAgentDetails);
+export default AgentDetails;
+const Fact = withUiSlot("component.Fact", DefaultFact);
+
+// Reference package implementation exports.
+export { DefaultAgentDetails, DefaultFact };

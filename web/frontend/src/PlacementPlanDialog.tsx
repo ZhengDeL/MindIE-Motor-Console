@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { api, roleName, when } from "./api";
 import type { Json, NodeInfo, Placement } from "./api";
@@ -160,7 +161,7 @@ function minimumHbm(value: string): number | undefined {
   return bytes;
 }
 
-export default function PlacementPlanDialog({
+function DefaultPlacementPlanDialog({
   configuration,
   nodes,
   existingCount,
@@ -308,33 +309,33 @@ export default function PlacementPlanDialog({
       onClose={onClose}
       footer={
         <>
-          <span className="placement-plan-footer-note">
-            建议不会预留资源，部署前仍需执行预检。
-          </span>
-          <Button onClick={onClose}>取消</Button>
-          <Button kind="primary" disabled={!canApply} onClick={apply}>
-            应用到布局
+          <UiElement as="span" className="placement-plan-footer-note">
+            <UiText>{"建议不会预留资源，部署前仍需执行预检。"}</UiText>
+          </UiElement>
+          <Button actionId="action.PlacementPlanDialog.001" onClick={onClose}><UiText>{"取消"}</UiText></Button>
+          <Button actionId="action.PlacementPlanDialog.002" kind="primary" disabled={!canApply} onClick={apply}>
+            <UiText>{"应用到布局"}</UiText>
           </Button>
         </>
       }
     >
-      <div className="placement-plan-dialog">
-        <div className="placement-plan-settings">
+      <UiElement as="div" className="placement-plan-dialog">
+        <UiElement as="div" className="placement-plan-settings">
           <Field label="分配策略">
             <Select
               value={strategy}
               onChange={(value) => setStrategy(value as Strategy)}
               ariaLabel="资源建议分配策略"
             >
-              <option value="pack">集中部署 · 优先减少宿主</option>
-              <option value="spread">分散部署 · 尽量均衡宿主</option>
+              <UiElement as="option" value="pack"><UiText>{"集中部署 · 优先减少宿主"}</UiText></UiElement>
+              <UiElement as="option" value="spread"><UiText>{"分散部署 · 尽量均衡宿主"}</UiText></UiElement>
             </Select>
           </Field>
           <Field
             label="最低空闲 HBM（GiB / 设备）"
             hint="留空采用系统默认，不代表模型显存需求"
           >
-            <input
+            <UiElement as="input"
               inputMode="decimal"
               value={hbm}
               maxLength={32}
@@ -343,207 +344,213 @@ export default function PlacementPlanDialog({
               aria-label="最低空闲 HBM"
             />
           </Field>
-          <Button loading={loading} onClick={regenerate} disabled={!runtimeAccess.enabled}>
-            重新生成
+          <Button actionId="action.PlacementPlanDialog.003" loading={loading} onClick={regenerate} disabled={!runtimeAccess.enabled}>
+            <UiText>{"重新生成"}</UiText>
           </Button>
-        </div>
+        </UiElement>
         {error && <ErrorBox message={error} />}
-        {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}分配条件仍保留，原建议不会应用。</InfoBox>}
+        {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}<UiText>{"分配条件仍保留，原建议不会应用。"}</UiText></InfoBox>}
         {changed && (
-          <div className="placement-plan-notice" role="status">
-            分配条件已更改，请重新生成建议后应用。
-          </div>
+          <UiElement as="div" className="placement-plan-notice" role="status">
+            <UiText>{"分配条件已更改，请重新生成建议后应用。"}</UiText>
+          </UiElement>
         )}
         {expired && (
-          <div className="placement-plan-notice" role="status">
-            资源建议已过期，请重新生成以读取新的资源观测。
-          </div>
+          <UiElement as="div" className="placement-plan-notice" role="status">
+            <UiText>{"资源建议已过期，请重新生成以读取新的资源观测。"}</UiText>
+          </UiElement>
         )}
         {unavailableNode && (
-          <div className="placement-plan-notice" role="status">
-            建议中的节点已移除、离线或不再支持 Docker，请重新生成。
-          </div>
+          <UiElement as="div" className="placement-plan-notice" role="status">
+            <UiText>{"建议中的节点已移除、离线或不再支持 Docker，请重新生成。"}</UiText>
+          </UiElement>
         )}
         {loading ? (
           <Spinner label="正在读取可信资源并生成建议" />
         ) : (
           plan && (
             <>
-              <div
+              <UiElement as="div"
                 className={`placement-plan-result ${plan.valid && plan.placements.length && !plan.errors.length ? "is-valid" : "is-unavailable"}`}
                 role="status"
               >
-                <strong>
+                <UiElement as="strong">
                   {plan.valid && plan.placements.length && !plan.errors.length
                     ? "已生成可供核对的布局建议"
                     : "当前没有满足条件的完整布局"}
-                </strong>
-                <span>
+                </UiElement>
+                <UiElement as="span">
                   {plan.valid && plan.placements.length
                     ? "确认节点、设备与端口后，再应用到服务。"
                     : "请查看排除原因，检查节点通信配置、采集状态和可用设备后重试；也可返回手工配置并执行预检。"}
-                </span>
-              </div>
+                </UiElement>
+              </UiElement>
               {plan.errors.length > 0 && (
-                <ul className="placement-plan-messages is-error">
+                <UiElement as="ul" className="placement-plan-messages is-error">
                   {plan.errors.map((message, index) => (
-                    <li key={index}>{message}</li>
+                    <UiElement as="li" key={index}>{message}</UiElement>
                   ))}
-                </ul>
+                </UiElement>
               )}
               {plan.warnings.length > 0 && (
-                <ul className="placement-plan-messages">
+                <UiElement as="ul" className="placement-plan-messages">
                   {plan.warnings.map((message, index) => (
-                    <li key={index}>{message}</li>
+                    <UiElement as="li" key={index}>{message}</UiElement>
                   ))}
-                </ul>
+                </UiElement>
               )}
               {!!plan.placements.length && (
                 <>
-                  <div className="placement-plan-summary">
-                    <span>
-                      <b>{plan.placements.length}</b> 个角色布局
-                    </span>
-                    <span>
-                      <b>
+                  <UiElement as="div" className="placement-plan-summary">
+                    <UiElement as="span">
+                      <UiElement as="b">{plan.placements.length}</UiElement> <UiText>{"个角色布局"}</UiText>
+                    </UiElement>
+                    <UiElement as="span">
+                      <UiElement as="b">
                         {
                           new Set(plan.placements.map((item) => item.node_id))
                             .size
                         }
-                      </b>{" "}
-                      个执行节点
-                    </span>
-                    <span>
-                      <b>
+                      </UiElement>{" "}
+                      <UiText>{"个执行节点"}</UiText>
+                    </UiElement>
+                    <UiElement as="span">
+                      <UiElement as="b">
                         {plan.placements.reduce(
                           (count, item) => count + item.devices.length,
                           0,
                         )}
-                      </b>{" "}
-                      个 NPU 设备声明
-                    </span>
-                  </div>
-                  <p className="placement-plan-scroll-hint">
-                    左右滑动查看设备与端口。
-                  </p>
-                  <div
+                      </UiElement>{" "}
+                      <UiText>{"个 NPU 设备声明"}</UiText>
+                    </UiElement>
+                  </UiElement>
+                  <UiElement as="p" className="placement-plan-scroll-hint">
+                    <UiText>{"左右滑动查看设备与端口。"}</UiText>
+                  </UiElement>
+                  <UiElement as="div"
                     className="table-wrap"
                     role="region"
                     aria-label="建议布局明细"
                     tabIndex={0}
                   >
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>角色 / 实例</th>
-                          <th>节点</th>
-                          <th>NPU 设备</th>
-                          <th>端口</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                    <UiElement as="table">
+                      <UiElement as="thead">
+                        <UiElement as="tr">
+                          <UiElement as="th"><UiText>{"角色 / 实例"}</UiText></UiElement>
+                          <UiElement as="th"><UiText>{"节点"}</UiText></UiElement>
+                          <UiElement as="th"><UiText>{"NPU 设备"}</UiText></UiElement>
+                          <UiElement as="th"><UiText>{"端口"}</UiText></UiElement>
+                        </UiElement>
+                      </UiElement>
+                      <UiElement as="tbody">
                         {plan.placements.map((placement, index) => (
-                          <tr
+                          <UiElement as="tr"
                             key={`${placement.node_id}-${placement.role}-${placement.instance_name}-${index}`}
                           >
-                            <td>
-                              <b>{roleName(placement.role)}</b>
-                              <span className="cell-secondary mono">
+                            <UiElement as="td">
+                              <UiElement as="b">{roleName(placement.role)}</UiElement>
+                              <UiElement as="span" className="cell-secondary mono">
                                 {placement.instance_name}
-                              </span>
-                            </td>
-                            <td>
+                              </UiElement>
+                            </UiElement>
+                            <UiElement as="td">
                               {nodeName(placement.node_id)}
-                              <span className="cell-secondary tabular">
+                              <UiElement as="span" className="cell-secondary tabular">
                                 {nodes.find(
                                   (node) => node.id === placement.node_id,
                                 )?.address || placement.node_id}
-                              </span>
-                            </td>
-                            <td>
+                              </UiElement>
+                            </UiElement>
+                            <UiElement as="td">
                               {placement.devices.length
                                 ? placement.devices
                                     .map((id) => `davinci${id}`)
                                     .join("、")
                                 : "不分配 NPU"}
-                            </td>
-                            <td>
+                            </UiElement>
+                            <UiElement as="td">
                               {Object.entries(placement.ports).length
                                 ? Object.entries(placement.ports).map(
                                     ([key, port]) => (
-                                      <span
+                                      <UiElement as="span"
                                         className="placement-plan-port"
                                         key={key}
                                       >
-                                        {portLabels[key] || key}：{port}
-                                      </span>
+                                        {portLabels[key] || key}<UiText>{"："}</UiText>{port}
+                                      </UiElement>
                                     ),
                                   )
                                 : "使用原生配置"}
-                            </td>
-                          </tr>
+                            </UiElement>
+                          </UiElement>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </UiElement>
+                    </UiElement>
+                  </UiElement>
                   {existingCount > 0 && (
                     <InfoBox>
-                      应用后将替换当前 {existingCount}{" "}
-                      个角色布局；服务配置与环境变量保持不变。
+                      <UiText>{"应用后将替换当前"}</UiText> {existingCount}{" "}
+                      <UiText>{"个角色布局；服务配置与环境变量保持不变。"}</UiText>
                     </InfoBox>
                   )}
                 </>
               )}
-              <div className="placement-plan-evidence">
-                <span>
-                  策略：
+              <UiElement as="div" className="placement-plan-evidence">
+                <UiElement as="span">
+                  <UiText>{"策略："}</UiText>
                   {preview?.settings.strategy === "spread"
                     ? "分散部署"
                     : "集中部署"}
-                </span>
-                <span>
-                  建议读取于{" "}
+                </UiElement>
+                <UiElement as="span">
+                  <UiText>{"建议读取于"}</UiText>{" "}
                   {when(
                     plan.evidence.generated_at ||
                       new Date(preview!.receivedAt).toISOString(),
                   )}
-                </span>
-                <span>核对期最长 30 秒，实际部署将重新检查资源。</span>
-              </div>
+                </UiElement>
+                <UiElement as="span"><UiText>{"核对期最长 30 秒，实际部署将重新检查资源。"}</UiText></UiElement>
+              </UiElement>
               {plan.evidence.basis && (
-                <p className="placement-plan-basis">
-                  候选依据：{plan.evidence.basis}
-                </p>
+                <UiElement as="p" className="placement-plan-basis">
+                  <UiText>{"候选依据："}</UiText>{plan.evidence.basis}
+                </UiElement>
               )}
               {plan.evidence.candidate_nodes !== undefined &&
                 plan.evidence.candidate_devices !== undefined && (
-                  <p className="placement-plan-basis">
-                    已核验候选：{plan.evidence.candidate_nodes} 个节点 /{" "}
-                    {plan.evidence.candidate_devices} 个设备。
-                  </p>
+                  <UiElement as="p" className="placement-plan-basis">
+                    <UiText>{"已核验候选："}</UiText>{plan.evidence.candidate_nodes} <UiText>{"个节点 /"}</UiText>{" "}
+                    {plan.evidence.candidate_devices} <UiText>{"个设备。"}</UiText>
+                  </UiElement>
                 )}
               {!!plan.exclusions.length && (
-                <details
+                <UiElement as="details"
                   className="placement-plan-exclusions"
                   open={!plan.valid}
                 >
-                  <summary>
-                    未纳入候选的节点（{plan.exclusions.length}）
-                  </summary>
-                  <ul>
+                  <UiElement as="summary">
+                    <UiText>{"未纳入候选的节点（"}</UiText>{plan.exclusions.length}<UiText>{"）"}</UiText>
+                  </UiElement>
+                  <UiElement as="ul">
                     {plan.exclusions.map((item, index) => (
-                      <li key={`${item.node_id}-${index}`}>
-                        <b>{nodeName(item.node_id)}</b>
-                        <span>{item.reason}</span>
-                      </li>
+                      <UiElement as="li" key={`${item.node_id}-${index}`}>
+                        <UiElement as="b">{nodeName(item.node_id)}</UiElement>
+                        <UiElement as="span">{item.reason}</UiElement>
+                      </UiElement>
                     ))}
-                  </ul>
-                </details>
+                  </UiElement>
+                </UiElement>
               )}
             </>
           )
         )}
-      </div>
+      </UiElement>
     </Modal>
   );
 }
+
+const PlacementPlanDialog = withUiSlot("component.PlacementPlanDialog", DefaultPlacementPlanDialog);
+export default PlacementPlanDialog;
+
+// Reference package implementation exports.
+export { DefaultPlacementPlanDialog };

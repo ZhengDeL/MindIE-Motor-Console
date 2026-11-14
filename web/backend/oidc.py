@@ -211,7 +211,7 @@ class OIDCManager:
             raise HTTPException(409, "请先初始化本地管理员")
         # No open return_to parameter. Every attempt ends at this console's '/'.
         state, browser, nonce, verifier = (secrets.token_urlsafe(32) for _ in range(4))
-        self.auth._throttle(request, "oidc-start:" + state)
+        self.auth.throttle(request, "oidc-start:" + state)
         metadata = self.metadata()
         with self._oauth_client(state=state) as client:
             url, _ = client.create_authorization_url(metadata["authorization_endpoint"], state=state,
@@ -286,7 +286,7 @@ class OIDCManager:
             # Do not echo/log provider errors, authorization codes, ID/access
             # tokens or client secrets. A consumed attempt is never replayed.
             with self.auth.transaction(write=True) as db:
-                self.auth._event(db, "anonymous", "oidc_login", "provider", "denied")
+                self.auth.security_event(db, "anonymous", "oidc_login", "provider", "denied")
             response = RedirectResponse("/?auth_error=oidc", status_code=303)
         response.delete_cookie(self.flow_cookie, path="/", secure=self.auth.settings.secure_cookie, httponly=True, samesite="lax")
         response.headers.update({"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"})

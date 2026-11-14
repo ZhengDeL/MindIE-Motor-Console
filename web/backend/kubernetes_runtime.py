@@ -22,7 +22,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 import httpx
 import yaml
 
@@ -100,7 +100,13 @@ def _resource_path(ref: dict) -> str:
 
 class KubernetesRuntime:
     def __init__(self, data_dir: str | Path | None = None, upstream_dir: str | Path | None = None,
-                 runner=None, read_only: bool | None = None):
+                 runner=None, read_only: bool | None = None, native_adapter=None,
+                 provider_generation=None, provider_binding=None):
+        if native_adapter is None:
+            from .provider_host.defaults import ReferenceNativeAdapter
+            native_adapter = ReferenceNativeAdapter()
+        self.native_adapter = native_adapter
+        self.provider_generation, self.provider_binding = provider_generation, provider_binding
         self.base = Path(data_dir or os.getenv("MOTOR_DATA_DIR", "/var/lib/motor-console")).resolve() / "kubernetes"
         self.upstream = Path(upstream_dir or os.getenv("MOTOR_UPSTREAM_DIR", "/opt/motor/upstream")).resolve()
         self.runner = runner or subprocess.run
@@ -130,6 +136,10 @@ class KubernetesRuntime:
                 result.append((name, None))
         return tuple(result)
 
+    def native_render_context(self):
+        from .provider_host.contracts import NativeRenderContextV1
+        return NativeRenderContextV1(self.upstream, self._directory, self.runner, self.native_adapter.verify_upstream_source)
+
     def _directory(self, service_id: str) -> Path:
         return self.base / service_key(service_id)
 
@@ -144,6 +154,9 @@ class KubernetesRuntime:
 
     def _save(self, state: dict) -> None:
         state["updated_at"] = _now()
+        if self.provider_generation:
+            state.setdefault("provider_generation", self.provider_generation)
+            state.setdefault("provider_binding", self.provider_binding)
         _json_write(self._directory(state["service_id"]) / "ownership.json", state)
 
     def _require_connection(self) -> None:
@@ -362,77 +375,8 @@ class KubernetesRuntime:
 
     @native_operation
     def _render(self, payload: dict, namespace: str, revision: str) -> tuple[list[dict], Path]:
-        """Use the pinned CLI and native configmap assets in isolated subprocesses."""
-        source = self.upstream / "examples/deployer"
-        if not (source / "deploy.py").is_file():
-            raise HTTPException(503, "Pinned Motor deploy.py checkout is missing")
-        from .motor_adapter import MotorConfigError, verify_upstream_source
-        try:
-            verify_upstream_source(self.upstream)
-        except MotorConfigError as exc:
-            raise HTTPException(409, "Pinned upstream verification failed: " + str(exc)) from exc
-        directory = self._directory(payload["service_id"]) / "revisions" / revision
-        directory.mkdir(parents=True, exist_ok=False)
-        directory.chmod(0o700)
-        _json_write(directory / "original.json", {k: payload.get(k) for k in ("user_config", "env")})
-        config = copy.deepcopy(payload.get("user_config"))
-        if not isinstance(config, dict) or not isinstance(config.get("motor_deploy_config"), dict):
-            raise HTTPException(422, "user_config.motor_deploy_config is required")
-        if not isinstance(payload.get("env"), dict):
-            raise HTTPException(422, "env must be a JSON object")
-        config["motor_deploy_config"]["job_id"] = namespace
-        config_dir = directory / "config"
-        _json_write(config_dir / "user_config.json", config)
-        _json_write(config_dir / "env.json", payload["env"])
-        deployer = directory / "deployer"
-        shutil.copytree(source, deployer, ignore=shutil.ignore_patterns("__pycache__", "output_yamls", "motor_workspace"))
-        # The image checkout is read-only; only this isolated copy is made writable.
-        for path in [deployer, *deployer.rglob("*")]:
-            path.chmod(path.stat().st_mode | 0o200)
-        process_env = os.environ.copy()
-        process_env["PYTHONDONTWRITEBYTECODE"] = "1"
-        commands = [sys.executable, str(deployer / "deploy.py"), "--dry-run", "--nostep", "--skip-check",
-                    "--config_dir", str(config_dir)]
-        try:
-            rendered = self.runner(commands, cwd=str(deployer), env=process_env, text=True, capture_output=True,
-                                   timeout=remaining_time(150), check=False, shell=False)
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise HTTPException(503, "Native Motor rendering failed to start or timed out") from exc
-        (directory / "render.log").write_text(rendered.stdout + rendered.stderr, encoding="utf-8")
-        if rendered.returncode:
-            raise HTTPException(422, "Native Motor dry-run failed; inspect the agent revision render.log")
-        # Native dry-run intentionally skips shell-env rendering and ConfigMap creation.
-        # Do the file-only preparation on the private copy using the original helpers.
-        helper = (
-            "import json,pathlib;from lib.utils import read_json,set_env_to_shell;"
-            "from lib.generator.k8s_utils import get_deploy_mode_from_config;"
-            "from lib.config_validator import validate_node_selectors;"
-            "from lib.prepare_utils import configmap_assets;"
-            "u=read_json(" + repr(str(config_dir / "user_config.json")) + ");"
-            "validate_node_selectors(u);"
-            "set_env_to_shell(u," + repr(str(config_dir / "env.json")) + ","
-            "get_deploy_mode_from_config(u['motor_deploy_config']));"
-            "d={n:p.read_text(encoding='utf-8') for p,n in configmap_assets(pathlib.Path.cwd())};"
-            "d['user_config.json']=json.dumps(u,ensure_ascii=False);"
-            "d['nodeport_conflict_coordinator.txt']='';d['nodeport_conflict_controller.txt']='';"
-            "pathlib.Path('assets.json').write_text(json.dumps(d),encoding='utf-8')"
-        )
-        try:
-            prepared = self.runner([sys.executable, "-c", helper], cwd=str(deployer), env=process_env, text=True,
-                                   capture_output=True, timeout=remaining_time(45), check=False, shell=False)
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise HTTPException(503, "Native ConfigMap preparation failed to start or timed out") from exc
-        if prepared.returncode:
-            raise HTTPException(422, "Native Motor ConfigMap preparation failed")
-        documents: list[dict] = []
-        for path in sorted((deployer / "output_yamls").glob("*.y*ml")):
-            documents.extend(doc for doc in yaml.safe_load_all(path.read_text(encoding="utf-8")) if doc)
-        assets = json.loads((deployer / "assets.json").read_text(encoding="utf-8"))
-        documents.insert(0, {"apiVersion": "v1", "kind": "ConfigMap",
-                             "metadata": {"name": "motor-config", "namespace": namespace}, "data": assets})
-        if len(documents) == 1:
-            raise HTTPException(422, "Native Motor renderer produced no workload YAML")
-        return documents, directory
+        return self.native_adapter.render_kubernetes(self.native_render_context(), payload, namespace, revision)
+
 
     @staticmethod
     def _scope(documents: list[dict], namespace: str, service_id: str, revision: str) -> list[dict]:
@@ -496,8 +440,8 @@ class KubernetesRuntime:
         namespace = namespace_for(service_id)
         from .native_contracts import native_contract_checks
         from .compatibility import public_profile
-        contract_checks = native_contract_checks(payload.get("user_config"), payload.get("env"), runtime="kubernetes",
-                                                 commit=public_profile()["commit"])
+        contract_checks = self.native_adapter.native_contract_checks(payload.get("user_config"), payload.get("env"), runtime="kubernetes",
+                                                 commit=self.native_adapter.public_profile()["commit"])
         if any(item["status"] == "fail" for item in contract_checks):
             return {"valid": False, "checks": contract_checks, "warnings": [], "command": "", "namespace": namespace,
                     "resources": [], "manifest_yaml": "", "extra_manifest_sha256": None}
@@ -660,54 +604,8 @@ class KubernetesRuntime:
     @native_operation
     def _render_scale(self, baseline: dict, target: dict, document: dict,
                       service_id: str, revision: str) -> tuple[dict, Path]:
-        """Run only the native, file-only replica updater; never run the update CLI.
+        return self.native_adapter.render_kubernetes_scale(self.native_render_context(), baseline, target, document, service_id, revision)
 
-        Pinned deploy.py --dry-run does not cover --update_instance_num. Its CLI
-        reads and mutates the cluster, so scaling uses its original pure helpers
-        against a private copy of the already owned InferServiceSet instead.
-        """
-        from .motor_adapter import MotorConfigError, verify_upstream_source
-        try:
-            verify_upstream_source(self.upstream)
-        except MotorConfigError as exc:
-            raise HTTPException(409, "Pinned upstream verification failed: " + str(exc)) from exc
-        source = self.upstream / "examples/deployer"
-        directory = self._directory(service_id) / "revisions" / revision
-        directory.mkdir(parents=True, exist_ok=False)
-        directory.chmod(0o700)
-        _json_write(directory / "baseline.json", baseline)
-        _json_write(directory / "target.json", target)
-        manifest = directory / "infer-service.yaml"
-        manifest.write_text(yaml.safe_dump(document, allow_unicode=True, sort_keys=False), encoding="utf-8")
-        deployer = directory / "deployer"
-        shutil.copytree(source, deployer, ignore=shutil.ignore_patterns("__pycache__", "output_yamls", "motor_workspace"))
-        for path in [deployer, *deployer.rglob("*")]:
-            path.chmod(path.stat().st_mode | 0o200)
-        helper = (
-            "import json,pathlib;"
-            "from lib.config_validator import validate_only_instance_changed;"
-            "from lib.generator.engine import validate_instance_nums;"
-            "from lib.generator.infer_service import update_infer_service_replicas_only;"
-            "b=json.loads(pathlib.Path(" + repr(str(directory / "baseline.json")) + ").read_text(encoding='utf-8'));"
-            "u=json.loads(pathlib.Path(" + repr(str(directory / "target.json")) + ").read_text(encoding='utf-8'));"
-            "validate_only_instance_changed(u,b);validate_instance_nums(u);"
-            "update_infer_service_replicas_only(" + repr(str(manifest)) + ",u['motor_deploy_config'],u)"
-        )
-        process_env = os.environ.copy()
-        process_env["PYTHONDONTWRITEBYTECODE"] = "1"
-        process_env["KUBECONFIG"] = str(directory / "no-cluster-access")
-        try:
-            result = self.runner([sys.executable, "-c", helper], cwd=str(deployer), env=process_env,
-                                 text=True, capture_output=True, timeout=remaining_time(45), check=False, shell=False)
-        except (OSError, subprocess.TimeoutExpired) as exc:
-            raise HTTPException(503, "Native Motor replica rendering failed to start or timed out") from exc
-        (directory / "render.log").write_text(result.stdout + result.stderr, encoding="utf-8")
-        if result.returncode:
-            raise HTTPException(422, "Native Motor replica rendering failed; inspect the agent revision render.log")
-        documents = [d for d in yaml.safe_load_all(manifest.read_text(encoding="utf-8")) if d]
-        if len(documents) != 1 or not isinstance(documents[0], dict):
-            raise HTTPException(422, "Native replica updater must return the single owned InferServiceSet")
-        return documents[0], directory
 
     @native_operation
     @operation_budget(230)
@@ -723,7 +621,7 @@ class KubernetesRuntime:
             raise HTTPException(422, "Scaling accepts only service_id, counts and dry_run")
         if payload.get("motor_profile"):
             from .compatibility import check_binding
-            check_binding(payload["motor_profile"])
+            self.native_adapter.check_binding(payload["motor_profile"])
         counts = payload.get("counts")
         dry_run = payload.get("dry_run", False)
         if not isinstance(dry_run, bool):
@@ -1245,10 +1143,15 @@ class KubernetesRuntime:
                 "endpoint": "", "endpoint_status": "external_unresolved"}
 
 
-def create_kubernetes_router(runtime: KubernetesRuntime | None = None) -> APIRouter:
+def create_kubernetes_router(runtime: KubernetesRuntime | None = None, *, agent_policy=None, operation_tracker=None) -> APIRouter:
     instance = runtime or KubernetesRuntime()
 
-    router = APIRouter(prefix="/agent/kubernetes", dependencies=[Depends(authorize_agent)])
+    def selected_authorize(authorization: str | None = Header(default=None)):
+        return agent_policy.authorize(authorization)
+    router = APIRouter(prefix="/agent/kubernetes", dependencies=[Depends(selected_authorize if agent_policy is not None else authorize_agent)])
+
+    def tracked(action, payload, result):
+        return operation_tracker("result", "kubernetes", action, payload, result) if operation_tracker is not None else result
 
     @router.get("/nodes")
     def nodes(request: Request) -> dict:
@@ -1272,23 +1175,23 @@ def create_kubernetes_router(runtime: KubernetesRuntime | None = None) -> APIRou
 
     @router.post("/deploy")
     def deploy(payload: dict) -> dict:
-        return instance.deploy(payload)
+        return tracked("deploy", payload, instance.deploy(payload))
 
     @router.post("/scale")
     def scale(payload: dict) -> dict:
-        return instance.scale(payload)
+        return tracked("scale", payload, instance.scale(payload))
 
     @router.post("/stop")
     def stop(payload: dict) -> dict:
-        return instance.action(payload.get("service_id"), "stop")
+        return tracked("stop", payload, instance.action(payload.get("service_id"), "stop"))
 
     @router.post("/restart")
     def restart(payload: dict) -> dict:
-        return instance.action(payload.get("service_id"), "restart")
+        return tracked("restart", payload, instance.action(payload.get("service_id"), "restart"))
 
     @router.post("/remove")
     def remove(payload: dict) -> dict:
-        return instance.action(payload.get("service_id"), "remove")
+        return tracked("remove", payload, instance.action(payload.get("service_id"), "remove"))
 
     @router.get("/status")
     def status(service_id: str) -> dict:

@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { api, download, downloadFile, post, when } from "./api";
 import { Badge, Button, Confirm, Copy, ErrorBox, Field, InfoBox } from "./ui";
@@ -82,7 +83,7 @@ function nativeChannel(extension: Extension) {
   return extension.scope === "native-configuration" ? "原生配置通道" :
     extension.scope === "existing-gateway-connection" ? "已有网关接入" : null;
 }
-export default function InfrastructureSettings({ canAdminister }: { canAdminister: boolean }) {
+function DefaultInfrastructureSettings({ canAdminister }: { canAdminister: boolean }) {
   const grafanaEnabled = usePluginEnabled("grafana");
   const ccaeEnabled = usePluginEnabled("ccae");
   const gatewaysEnabled = usePluginEnabled("gateways");
@@ -308,79 +309,85 @@ export default function InfrastructureSettings({ canAdminister }: { canAdministe
   const visibleExtensions = extensions.filter((extension) => extension.id === "observability.grafana" ? grafanaEnabled
     : extension.id === "native.ccae" ? ccaeEnabled : extension.id === "gateway.existing" ? gatewaysEnabled : true);
   return <>
-    {canAdminister && <section className="panel">
-      <div className="panel-head"><h2>存储与日志</h2><Button loading={configQuery.refreshing} onClick={() => void configQuery.refresh()}><RefreshCw size={14} />读取配置</Button></div>
-      <div className="settings-content">
+    {canAdminister && <UiRegion name="layout.panel" as="section" className="panel">
+      <UiElement as="div" className="panel-head"><UiElement as="h2"><UiText>{"存储与日志"}</UiText></UiElement><Button actionId="action.InfrastructureSettings.001" loading={configQuery.refreshing} onClick={() => void configQuery.refresh()}><RefreshCw size={14} /><UiText>{"读取配置"}</UiText></Button></UiElement>
+      <UiElement as="div" className="settings-content">
         {configurationError && <ErrorBox message={configurationError} />}
         {configuration && <>
-          <dl className="description-list">
-            {knownText(configuration.storage?.backend) && <><dt>控制数据库</dt><dd>{({ sqlite: "SQLite", postgresql: "PostgreSQL", postgres: "PostgreSQL" } as Record<string, string>)[configuration.storage.backend] ?? configuration.storage.backend}</dd></>}
-            {Number.isSafeInteger(configuration.storage?.schema_version) && <><dt>数据库结构版本</dt><dd>{configuration.storage.schema_version}</dd></>}
-            {knownText(configuration.logging?.directory) && <><dt>请求日志目录</dt><dd><code className="break-word">{configuration.logging.directory}</code><Copy value={configuration.logging.directory} /></dd></>}
-            {configuration.logging?.segment_bytes > 0 && <><dt>单段日志上限</dt><dd>{bytes(configuration.logging.segment_bytes)}</dd></>}
-            {Number.isSafeInteger(configuration.logging?.rotations) && <><dt>轮转备份</dt><dd>{configuration.logging.rotations} 个</dd></>}
-            {configuration.logging?.window_bytes > 0 && <><dt>日志窗口上限</dt><dd>{bytes(configuration.logging.window_bytes)}</dd></>}
-          </dl>
-          <p className="settings-context-note">路径与轮转由部署配置管理，修改后按维护流程重启生效。审计保存在控制数据库；Agent 资源账本、引擎日志与请求日志分别管理。</p>
+          <UiElement as="dl" className="description-list">
+            {knownText(configuration.storage?.backend) && <><UiElement as="dt"><UiText>{"控制数据库"}</UiText></UiElement><UiElement as="dd">{({ sqlite: "SQLite", postgresql: "PostgreSQL", postgres: "PostgreSQL" } as Record<string, string>)[configuration.storage.backend] ?? configuration.storage.backend}</UiElement></>}
+            {Number.isSafeInteger(configuration.storage?.schema_version) && <><UiElement as="dt"><UiText>{"数据库结构版本"}</UiText></UiElement><UiElement as="dd">{configuration.storage.schema_version}</UiElement></>}
+            {knownText(configuration.logging?.directory) && <><UiElement as="dt"><UiText>{"请求日志目录"}</UiText></UiElement><UiElement as="dd"><UiElement as="code" className="break-word">{configuration.logging.directory}</UiElement><Copy value={configuration.logging.directory} /></UiElement></>}
+            {configuration.logging?.segment_bytes > 0 && <><UiElement as="dt"><UiText>{"单段日志上限"}</UiText></UiElement><UiElement as="dd">{bytes(configuration.logging.segment_bytes)}</UiElement></>}
+            {Number.isSafeInteger(configuration.logging?.rotations) && <><UiElement as="dt"><UiText>{"轮转备份"}</UiText></UiElement><UiElement as="dd">{configuration.logging.rotations} <UiText>{"个"}</UiText></UiElement></>}
+            {configuration.logging?.window_bytes > 0 && <><UiElement as="dt"><UiText>{"日志窗口上限"}</UiText></UiElement><UiElement as="dd">{bytes(configuration.logging.window_bytes)}</UiElement></>}
+          </UiElement>
+          <UiElement as="p" className="settings-context-note"><UiText>{"路径与轮转由部署配置管理，修改后按维护流程重启生效。审计保存在控制数据库；Agent 资源账本、引擎日志与请求日志分别管理。"}</UiText></UiElement>
         </>}
-      </div>
-    </section>}
-    <section className="panel">
-      <div className="panel-head"><h2>模块与扩展</h2><Button loading={extensionsQuery.refreshing} onClick={() => void extensionsQuery.refresh()}><RefreshCw size={14} />刷新</Button></div>
-      <div className="settings-content">
+      </UiElement>
+    </UiRegion>}
+    <UiRegion name="layout.panel" as="section" className="panel">
+      <UiElement as="div" className="panel-head"><UiElement as="h2"><UiText>{"模块与扩展"}</UiText></UiElement><Button actionId="action.InfrastructureSettings.002" loading={extensionsQuery.refreshing} onClick={() => void extensionsQuery.refresh()}><RefreshCw size={14} /><UiText>{"刷新"}</UiText></Button></UiElement>
+      <UiElement as="div" className="settings-content">
         {extensionError && <ErrorBox message={extensionError} />}
         {visibleExtensions.map((extension) => {
           const connection = connectionView(extension.connection_status, extensionDeadlines[extension.id], clock);
           const channel = nativeChannel(extension);
-          return <div className="settings-extension" key={extension.id}>
-            <div><strong>{extension.name}</strong>{knownText(extension.version) && <span className="tag">模块版本 {extension.version}</span>}</div>
-            {(connection || channel) && <div className="settings-extension-status">
+          return <UiElement as="div" className="settings-extension" key={extension.id}>
+            <UiElement as="div"><UiElement as="strong">{extension.name}</UiElement>{knownText(extension.version) && <UiElement as="span" className="tag"><UiText>{"模块版本"}</UiText> {extension.version}</UiElement>}</UiElement>
+            {(connection || channel) && <UiElement as="div" className="settings-extension-status">
               {connection && <Badge status={connection.badge}>{connection.label}</Badge>}
               {channel && <Badge status="stopped">{channel}</Badge>}
-            </div>}
-            {knownText(extension.detail) && <p>{extension.detail}</p>}
-          </div>;
+            </UiElement>}
+            {knownText(extension.detail) && <UiElement as="p">{extension.detail}</UiElement>}
+          </UiElement>;
         })}
-        {!extensionsQuery.hasSuccess && <p className="settings-context-note" role="status">{readNotice({ loaded: false, refreshing: extensionsQuery.refreshing, error: extensionError })}</p>}
-        {extensionsQuery.hasSuccess && !visibleExtensions.length && !extensionError && <p className="settings-context-note">当前没有已启用的集成模块。</p>}
-      </div>
-    </section>
-    {grafanaEnabled && <section className="panel">
-      <div className="panel-head"><h2>Grafana 观测连接</h2>{link && <a className="text-link" href={link} target="_blank" rel="noopener noreferrer">打开仪表板<ExternalLink size={14} /></a>}</div>
-      <div className="settings-content">
+        {!extensionsQuery.hasSuccess && <UiElement as="p" className="settings-context-note" role="status">{readNotice({ loaded: false, refreshing: extensionsQuery.refreshing, error: extensionError })}</UiElement>}
+        {extensionsQuery.hasSuccess && !visibleExtensions.length && !extensionError && <UiElement as="p" className="settings-context-note"><UiText>{"当前没有已启用的集成模块。"}</UiText></UiElement>}
+      </UiElement>
+    </UiRegion>
+    {grafanaEnabled && <UiRegion name="layout.panel" as="section" className="panel">
+      <UiElement as="div" className="panel-head"><UiElement as="h2"><UiText>{"Grafana 观测连接"}</UiText></UiElement>{link && <UiElement as="a" className="text-link" href={link} target="_blank" rel="noopener noreferrer"><UiText>{"打开仪表板"}</UiText><ExternalLink size={14} /></UiElement>}</UiElement>
+      <UiElement as="div" className="settings-content">
         {grafanaError && <ErrorBox message={grafanaError} />}
         {feedback && <InfoBox>{feedback}</InfoBox>}
-        <p className="settings-context-note">接入已有 Grafana，保留其独立登录。连接、检查和离线配置生成是不同操作；保存地址不会安装观测栈或产生指标。</p>
-        {grafanaStatus && <div className="settings-extension-status" role="status">
+        <UiElement as="p" className="settings-context-note"><UiText>{"接入已有 Grafana，保留其独立登录。连接、检查和离线配置生成是不同操作；保存地址不会安装观测栈或产生指标。"}</UiText></UiElement>
+        {grafanaStatus && <UiElement as="div" className="settings-extension-status" role="status">
           <Badge status={grafanaStatus.badge}>{grafanaStatus.label}</Badge>
           {remote?.connection_status?.checked_at && connectionTimes(remote.connection_status) &&
-            <span className="settings-extension-scope">检查完成于 {when(remote.connection_status.checked_at)}</span>}
-        </div>}
-        <p className="settings-context-note">连接检查结果有效期为 5 分钟，仅检查 Grafana 健康接口和只读访问。指标采集与模型运行情况请在对应看板中查看；必要时通过实际请求确认服务状态。到期仅更新显示，不会自动发起外部检查。</p>
-        <fieldset className="settings-extension-form" disabled={!canAdminister || !!busy || !remote}>
-          <label className="checkbox-label"><input type="checkbox" checked={draft.enabled} onChange={(event) => change({ enabled: event.target.checked })} />启用 Grafana 连接</label>
+            <UiElement as="span" className="settings-extension-scope"><UiText>{"检查完成于"}</UiText> {when(remote.connection_status.checked_at)}</UiElement>}
+        </UiElement>}
+        <UiElement as="p" className="settings-context-note"><UiText>{"连接检查结果有效期为 5 分钟，仅检查 Grafana 健康接口和只读访问。指标采集与模型运行情况请在对应看板中查看；必要时通过实际请求确认服务状态。到期仅更新显示，不会自动发起外部检查。"}</UiText></UiElement>
+        <UiElement as="fieldset" className="settings-extension-form" disabled={!canAdminister || !!busy || !remote}>
+          <UiElement as="label" className="checkbox-label"><UiElement as="input" type="checkbox" checked={draft.enabled} onChange={(event) => change({ enabled: event.target.checked })} /><UiText>{"启用 Grafana 连接"}</UiText></UiElement>
           <Field label="Grafana 基础地址" hint="需由部署配置允许此来源，建议使用 HTTPS。">
-            <input type="url" value={draft.base_url} placeholder="https://grafana.example.com" onChange={(event) => change({ base_url: event.target.value })} />
+            <UiElement as="input" type="url" value={draft.base_url} placeholder="https://grafana.example.com" onChange={(event) => change({ base_url: event.target.value })} />
           </Field>
-          <Field label="仪表板路径" hint="同一 Grafana 下的路径；填写 / 打开其首页。"><input value={draft.dashboard_path} placeholder="/d/motor/overview" onChange={(event) => change({ dashboard_path: event.target.value })} /></Field>
+          <Field label="仪表板路径" hint="同一 Grafana 下的路径；填写 / 打开其首页。"><UiElement as="input" value={draft.dashboard_path} placeholder="/d/motor/overview" onChange={(event) => change({ dashboard_path: event.target.value })} /></Field>
           <Field label="检查用 API Token" hint={remote?.has_api_token ? "已配置凭据；留空保留，凭据不回显。" : "可选；仅用于服务端检查，不加入仪表板链接。"}>
-            <input type="password" autoComplete="new-password" data-private="true" value={token} disabled={clearToken} onChange={(event) => { change({}); setToken(event.target.value); }} />
+            <UiElement as="input" type="password" autoComplete="new-password" data-private="true" value={token} disabled={clearToken} onChange={(event) => { change({}); setToken(event.target.value); }} />
           </Field>
-          {remote?.has_api_token && <label className="checkbox-label"><input type="checkbox" checked={clearToken} onChange={(event) => { change({}); setClearToken(event.target.checked); setToken(""); }} />清除已保存的 API Token</label>}
-        </fieldset>
-        <div className="settings-actions settings-extension-actions">
+          {remote?.has_api_token && <UiElement as="label" className="checkbox-label"><UiElement as="input" type="checkbox" checked={clearToken} onChange={(event) => { change({}); setClearToken(event.target.checked); setToken(""); }} /><UiText>{"清除已保存的 API Token"}</UiText></UiElement>}
+        </UiElement>
+        <UiElement as="div" className="settings-actions settings-extension-actions">
           {canAdminister && <>
-            <Button kind="primary" disabled={!edited || !remote} loading={busy === "save"} onClick={() => void save()}>保存连接</Button>
-            <Button disabled={!remote || !!busy} onClick={() => edited ? setReloadOpen(true) : reload()}>重新载入</Button>
-            <Button disabled={edited || !remote?.enabled || !!busy} loading={busy === "probe"} onClick={() => void perform("probe")}>检查连接</Button>
-            <Button disabled={edited || !remote?.enabled || !!busy} loading={busy === "provision"} onClick={() => void perform("provision")}>生成并下载 ZIP 配置包</Button>
-            {lastProvision && <Button disabled={!!busy} loading={busy === "download"} onClick={() => void retryDownload()}>下载上次配置包</Button>}
+            <Button actionId="action.InfrastructureSettings.003" kind="primary" disabled={!edited || !remote} loading={busy === "save"} onClick={() => void save()}><UiText>{"保存连接"}</UiText></Button>
+            <Button actionId="action.InfrastructureSettings.004" disabled={!remote || !!busy} onClick={() => edited ? setReloadOpen(true) : reload()}><UiText>{"重新载入"}</UiText></Button>
+            <Button actionId="action.InfrastructureSettings.005" disabled={edited || !remote?.enabled || !!busy} loading={busy === "probe"} onClick={() => void perform("probe")}><UiText>{"检查连接"}</UiText></Button>
+            <Button actionId="action.InfrastructureSettings.006" disabled={edited || !remote?.enabled || !!busy} loading={busy === "provision"} onClick={() => void perform("provision")}><UiText>{"生成并下载 ZIP 配置包"}</UiText></Button>
+            {lastProvision && <Button actionId="action.InfrastructureSettings.007" disabled={!!busy} loading={busy === "download"} onClick={() => void retryDownload()}><UiText>{"下载上次配置包"}</UiText></Button>}
           </>}
-        </div>
-        {edited && <p className="small-caption">有未保存更改，检查与配置生成将在保存后启用。</p>}
-        {probe && <details className="settings-technical-detail"><summary>查看最近检查明细</summary><pre className="json-view">{JSON.stringify(probe, null, 2)}</pre></details>}
-      </div>
-    </section>}
+        </UiElement>
+        {edited && <UiElement as="p" className="small-caption"><UiText>{"有未保存更改，检查与配置生成将在保存后启用。"}</UiText></UiElement>}
+        {probe && <UiElement as="details" className="settings-technical-detail"><UiElement as="summary"><UiText>{"查看最近检查明细"}</UiText></UiElement><UiElement as="pre" className="json-view">{JSON.stringify(probe, null, 2)}</UiElement></UiElement>}
+      </UiElement>
+    </UiRegion>}
     {reloadOpen && <Confirm title="重新载入连接配置？" description="本地未保存的更改将被放弃；已保存的服务和模型不受影响。" confirmText="放弃并载入" onClose={() => setReloadOpen(false)} onConfirm={() => { setReloadOpen(false); reload(); }} />}
   </>;
 }
+
+const InfrastructureSettings = withUiSlot("component.InfrastructureSettings", DefaultInfrastructureSettings);
+export default InfrastructureSettings;
+
+// Reference package implementation exports.
+export { DefaultInfrastructureSettings };

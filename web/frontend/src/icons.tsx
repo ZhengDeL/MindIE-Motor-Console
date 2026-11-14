@@ -1,6 +1,16 @@
 import { forwardRef } from "react";
+import { useUiContract } from "./uiPluginSdk";
 import type { ForwardRefExoticComponent, RefAttributes, SVGProps } from "react";
 import {
+  ArrowDown as LucideArrowDown,
+  ArrowUp as LucideArrowUp,
+  Bell as LucideBell,
+  Home as LucideHome,
+  ImagePlus as LucideImagePlus,
+  MemoryStick as LucideMemoryStick,
+  PanelLeftClose as LucidePanelLeftClose,
+  PanelLeftOpen as LucidePanelLeftOpen,
+  RotateCcw as LucideRotateCcw,
   Activity as LucideActivity,
   AlertCircle as LucideAlertCircle,
   Archive as LucideArchive,
@@ -79,23 +89,13 @@ export type ConsoleIcon = ForwardRefExoticComponent<
 function createIcon(Definition: LucideIcon, name: string): ConsoleIcon {
   const Icon = forwardRef<SVGSVGElement, ConsoleIconProps>(
     ({ size = 18, width = size, height = size, color, className, style, spin = false, ...props }, ref) => {
+      const pack = useUiContract<{ render: (id: string, props: Record<string, any>, Default: LucideIcon) => React.ReactNode }>("ui.icons");
       const labelled = Boolean(props["aria-label"] || props["aria-labelledby"]);
-      return (
-        <Definition
-          {...props}
-          ref={ref}
-          size={size}
-          width={width}
-          height={height}
-          focusable="false"
-          aria-hidden={props["aria-hidden"] ?? !labelled}
-          role={props.role ?? (labelled ? "img" : undefined)}
-          data-icon={name}
-          data-icon-theme="lucide"
-          className={["console-icon", "console-icon-line", spin && "spin", className].filter(Boolean).join(" ")}
-          style={{ ...(color != null ? { color } : {}), ...style }}
-        />
-      );
+      return pack.render(name, { ...props, ref, size, width, height, focusable: "false",
+        "aria-hidden": props["aria-hidden"] ?? !labelled,
+        role: props.role ?? (labelled ? "img" : undefined), "data-icon": name,
+        className: ["console-icon", "console-icon-line", spin && "spin", className].filter(Boolean).join(" "),
+        style: { ...(color != null ? { color } : {}), ...style } }, Definition);
     },
   );
   Icon.displayName = name;
@@ -103,6 +103,15 @@ function createIcon(Definition: LucideIcon, name: string): ConsoleIcon {
 }
 
 // Existing names remain stable for every action and navigation component.
+export const ArrowDown = createIcon(LucideArrowDown, "ArrowDown");
+export const ArrowUp = createIcon(LucideArrowUp, "ArrowUp");
+export const Bell = createIcon(LucideBell, "Bell");
+export const Home = createIcon(LucideHome, "Home");
+export const ImagePlus = createIcon(LucideImagePlus, "ImagePlus");
+export const MemoryStick = createIcon(LucideMemoryStick, "MemoryStick");
+export const PanelLeftClose = createIcon(LucidePanelLeftClose, "PanelLeftClose");
+export const PanelLeftOpen = createIcon(LucidePanelLeftOpen, "PanelLeftOpen");
+export const RotateCcw = createIcon(LucideRotateCcw, "RotateCcw");
 export const Activity = /*#__PURE__*/ createIcon(LucideActivity, "Activity");
 export const AlertCircle = /*#__PURE__*/ createIcon(LucideAlertCircle, "AlertCircle");
 export const Archive = /*#__PURE__*/ createIcon(LucideArchive, "Archive");

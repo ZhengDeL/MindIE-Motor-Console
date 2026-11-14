@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { readNotice, type ReadState } from "./readState";
 import { api, when } from "./api";
@@ -46,7 +47,7 @@ export function immutableImage(image: string, digest: string): string {
   return `${separator > repository.lastIndexOf("/") ? repository.slice(0, separator) : repository}@${digest}`;
 }
 
-export default function ImageContractPanel({
+function DefaultImageContractPanel({
   image,
   hardware,
   runtime,
@@ -175,21 +176,21 @@ export default function ImageContractPanel({
     unavailable: "当前不可运行",
   };
   return (
-    <details className="integration-section">
-      <summary>
-        <span>官方镜像与运行环境检查</span>
-        <span className="integration-summary-hint">
-          <small>明确镜像来源，检查节点上的实际内容</small>
+    <UiElement as="details" className="integration-section">
+      <UiElement as="summary">
+        <UiElement as="span"><UiText>{"官方镜像与运行环境检查"}</UiText></UiElement>
+        <UiElement as="span" className="integration-summary-hint">
+          <UiElement as="small"><UiText>{"明确镜像来源，检查节点上的实际内容"}</UiText></UiElement>
           <ChevronDown size={15} />
-        </span>
-      </summary>
-      <div className="integration-section-body">
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="integration-section-body">
         {catalogError && (
           <ErrorBox
             message={`镜像目录加载失败：${catalogError}。仍可在“服务镜像”中填写自定义镜像。`}
           />
         )}
-        <div className="integration-control-row">
+        <UiElement as="div" className="integration-control-row">
           <Field label="官方镜像预置">
             <Select
               ariaLabel="官方镜像预置"
@@ -197,11 +198,11 @@ export default function ImageContractPanel({
               onChange={setSelected}
               disabled={!catalog.length}
             >
-              {!catalog.length && <option value="">{catalogLoaded ? "暂无可用预置" : catalogError ? "预置目录读取失败" : "正在读取预置目录…"}</option>}
+              {!catalog.length && <UiElement as="option" value="">{catalogLoaded ? "暂无可用预置" : catalogError ? "预置目录读取失败" : "正在读取预置目录…"}</UiElement>}
               {catalog.map((item) => (
-                <option key={item.id} value={item.id}>
+                <UiElement as="option" key={item.id} value={item.id}>
                   {item.name}
-                </option>
+                </UiElement>
               ))}
             </Select>
           </Field>
@@ -211,39 +212,39 @@ export default function ImageContractPanel({
               value={reference}
               onChange={setReference}
             >
-              <option value="digest">固定 manifest SHA256</option>
-              <option value="tag">版本标签</option>
+              <UiElement as="option" value="digest"><UiText>{"固定 manifest SHA256"}</UiText></UiElement>
+              <UiElement as="option" value="tag"><UiText>{"版本标签"}</UiText></UiElement>
             </Select>
           </Field>
-          <Button onClick={applyPreset} disabled={!preset}>
-            填入服务镜像
+          <Button actionId="action.IntegrationImages.001" onClick={applyPreset} disabled={!preset}>
+            <UiText>{"填入服务镜像"}</UiText>
           </Button>
-        </div>
+        </UiElement>
         {preset && (
-          <div className="integration-preset-description">
-            <strong>
-              Motor {preset.motor_release} · vLLM-Ascend {preset.vllm_ascend} ·{" "}
+          <UiElement as="div" className="integration-preset-description">
+            <UiElement as="strong">
+              <UiText>{"Motor"}</UiText> {preset.motor_release} <UiText>{"· vLLM-Ascend"}</UiText> {preset.vllm_ascend} <UiText>{"·"}</UiText>{" "}
               {preset.hardware}
-            </strong>
-            <div>
-              {preset.os} · Python {preset.python} ·{" "}
+            </UiElement>
+            <UiElement as="div">
+              {preset.os} <UiText>{"· Python"}</UiText> {preset.python} <UiText>{"·"}</UiText>{" "}
               {preset.platforms.join(" / ")}
-            </div>
-            <code className="integration-code">{preset.image}</code>
-            <div>
-              目录验证范围：镜像仓库元数据。填入后仍需检查目标节点、原生版本与实际推理。{" "}
-              {docsUrl && <a href={docsUrl} target="_blank" rel="noreferrer">
-                使用文档 ↗
-              </a>}
-            </div>
+            </UiElement>
+            <UiElement as="code" className="integration-code">{preset.image}</UiElement>
+            <UiElement as="div">
+              <UiText>{"目录验证范围：镜像仓库元数据。填入后仍需检查目标节点、原生版本与实际推理。"}</UiText>{" "}
+              {docsUrl && <UiElement as="a" href={docsUrl} target="_blank" rel="noreferrer">
+                <UiText>{"使用文档 ↗"}</UiText>
+              </UiElement>}
+            </UiElement>
             {hardware && hardware !== preset.hardware && (
-              <div>
-                当前配置的硬件类型为 {hardware}，请核对镜像与实际硬件配套。
-              </div>
+              <UiElement as="div">
+                <UiText>{"当前配置的硬件类型为"}</UiText> {hardware}<UiText>{"，请核对镜像与实际硬件配套。"}</UiText>
+              </UiElement>
             )}
-          </div>
+          </UiElement>
         )}
-        <div className="integration-control-row">
+        <UiElement as="div" className="integration-control-row">
           <Field
             label="镜像检查节点"
             hint="检查所选节点本地已有镜像，不自动拉取"
@@ -253,71 +254,67 @@ export default function ImageContractPanel({
               value={nodeId}
               onChange={setNodeId}
             >
-              <option value="">{nodesRead.loaded ? "请选择 Docker 执行节点" : readNotice(nodesRead)}</option>
+              <UiElement as="option" value="">{nodesRead.loaded ? "请选择 Docker 执行节点" : readNotice(nodesRead)}</UiElement>
               {dockerNodes.map((node) => (
-                <option key={node.id} value={node.id}>
-                  {node.name} · {node.address}
-                </option>
+                <UiElement as="option" key={node.id} value={node.id}>
+                  {node.name} <UiText>{"·"}</UiText> {node.address}
+                </UiElement>
               ))}
             </Select>
           </Field>
-          <Button
+          <Button actionId="action.IntegrationImages.002"
             onClick={() => void inspect()}
             loading={busy}
             disabled={!nodesRead.loaded || !selectedNode || !image.trim()}
           >
-            检查服务镜像
+            <UiText>{"检查服务镜像"}</UiText>
           </Button>
-        </div>
-        <label className="integration-checkbox">
-          <input
+        </UiElement>
+        <UiElement as="label" className="integration-checkbox">
+          <UiElement as="input"
             type="checkbox"
             checked={probe}
             onChange={(event) => setProbe(event.target.checked)}
           />
-          运行受限 CPU 检查（不加载模型）
-        </label>
-        <p className="integration-caption">
-          勾选后创建临时受限容器，检查 Python 包和原生启动入口；不挂载
-          NPU、权重或宿主目录，不连接业务网络。
-        </p>
-        {!nodesRead.loaded ? <InfoBox>{readNotice(nodesRead)}节点列表，尚不能判断哪些 Agent 可检查镜像。</InfoBox> : !dockerNodes.length && (
+          <UiText>{"运行受限 CPU 检查（不加载模型）"}</UiText>
+        </UiElement>
+        <UiElement as="p" className="integration-caption">
+          <UiText>{"勾选后创建临时受限容器，检查 Python 包和原生启动入口；不挂载 NPU、权重或宿主目录，不连接业务网络。"}</UiText>
+        </UiElement>
+        {!nodesRead.loaded ? <InfoBox>{readNotice(nodesRead)}<UiText>{"节点列表，尚不能判断哪些 Agent 可检查镜像。"}</UiText></InfoBox> : !dockerNodes.length && (
           <InfoBox>
-            当前没有可执行本地镜像检查的 Docker Agent。Kubernetes
-            镜像由集群容器运行时与仓库准备，本地 Docker
-            检查不能代替集群节点检查。
+            <UiText>{"当前没有可执行本地镜像检查的 Docker Agent。Kubernetes 镜像由集群容器运行时与仓库准备，本地 Docker 检查不能代替集群节点检查。"}</UiText>
           </InfoBox>
         )}
         {runtime === "kubernetes" && dockerNodes.length > 0 && (
-          <p className="integration-caption">
-            本次为独立 Docker 节点的镜像内容检查，不表示 Kubernetes
-            节点已拉取该镜像。
-          </p>
+          <UiElement as="p" className="integration-caption">
+            <UiText>{"本次为独立 Docker 节点的镜像内容检查，不表示 Kubernetes 节点已拉取该镜像。"}</UiText>
+          </UiElement>
         )}
         {error && <ErrorBox message={error} />}
         {result && (
-          <div className="integration-report">
-            <div className="integration-report-head">
-              <h4>镜像检查结果</h4>
-              <span className="integration-caption">
+          <UiElement as="div" className="integration-report">
+            <UiElement as="div" className="integration-report-head">
+              <UiElement as="h4"><UiText>{"镜像检查结果"}</UiText></UiElement>
+              <UiElement as="span" className="integration-caption">
                 {when(result.collected_at)}
-              </span>
-            </div>
-            <dl className="integration-facts">
-              <dt>检查镜像</dt>
-              <dd>
-                <code className="integration-code">{result.image}</code>
-              </dd>
-              <dt>镜像 ID</dt>
-              <dd>
-                <code className="integration-code">{result.image_id}</code>
-              </dd>
-              <dt>系统 / 架构</dt>
-              <dd>
-                {result.os} / {result.architecture}
-              </dd>
-              <dt>Motor Python 源码身份</dt>
-              <dd>
+              </UiElement>
+            </UiElement>
+            <UiElement as="dl" className="integration-facts">
+              <UiElement as="dt"><UiText>{"检查镜像"}</UiText></UiElement>
+              <UiElement as="dd">
+                <UiElement as="code" className="integration-code">{result.image}</UiElement>
+              </UiElement>
+              <UiElement as="dt"><UiText>{"镜像 ID"}</UiText></UiElement>
+              <UiElement as="dd">
+                <UiElement as="code" className="integration-code">{result.image_id}</UiElement>
+              </UiElement>
+              <UiElement as="dt"><UiText>{"系统 / 架构"}</UiText></UiElement>
+              <UiElement as="dd">
+                {result.os} <UiText>{"/"}</UiText> {result.architecture}
+              </UiElement>
+              <UiElement as="dt"><UiText>{"Motor Python 源码身份"}</UiText></UiElement>
+              <UiElement as="dd">
                 {result.identity.status === "verified"
                   ? "Python 源码比对一致"
                   : result.identity.status === "declared"
@@ -325,40 +322,45 @@ export default function ImageContractPanel({
                     : result.identity.status === "mismatch"
                       ? "与已固定 Python 源码不一致"
                       : "尚未证实"}
-                ：{evidenceLabel[result.identity.evidence] ?? result.identity.evidence}
-              </dd>
-              <dt>CPU 内容检查</dt>
-              <dd>{probeLabel[result.probe.status]}</dd>
+                <UiText>{"："}</UiText>{evidenceLabel[result.identity.evidence] ?? result.identity.evidence}
+              </UiElement>
+              <UiElement as="dt"><UiText>{"CPU 内容检查"}</UiText></UiElement>
+              <UiElement as="dd">{probeLabel[result.probe.status]}</UiElement>
               {Object.entries(result.probe.packages).map(([name, version]) => (
                 <Fragment key={name}>
-                  <dt>{name}</dt>
-                  <dd>{version || "未检出"}</dd>
+                  <UiElement as="dt">{name}</UiElement>
+                  <UiElement as="dd">{version || "未检出"}</UiElement>
                 </Fragment>
               ))}
-            </dl>
+            </UiElement>
             {result.probe.errors.length > 0 && (
               <ErrorBox
                 message={`CPU 检查诊断：${result.probe.errors.map(probeErrorLabel).join("；")}`}
               />
             )}
-            <ul className="integration-checks">
+            <UiElement as="ul" className="integration-checks">
               {result.checks.map((check, index) => (
-                <li key={`${check.name}-${index}`}>
+                <UiElement as="li" key={`${check.name}-${index}`}>
                   <Badge status={check.status} />
-                  <div>
-                    <strong>{check.name}</strong>
-                    <p>{check.detail}</p>
-                  </div>
-                </li>
+                  <UiElement as="div">
+                    <UiElement as="strong">{check.name}</UiElement>
+                    <UiElement as="p">{check.detail}</UiElement>
+                  </UiElement>
+                </UiElement>
               ))}
-            </ul>
+            </UiElement>
             <InfoBox>
-              检查结果仅覆盖已列出的镜像内容与启动入口，不验证模型加载、NPU
-              推理或多节点通信。
+              <UiText>{"检查结果仅覆盖已列出的镜像内容与启动入口，不验证模型加载、NPU 推理或多节点通信。"}</UiText>
             </InfoBox>
-          </div>
+          </UiElement>
         )}
-      </div>
-    </details>
+      </UiElement>
+    </UiElement>
   );
 }
+
+const ImageContractPanel = withUiSlot("component.ImageContractPanel", DefaultImageContractPanel);
+export default ImageContractPanel;
+
+// Reference package implementation exports.
+export { DefaultImageContractPanel };

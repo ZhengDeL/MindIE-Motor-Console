@@ -39,10 +39,11 @@ class ReleaseSelection(BaseModel):
 
 class SystemManager:
     def __init__(self, store, logs, *, mode: str, release_dir: str | Path | None = None, key_file: str | Path | None = None,
-                 configuration: PlatformConfiguration | None = None, secret_seed: str | None = None):
+                 configuration: PlatformConfiguration | None = None, secret_seed: str | None = None, native_adapter=None):
         self.store, self.logs, self.mode = store, logs, mode
         self.configuration = configuration or PlatformConfiguration.from_env(store.directory)
         self.secret_seed = secret_seed
+        self.native_profile = native_adapter.public_profile if native_adapter is not None else public_profile
         self.release_dir = Path(release_dir or os.getenv("MOTOR_RELEASE_DIR") or store.directory / "releases")
         self.key_file = key_file or os.getenv("MOTOR_RELEASE_PUBLIC_KEY_FILE")
         self.backup_dir = store.directory / "backups"
@@ -55,7 +56,7 @@ class SystemManager:
         return {"console": {"product_id": PRODUCT_ID, "version": CONSOLE_VERSION, "agent_protocol": AGENT_PROTOCOL_VERSION},
                 "storage": self.store.storage_info(),
                 "recovery_archive": freshness_status(self.store.directory),
-                "motor": public_profile(),
+                "motor": self.native_profile(),
                 "upgrade": {"mode": "host-cli", "release_directory_configured": bool(self.key_file),
                             "requires_host_execution": True, "automatic_motor_upgrade": False}, "demo": self.mode == "demo"}
 

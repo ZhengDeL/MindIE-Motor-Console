@@ -50,7 +50,9 @@ def intent_hash(action: str, payload: dict) -> str:
 
 
 class DockerAgentState:
-    def __init__(self, directory: str | Path, *, initialization_timeout=10):
+    def __init__(self, directory: str | Path, *, initialization_timeout=10,
+                 provider_generation=None, provider_binding=None):
+        self.provider_generation, self.provider_binding = provider_generation, provider_binding
         directory = Path(directory).resolve()
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.path = directory / "agent-runtime.sqlite3"
@@ -138,6 +140,8 @@ class DockerAgentState:
                      "node_id": node_id or "", "operation_status": "accepted", "received_at": stamp(),
                      "started_at": None, "finished_at": None, "resources_may_exist": False,
                      "result": None, "error_code": None, "message": "Operation accepted"}
+            if self.provider_generation:
+                value.update(provider_generation=self.provider_generation, provider_binding=self.provider_binding)
             if public_intent is not None:
                 value["intent"] = dict(public_intent)
             self._put_operation(db, value, identifier, fingerprint)

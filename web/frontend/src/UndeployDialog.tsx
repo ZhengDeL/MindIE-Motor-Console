@@ -1,10 +1,11 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useState } from "react";
 import { Box, ShieldCheck, Trash2 } from "./icons";
 import type { Service } from "./api";
 import { Button, ErrorBox, Field, InfoBox, Modal } from "./ui";
 import { useRuntimeAccess } from "./consolePlugins";
 
-export default function UndeployDialog({
+function DefaultUndeployDialog({
   service,
   onClose,
   onUndeploy,
@@ -24,8 +25,8 @@ export default function UndeployDialog({
       onClose={onClose}
       footer={
         <>
-          <Button onClick={onClose}>取消</Button>
-          <Button
+          <Button actionId="action.UndeployDialog.001" onClick={onClose}><UiText>{"取消"}</UiText></Button>
+          <Button actionId="action.UndeployDialog.002"
             kind="danger"
             disabled={!runtimeAccess.enabled || confirmation !== service.name}
             loading={busy}
@@ -44,42 +45,41 @@ export default function UndeployDialog({
             }}
           >
             <Trash2 size={14} />
-            确认卸载部署
+            <UiText>{"确认卸载部署"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
-      {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}确认输入仍保留。</InfoBox>}
-      <div className="undeploy-summary">
-        <div className="confirm-symbol danger">
+      {!runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}<UiText>{"确认输入仍保留。"}</UiText></InfoBox>}
+      <UiElement as="div" className="undeploy-summary">
+        <UiElement as="div" className="confirm-symbol danger">
           <Trash2 size={24} />
-        </div>
-        <div>
-          <h3>确认卸载当前 Kubernetes 部署？</h3>
-          <p>
-            该操作会影响本服务的在线请求。卸载会移除受管部署资源，并等待活动工作负载退出。
-          </p>
-        </div>
-      </div>
-      <div className="confirm-resource">
+        </UiElement>
+        <UiElement as="div">
+          <UiElement as="h3"><UiText>{"确认卸载当前 Kubernetes 部署？"}</UiText></UiElement>
+          <UiElement as="p">
+            <UiText>{"该操作会影响本服务的在线请求。卸载会移除受管部署资源，并等待活动工作负载退出。"}</UiText>
+          </UiElement>
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="confirm-resource">
         <Box size={17} />
-        <b>{service.name}</b>
-        <span className="runtime-tag k8s">Kubernetes</span>
-      </div>
-      <div className="undeploy-retained">
+        <UiElement as="b">{service.name}</UiElement>
+        <UiElement as="span" className="runtime-tag k8s"><UiText>{"Kubernetes"}</UiText></UiElement>
+      </UiElement>
+      <UiElement as="div" className="undeploy-retained">
         <ShieldCheck size={17} />
-        <span>
-          保留
-          Namespace、PVC、模型权重与服务配置。完成后服务回到待部署状态，可按当前配置重新部署。
-        </span>
-      </div>
+        <UiElement as="span">
+          <UiText>{"保留 Namespace、PVC、模型权重与服务配置。完成后服务回到待部署状态，可按当前配置重新部署。"}</UiText>
+        </UiElement>
+      </UiElement>
       <Field
         label="输入服务名以确认"
         required
         hint="请精确输入上方服务名，包含大小写，不添加空格"
       >
-        <input
+        <UiElement as="input"
           aria-label="输入服务名以确认"
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
@@ -92,3 +92,9 @@ export default function UndeployDialog({
     </Modal>
   );
 }
+
+const UndeployDialog = withUiSlot("component.UndeployDialog", DefaultUndeployDialog);
+export default UndeployDialog;
+
+// Reference package implementation exports.
+export { DefaultUndeployDialog };

@@ -1,6 +1,6 @@
 """Independent public compatibility coordinates, not inferred Motor versions."""
 
-CONSOLE_VERSION = "0.11.2"
+CONSOLE_VERSION = "0.12.0"
 PRODUCT_ID = "motor-console"
 MIN_AGENT_VERSION = (0, 10, 1)
 CONSOLE_PROTOCOL_HEADER = "X-Motor-Console-Protocol"

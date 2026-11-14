@@ -17,6 +17,7 @@
 /.github/ISSUE_TEMPLATE/*
 !/.github/ISSUE_TEMPLATE/plugin-proposal.yml
 !/web/
+!/platform/
 !/mindie-motor/
 /mindie-motor/*
 !/mindie-motor/upstream/
@@ -28,6 +29,8 @@
 **/.venv*/
 **/node_modules/
 **/dist/
+**/coverage/
+**/*.mcui
 **/.data/
 **/.hx-data/
 **/.env

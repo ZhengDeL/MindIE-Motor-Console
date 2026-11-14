@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { when } from "./api";
 import type { NodeInfo, NpuDeviceTelemetry, ResourceLedger } from "./api";
 import { Activity, CheckCircle2, Clock3, Cpu, RefreshCw, Server } from "./icons";
@@ -42,7 +43,7 @@ const sourceNames: Record<string, string> = {
 const decimal = (value: number, unit: string) =>
   `${value.toLocaleString("zh-CN", { maximumFractionDigits: 1 })} ${unit}`;
 
-function DeviceObservations({
+function DefaultDeviceObservations({
   devices,
   historical = false,
 }: {
@@ -51,10 +52,10 @@ function DeviceObservations({
 }) {
   const measured = devices.filter(hasDeviceMetrics);
   return (
-    <div
+    <UiElement as="div"
       className={`npu-device-observations ${historical ? "is-historical" : ""}`}
     >
-      <div
+      <UiElement as="div"
         className="npu-device-grid"
         role="region"
         aria-label={historical ? "上次 NPU 硬件指标" : "当前 NPU 硬件指标"}
@@ -67,176 +68,176 @@ function DeviceObservations({
           const memoryUsed = isResourceNumber(device.memory_used_bytes);
           const memoryTotal = isResourceNumber(device.memory_total_bytes);
           return (
-            <article
+            <UiElement as="article"
               className="npu-device-card"
               key={device.device_id}
               aria-label={`NPU 设备 ${device.device_id}`}
               style={{ animationDelay: `${Math.min(deviceIndex, 7) * 24}ms` }}
             >
-              <header>
-                <span className="device-card-symbol">
+              <UiElement as="header">
+                <UiElement as="span" className="device-card-symbol">
                   <Cpu size={18} />
-                </span>
-                <div>
-                  <h4>
+                </UiElement>
+                <UiElement as="div">
+                  <UiElement as="h4">
                     {knownText(device.model_name) ? device.model_name : "NPU"}{" "}
-                    <span>· 设备 {device.device_id}</span>
-                  </h4>
-                  {physical !== null && <code>/dev/davinci{physical}</code>}
-                </div>
+                    <UiElement as="span"><UiText>{"· 设备"}</UiText> {device.device_id}</UiElement>
+                  </UiElement>
+                  {physical !== null && <UiElement as="code"><UiText>{"/dev/davinci"}</UiText>{physical}</UiElement>}
+                </UiElement>
                 {["healthy", "unhealthy"].includes(device.health) && (
-                  <span
+                  <UiElement as="span"
                     className={`npu-health ${historical ? "historical" : device.health}`}
                   >
                     {historical ? "历史 · " : ""}
                     {device.health === "healthy" ? "健康" : "异常"}
-                  </span>
+                  </UiElement>
                 )}
-              </header>
-              <div className="device-card-metrics">
+              </UiElement>
+              <UiElement as="div" className="device-card-metrics">
                 {utilization && (
-                  <section className="device-utilization">
-                    <span>计算利用率</span>
-                    <strong>
+                  <UiRegion name="layout.panel" as="section" className="device-utilization">
+                    <UiElement as="span"><UiText>{"计算利用率"}</UiText></UiElement>
+                    <UiElement as="strong">
                       {resourcePercent(device.utilization_percent)}
-                    </strong>
-                    <i aria-hidden="true">
-                      <b
+                    </UiElement>
+                    <UiElement as="i" aria-hidden="true">
+                      <UiElement as="b"
                         style={{
                           transform: `scaleX(${(device.utilization_percent ?? 0) / 100})`,
                         }}
                       />
-                    </i>
-                  </section>
+                    </UiElement>
+                  </UiRegion>
                 )}
                 {(memoryUsed || memoryTotal) && (
-                  <section className="device-memory">
-                    <span>HBM 内存</span>
-                    <div>
+                  <UiRegion name="layout.panel" as="section" className="device-memory">
+                    <UiElement as="span"><UiText>{"HBM 内存"}</UiText></UiElement>
+                    <UiElement as="div">
                       {memoryUsed && (
-                        <strong>
+                        <UiElement as="strong">
                           {resourceBytes(device.memory_used_bytes)}
-                          <small>已用</small>
-                        </strong>
+                          <UiElement as="small"><UiText>{"已用"}</UiText></UiElement>
+                        </UiElement>
                       )}
                       {memoryTotal && (
-                        <span>
-                          {resourceBytes(device.memory_total_bytes)} 总量
-                        </span>
+                        <UiElement as="span">
+                          {resourceBytes(device.memory_total_bytes)} <UiText>{"总量"}</UiText>
+                        </UiElement>
                       )}
-                    </div>
+                    </UiElement>
                     {isValidResourcePercent(device.memory_usage_percent) && (
-                      <i aria-hidden="true">
-                        <b
+                      <UiElement as="i" aria-hidden="true">
+                        <UiElement as="b"
                           style={{
                             transform: `scaleX(${(device.memory_usage_percent ?? 0) / 100})`,
                           }}
                         />
-                      </i>
+                      </UiElement>
                     )}
-                  </section>
+                  </UiRegion>
                 )}
-              </div>
+              </UiElement>
               {(isResourceNumber(device.temperature_celsius) ||
                 isResourceNumber(device.power_watts)) && (
-                <div className="device-sensor-readings">
+                <UiElement as="div" className="device-sensor-readings">
                   {isResourceNumber(device.temperature_celsius) && (
-                    <span>
-                      温度 <b>{decimal(device.temperature_celsius, "℃")}</b>
-                    </span>
+                    <UiElement as="span">
+                      <UiText>{"温度"}</UiText> <UiElement as="b">{decimal(device.temperature_celsius, "℃")}</UiElement>
+                    </UiElement>
                   )}
                   {isResourceNumber(device.power_watts) && (
-                    <span>
-                      功耗 <b>{decimal(device.power_watts, "W")}</b>
-                    </span>
+                    <UiElement as="span">
+                      <UiText>{"功耗"}</UiText> <UiElement as="b">{decimal(device.power_watts, "W")}</UiElement>
+                    </UiElement>
                   )}
-                </div>
+                </UiElement>
               )}
-              <details className="device-identifiers">
-                <summary>设备标识</summary>
-                <dl>
+              <UiElement as="details" className="device-identifiers">
+                <UiElement as="summary"><UiText>{"设备标识"}</UiText></UiElement>
+                <UiElement as="dl">
                   {physical !== null && (
                     <>
-                      <dt>物理设备</dt>
-                      <dd>
-                        <code>/dev/davinci{physical}</code>
-                      </dd>
+                      <UiElement as="dt"><UiText>{"物理设备"}</UiText></UiElement>
+                      <UiElement as="dd">
+                        <UiElement as="code"><UiText>{"/dev/davinci"}</UiText>{physical}</UiElement>
+                      </UiElement>
                     </>
                   )}
                   {isResourceInteger(device.logical_device_id) && (
                     <>
-                      <dt>逻辑 ID</dt>
-                      <dd>{device.logical_device_id}</dd>
+                      <UiElement as="dt"><UiText>{"逻辑 ID"}</UiText></UiElement>
+                      <UiElement as="dd">{device.logical_device_id}</UiElement>
                     </>
                   )}
                   {isResourceInteger(device.npu_id) && (
                     <>
-                      <dt>NPU ID</dt>
-                      <dd>{device.npu_id}</dd>
+                      <UiElement as="dt"><UiText>{"NPU ID"}</UiText></UiElement>
+                      <UiElement as="dd">{device.npu_id}</UiElement>
                     </>
                   )}
                   {isResourceInteger(device.chip_id) && (
                     <>
-                      <dt>Chip ID</dt>
-                      <dd>{device.chip_id}</dd>
+                      <UiElement as="dt"><UiText>{"Chip ID"}</UiText></UiElement>
+                      <UiElement as="dd">{device.chip_id}</UiElement>
                     </>
                   )}
                   {knownText(device.pci_bus_id) && (
                     <>
-                      <dt>PCI 地址</dt>
-                      <dd>
-                        <code>{device.pci_bus_id}</code>
-                      </dd>
+                      <UiElement as="dt"><UiText>{"PCI 地址"}</UiText></UiElement>
+                      <UiElement as="dd">
+                        <UiElement as="code">{device.pci_bus_id}</UiElement>
+                      </UiElement>
                     </>
                   )}
                   {knownText(device.uuid) && (
                     <>
-                      <dt>UUID</dt>
-                      <dd>
-                        <code>{device.uuid}</code>
-                      </dd>
+                      <UiElement as="dt"><UiText>{"UUID"}</UiText></UiElement>
+                      <UiElement as="dd">
+                        <UiElement as="code">{device.uuid}</UiElement>
+                      </UiElement>
                     </>
                   )}
-                </dl>
-              </details>
+                </UiElement>
+              </UiElement>
               {device.processes_status === "ready" && (
-                <details className="device-processes">
-                  <summary>{device.processes.length} 个观测进程</summary>
-                  {device.process_pid_scope === "host" && <p>宿主机 PID</p>}
+                <UiElement as="details" className="device-processes">
+                  <UiElement as="summary">{device.processes.length} <UiText>{"个观测进程"}</UiText></UiElement>
+                  {device.process_pid_scope === "host" && <UiElement as="p"><UiText>{"宿主机 PID"}</UiText></UiElement>}
                   {device.processes.length ? (
-                    <ul>
+                    <UiElement as="ul">
                       {device.processes.map((process) => (
-                        <li key={`${device.device_id}-${process.pid}`}>
-                          <code>PID {process.pid}</code>
+                        <UiElement as="li" key={`${device.device_id}-${process.pid}`}>
+                          <UiElement as="code"><UiText>{"PID"}</UiText> {process.pid}</UiElement>
                           {isResourceNumber(process.memory_used_bytes) && (
-                            <span>
+                            <UiElement as="span">
                               {resourceBytes(process.memory_used_bytes)}
-                            </span>
+                            </UiElement>
                           )}
                           {knownText(process.container_id) && (
-                            <code title={process.container_id}>
+                            <UiElement as="code" title={process.container_id}>
                               {process.container_id}
-                            </code>
+                            </UiElement>
                           )}
-                        </li>
+                        </UiElement>
                       ))}
-                    </ul>
+                    </UiElement>
                   ) : (
-                    <p>
-                      本次完整查询未记录到进程。进程列表不用于单独判断可分配性。
-                    </p>
+                    <UiElement as="p">
+                      <UiText>{"本次完整查询未记录到进程。进程列表不用于单独判断可分配性。"}</UiText>
+                    </UiElement>
                   )}
-                </details>
+                </UiElement>
               )}
-            </article>
+            </UiElement>
           );
         })}
-      </div>
-    </div>
+      </UiElement>
+    </UiElement>
   );
 }
 
-function AllocationRecords({
+function DefaultAllocationRecords({
   ledger,
   historical = false,
 }: {
@@ -244,55 +245,55 @@ function AllocationRecords({
   historical?: boolean;
 }) {
   return ledger.items.length ? (
-    <div
+    <UiElement as="div"
       className="allocation-records"
       role="region"
       aria-label={historical ? "历史受管分配记录" : "受管资源分配清单"}
     >
       {ledger.items.map((allocation) => (
-        <article key={allocation.allocation_id} className="allocation-record">
-          <header>
-            <code>{allocation.service_id}</code>
-            <span
+        <UiElement as="article" key={allocation.allocation_id} className="allocation-record">
+          <UiElement as="header">
+            <UiElement as="code">{allocation.service_id}</UiElement>
+            <UiElement as="span"
               className={`npu-allocation-state ${historical ? "historical" : allocation.state}`}
             >
               {allocationLabels[allocation.state] || "状态需核对"}
               {historical ? " · 历史" : ""}
-            </span>
-          </header>
-          <div className="allocation-resource-tags">
+            </UiElement>
+          </UiElement>
+          <UiElement as="div" className="allocation-resource-tags">
             {allocation.devices.map((device) => (
-              <span key={`device-${device}`}>davinci{device}</span>
+              <UiElement as="span" key={`device-${device}`}><UiText>{"davinci"}</UiText>{device}</UiElement>
             ))}
             {allocation.ports.map((port) => (
-              <span key={`port-${port}`}>端口 {port}</span>
+              <UiElement as="span" key={`port-${port}`}><UiText>{"端口"}</UiText> {port}</UiElement>
             ))}
-          </div>
+          </UiElement>
           {!!allocation.container_names.length && (
-            <div className="allocation-container-names">
+            <UiElement as="div" className="allocation-container-names">
               {allocation.container_names.map((name) => (
-                <code key={name}>{name}</code>
+                <UiElement as="code" key={name}>{name}</UiElement>
               ))}
-            </div>
+            </UiElement>
           )}
-          <details>
-            <summary>操作记录</summary>
-            <code>{allocation.operation_id}</code>
+          <UiElement as="details">
+            <UiElement as="summary"><UiText>{"操作记录"}</UiText></UiElement>
+            <UiElement as="code">{allocation.operation_id}</UiElement>
             {allocation.updated_at && (
-              <time>{when(allocation.updated_at)}</time>
+              <UiElement as="time">{when(allocation.updated_at)}</UiElement>
             )}
-          </details>
-        </article>
+          </UiElement>
+        </UiElement>
       ))}
-    </div>
+    </UiElement>
   ) : (
-    <p className="resource-empty-state">
-      该次采样未记录受管分配。部署时仍须核验当前资源与其他程序的占用。
-    </p>
+    <UiElement as="p" className="resource-empty-state">
+      <UiText>{"该次采样未记录受管分配。部署时仍须核验当前资源与其他程序的占用。"}</UiText>
+    </UiElement>
   );
 }
 
-export default function NodeResourceDetails({
+function DefaultNodeResourceDetails({
   node,
   now = serverNow(),
   demo = false,
@@ -348,21 +349,21 @@ export default function NodeResourceDetails({
     : null;
 
   return (
-    <div className="node-resource-details">
-      <div className="node-resource-toolbar">
-        <div className="node-resource-sample" role="status">
-          <span className={`resource-sample-status is-${observation.state} ${current ? "is-current" : ""}`}>
-            <span aria-hidden="true" />{observation.label}
-          </span>
+    <UiElement as="div" className="node-resource-details">
+      <UiElement as="div" className="node-resource-toolbar">
+        <UiElement as="div" className="node-resource-sample" role="status">
+          <UiElement as="span" className={`resource-sample-status is-${observation.state} ${current ? "is-current" : ""}`}>
+            <UiElement as="span" aria-hidden="true" />{observation.label}
+          </UiElement>
           {observation.collectedAt && (
-            <time dateTime={observation.collectedAt} title={when(observation.collectedAt)}>
-              更新于 {observationAge(observation.collectedAt, now)}
-            </time>
+            <UiElement as="time" dateTime={observation.collectedAt} title={when(observation.collectedAt)}>
+              <UiText>{"更新于"}</UiText> {observationAge(observation.collectedAt, now)}
+            </UiElement>
           )}
-        </div>
-        {onRefresh && <Button onClick={onRefresh}><RefreshCw size={14} />刷新观测</Button>}
-      </div>
-      {demo && <InfoBox>演示数据，未连接真实设备。</InfoBox>}
+        </UiElement>
+        {onRefresh && <Button actionId="action.NodeResourceDetails.001" onClick={onRefresh}><RefreshCw size={14} /><UiText>{"刷新观测"}</UiText></Button>}
+      </UiElement>
+      {demo && <InfoBox><UiText>{"演示数据，未连接真实设备。"}</UiText></InfoBox>}
       {node.identity_conflict && (
         <InfoBox>
           {node.identity_conflict.message ||
@@ -370,105 +371,103 @@ export default function NodeResourceDetails({
         </InfoBox>
       )}
       {!current && (
-        <div className={`resource-guidance ${notice.tone}`} role="status">
+        <UiElement as="div" className={`resource-guidance ${notice.tone}`} role="status">
           <Clock3 size={20} />
-          <div>
-            <b>{notice.title}</b>
-            <p>{notice.detail}</p>
-          </div>
-        </div>
+          <UiElement as="div">
+            <UiElement as="b">{notice.title}</UiElement>
+            <UiElement as="p">{notice.detail}</UiElement>
+          </UiElement>
+        </UiElement>
       )}
       {(declaration || cpuAvailable || memoryAvailable) && (
-        <div className="resource-observation-grid">
+        <UiElement as="div" className="resource-observation-grid">
           {declaration && (
-            <section>
+            <UiRegion name="layout.panel" as="section">
               <Server size={19} />
-              <span>Docker 设备声明</span>
-              <strong>
+              <UiElement as="span"><UiText>{"Docker 设备声明"}</UiText></UiElement>
+              <UiElement as="strong">
                 {declaration.used}
-                <small> 已声明</small>
-                <i />
+                <UiElement as="small"> <UiText>{"已声明"}</UiText></UiElement>
+                <UiElement as="i" />
                 {declaration.total}
-                <small> 总量</small>
-              </strong>
-              <span>声明用于保留设备分配关系，不等同实时利用率。</span>
-            </section>
+                <UiElement as="small"> <UiText>{"总量"}</UiText></UiElement>
+              </UiElement>
+              <UiElement as="span"><UiText>{"声明用于保留设备分配关系，不等同实时利用率。"}</UiText></UiElement>
+            </UiRegion>
           )}
           {(cpuAvailable || memoryAvailable) && (
-            <section>
+            <UiRegion name="layout.panel" as="section">
               <Activity size={19} />
-              <span>宿主采样</span>
-              <strong>
-                {cpuAvailable && <>CPU {resourcePercent(node.cpu_percent)}</>}
-                {cpuAvailable && memoryAvailable && <i />}
+              <UiElement as="span"><UiText>{"宿主采样"}</UiText></UiElement>
+              <UiElement as="strong">
+                {cpuAvailable && <><UiText>{"CPU"}</UiText> {resourcePercent(node.cpu_percent)}</>}
+                {cpuAvailable && memoryAvailable && <UiElement as="i" />}
                 {memoryAvailable && (
-                  <>内存 {resourcePercent(node.memory_percent)}</>
+                  <><UiText>{"内存"}</UiText> {resourcePercent(node.memory_percent)}</>
                 )}
-              </strong>
+              </UiElement>
               {observation.collectedAt && (
-                <span>采于 {when(observation.collectedAt)}</span>
+                <UiElement as="span"><UiText>{"采于"}</UiText> {when(observation.collectedAt)}</UiElement>
               )}
-            </section>
+            </UiRegion>
           )}
-        </div>
+        </UiElement>
       )}
       {clusterSummary && (
-        <section className="resource-detail-section">
-          <div className="resource-section-heading">
-            <div>
-              <span className="resource-eyebrow">KUBERNETES</span>
-              <h3>集群调度份额</h3>
-            </div>
-          </div>
-          <p className="npu-scope-note">
-            来自当前集群 NodeList，按节点 UID 去重。调度上限是可供 Pod
-            请求的额度，完整节点与调度条件可在“集群节点”查看。
-          </p>
-          <div className="cluster-resource-detail-summary">
+        <UiRegion name="layout.panel" as="section" className="resource-detail-section">
+          <UiElement as="div" className="resource-section-heading">
+            <UiElement as="div">
+              <UiElement as="span" className="resource-eyebrow"><UiText>{"KUBERNETES"}</UiText></UiElement>
+              <UiElement as="h3"><UiText>{"集群调度份额"}</UiText></UiElement>
+            </UiElement>
+          </UiElement>
+          <UiElement as="p" className="npu-scope-note">
+            <UiText>{"来自当前集群 NodeList，按节点 UID 去重。调度上限是可供 Pod 请求的额度，完整节点与调度条件可在“集群节点”查看。"}</UiText>
+          </UiElement>
+          <UiElement as="div" className="cluster-resource-detail-summary">
             <KubernetesNpuContent summary={clusterSummary} demo={demo} />
-          </div>
-        </section>
+          </UiElement>
+        </UiRegion>
       )}
       {hardwareRelevant && (
-        <section className="resource-detail-section">
-          <div className="resource-section-heading">
-            <div>
-              <h3>硬件指标</h3>
-            </div>
+        <UiRegion name="layout.panel" as="section" className="resource-detail-section">
+          <UiElement as="div" className="resource-section-heading">
+            <UiElement as="div">
+              <UiElement as="h3"><UiText>{"硬件指标"}</UiText></UiElement>
+            </UiElement>
             {!!currentDevices.length && (
-              <span className="resource-verified">
+              <UiElement as="span" className="resource-verified">
                 <CheckCircle2 size={13} />
-                {currentDevices.length} 个设备已采集
-              </span>
+                {currentDevices.length} <UiText>{"个设备已采集"}</UiText>
+              </UiElement>
             )}
-          </div>
+          </UiElement>
           {!!currentDevices.length ? (
             <>
-              <p className="npu-scope-note">
-                展示已采集的有效字段。利用率与 HBM
-                用量用于监控，部署仍执行独立资源准入。
-              </p>
-              <div className="npu-collection-meta">
+              <UiElement as="p" className="npu-scope-note">
+                <UiText>{"展示已采集的有效字段。利用率与 HBM 用量用于监控，部署仍执行独立资源准入。"}</UiText>
+              </UiElement>
+              <UiElement as="div" className="npu-collection-meta">
                 {knownText(currentHardware?.source) && (
-                  <span>
+                  <UiElement as="span">
                     {sourceNames[currentHardware.source] ??
                       currentHardware.source}
-                  </span>
+                  </UiElement>
                 )}
                 {hardware.collectedAt && (
-                  <time>
-                    采于 {when(hardware.collectedAt)} ·{" "}
+                  <UiElement as="time">
+                    <UiText>{"采于"}</UiText> {when(hardware.collectedAt)} <UiText>{"·"}</UiText>{" "}
                     {observationAge(hardware.collectedAt, now)}
-                  </time>
+                  </UiElement>
                 )}
-              </div>
+              </UiElement>
               <DeviceObservations devices={currentDevices} />
             </>
           ) : (
-            <div className="resource-guidance">
+            <UiElement as="div" className="resource-guidance">
               <Cpu size={22} />
-              <div>
-                <b>
+              <UiElement as="div">
+                <UiElement as="b">
                   {hardware.state === "stale"
                     ? "硬件采样待刷新"
                     : hardware.state === "error"
@@ -476,8 +475,8 @@ export default function NodeResourceDetails({
                       : hardware.state === "offline"
                         ? "恢复连接后采集硬件指标"
                         : "接入硬件指标"}
-                </b>
-                <p>
+                </UiElement>
+                <UiElement as="p">
                   {hardware.state === "stale"
                     ? "最近一次硬件采样已过期，请刷新观测并检查 Agent 采集状态。恢复有效采样前，不显示当前硬件读数。"
                     : hardware.state === "error"
@@ -485,100 +484,107 @@ export default function NodeResourceDetails({
                       : hardware.state === "offline"
                         ? "恢复 Agent 连接后重新读取硬件采样。历史读数不参与当前资源汇总与准入。"
                         : "在此宿主配置采集器或受信任的 NPU Exporter 后，可查看利用率、HBM、温度和进程。Docker 声明不会代替硬件读数。"}
-                </p>
-              </div>
-            </div>
+                </UiElement>
+              </UiElement>
+            </UiElement>
           )}
           {!!telemetry?.errors?.length && (
-            <details className="npu-collection-issues">
-              <summary>硬件采集诊断</summary>
-              <ul>
+            <UiElement as="details" className="npu-collection-issues">
+              <UiElement as="summary"><UiText>{"硬件采集诊断"}</UiText></UiElement>
+              <UiElement as="ul">
                 {telemetry.errors.map((error, index) => (
-                  <li key={`${error.source}-${index}`}>
+                  <UiElement as="li" key={`${error.source}-${index}`}>
                     {error.message || error.code}
-                  </li>
+                  </UiElement>
                 ))}
-              </ul>
-            </details>
+              </UiElement>
+            </UiElement>
           )}
           {!!historicalHardware?.devices.filter(hasDeviceMetrics).length && (
-            <details className="npu-last-good">
-              <summary>
-                历史硬件采样
+            <UiElement as="details" className="npu-last-good">
+              <UiElement as="summary">
+                <UiText>{"历史硬件采样"}</UiText>
                 {historicalHardware.collected_at &&
                   ` · ${when(historicalHardware.collected_at)}`}
-              </summary>
-              <p className="npu-history-note">
-                以下为历史记录，仅用于排障，不参与当前资源汇总与准入。
-              </p>
+              </UiElement>
+              <UiElement as="p" className="npu-history-note">
+                <UiText>{"以下为历史记录，仅用于排障，不参与当前资源汇总与准入。"}</UiText>
+              </UiElement>
               <DeviceObservations
                 devices={historicalHardware.devices}
                 historical
               />
-            </details>
+            </UiElement>
           )}
-        </section>
+        </UiRegion>
       )}
       {node.docker_available !== false && (
-        <section className="resource-detail-section">
-          <div className="resource-section-heading">
-            <div>
-              <span className="resource-eyebrow">ALLOCATION</span>
-              <h3>受管资源分配</h3>
-            </div>
+        <UiRegion name="layout.panel" as="section" className="resource-detail-section">
+          <UiElement as="div" className="resource-section-heading">
+            <UiElement as="div">
+              <UiElement as="span" className="resource-eyebrow"><UiText>{"ALLOCATION"}</UiText></UiElement>
+              <UiElement as="h3"><UiText>{"受管资源分配"}</UiText></UiElement>
+            </UiElement>
             {currentLedger && (
-              <span>
+              <UiElement as="span">
                 {currentLedger.complete
                   ? "当前 Agent 账本"
                   : "当前账本部分记录"}
-              </span>
+              </UiElement>
             )}
-          </div>
-          <p className="npu-scope-note">
-            显示本 Agent
-            管理的设备、端口与容器。标记“待核对”的资源保留预留，需核对操作回执。
-          </p>
+          </UiElement>
+          <UiElement as="p" className="npu-scope-note">
+            <UiText>{"显示本 Agent 管理的设备、端口与容器。标记“待核对”的资源保留预留，需核对操作回执。"}</UiText>
+          </UiElement>
           {currentLedger ? (
             <>
-              <div className="npu-collection-meta">
-                <time>更新于 {when(currentLedger.collected_at)}</time>
-              </div>
+              <UiElement as="div" className="npu-collection-meta">
+                <UiElement as="time"><UiText>{"更新于"}</UiText> {when(currentLedger.collected_at)}</UiElement>
+              </UiElement>
               <AllocationRecords ledger={currentLedger} />
             </>
           ) : (
-            <div className="resource-guidance">
+            <UiElement as="div" className="resource-guidance">
               <Server size={20} />
-              <div>
-                <b>分配账本待采集</b>
-                <p>
-                  连接有效的 Agent 后重新读取，不依据缺失记录判断资源已经释放。
-                </p>
-              </div>
-            </div>
+              <UiElement as="div">
+                <UiElement as="b"><UiText>{"分配账本待采集"}</UiText></UiElement>
+                <UiElement as="p">
+                  <UiText>{"连接有效的 Agent 后重新读取，不依据缺失记录判断资源已经释放。"}</UiText>
+                </UiElement>
+              </UiElement>
+            </UiElement>
           )}
           {historicalLedger && (
-            <details className="npu-last-good">
-              <summary>历史分配记录</summary>
-              <p className="npu-history-note">
-                历史记录不用于确认当前资源已经释放。
-              </p>
+            <UiElement as="details" className="npu-last-good">
+              <UiElement as="summary"><UiText>{"历史分配记录"}</UiText></UiElement>
+              <UiElement as="p" className="npu-history-note">
+                <UiText>{"历史记录不用于确认当前资源已经释放。"}</UiText>
+              </UiElement>
               <AllocationRecords ledger={historicalLedger} historical />
-            </details>
+            </UiElement>
           )}
-        </section>
+        </UiRegion>
       )}
       {!!node.collection_errors?.length && (
-        <details className="npu-collection-issues resource-diagnostics">
-          <summary>节点采集诊断</summary>
-          <ul>
+        <UiElement as="details" className="npu-collection-issues resource-diagnostics">
+          <UiElement as="summary"><UiText>{"节点采集诊断"}</UiText></UiElement>
+          <UiElement as="ul">
             {node.collection_errors.map((error, index) => (
-              <li key={`${error.source}-${error.code}-${index}`}>
-                {error.source} · {error.message || error.code}
-              </li>
+              <UiElement as="li" key={`${error.source}-${error.code}-${index}`}>
+                {error.source} <UiText>{"·"}</UiText> {error.message || error.code}
+              </UiElement>
             ))}
-          </ul>
-        </details>
+          </UiElement>
+        </UiElement>
       )}
-    </div>
+    </UiElement>
   );
 }
+
+const DeviceObservations = withUiSlot("component.DeviceObservations", DefaultDeviceObservations);
+const AllocationRecords = withUiSlot("component.AllocationRecords", DefaultAllocationRecords);
+const NodeResourceDetails = withUiSlot("component.NodeResourceDetails", DefaultNodeResourceDetails);
+export default NodeResourceDetails;
+
+// Reference package implementation exports.
+export { DefaultDeviceObservations, DefaultAllocationRecords, DefaultNodeResourceDetails };

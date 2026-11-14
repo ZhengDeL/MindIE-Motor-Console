@@ -1,6 +1,6 @@
 # 安装与升级
 
-MindIE-Motor Console 由独立 Web/API、数据库插件和执行 Agent 组成。Web 不持有节点执行权限；原生 Motor 使用固定源码画像，不随控制台更新自动变更。
+MindIE-Motor Console 由独立 Web/API、数据库提供者和执行 Agent 组成。0.12.0 候选还提供独立 Node 插件入口、Python Provider SDK 与完整 UI 制品，详见[提供者部署](PROVIDER_PLUGINS.md)；本页基础拓扑仍可直接运行 Python API。Web 不持有节点执行权限；原生 Motor 使用固定源码画像，不随控制台更新自动变更。
 
 本指南用于 Linux Docker 单实例 Control 的安装和组件更新。命令在 **Linux Bash、仓库根目录**执行，域名、路径和摘要须替换为实际值。示例镜像地址不是预构建镜像下载源。本地体验见[开发指南](../README.md)，运行维护见[生产手册](../PRODUCTION.md)。
 
@@ -120,11 +120,13 @@ CPU/内存/OS 来自 [Node Exporter](DOCKER_NODE_EXPORTER.md)，NPU 来自[受�
 
 模型镜像、所有节点可读的权重、驱动、通信网络和端口分别准备。模板保存不启动模型；审查原生 JSON、角色/节点/设备布局并执行预检，再由 Agent 最终准入。Kubernetes 部署还需集群管理员预置必要组件并按[原生集成说明](NATIVE_INTEGRATION.md)审核权限，不将单命名空间 Role 或平台页面状态视为完整部署能力。
 
-## 5. 社区插件导入与持久化
+## 5. 插件导入与持久化
+
+需替换存储、安全、运行时、业务 API 或完整 UI 时，使用[提供者导入与部署](PROVIDER_PLUGINS.md)中的相应 SDK。下面说明的是保留的 `.qhplugin` 增量社区格式；不同格式不能互换。插件目录、选择文件和配置应分别纳入备份。
 
 登录后读取 `GET /api/plugin-sdk` 核对实际 features，再按[插件开发指南](../PLUGIN_DEVELOPMENT.md)构建和导入 `.qhplugin`。HTTP401表示尚未建立登录会话，不用关闭权限解决。导入不执行代码；管理员审阅来源和内容、明确信任并选择后，下次 Control 启动才加载。demo 和 Agent 不加载上传的控制面代码。
 
-当前插件是受信 Python 同进程扩展，不能作为沙箱或绕过宿主权限。社区包提供公开 SDK 内的 HTTP 路由和声明式页面，不能任意替换数据库早期 bootstrap、原生 K8s 执行器或注入前端编译包。启用或回退前检查依赖与兼容范围，停止接收新管理任务并处理未决操作后，才维护重启 Control；不需要因此重建模型。
+`.qhplugin` 是受信 Python 同进程扩展，不能作为沙箱或绕过宿主权限。该格式提供 HTTP 路由和声明式状态页；早期存储、运行时或完整 UI 替换分别使用 Provider/UI SDK。启用或回退前检查依赖与兼容范围，停止接收新管理任务并处理未决操作后，才维护重启 Control；不需要因此重建模型。
 
 `MOTOR_PLUGIN_DIR` 默认 `/var/lib/motor-console/plugin-packages`，标准 Compose 位于已有 Control 数据卷。改成外部路径时必须另行配置可写挂载及进程 UID 权限；只改环境变量不会自动增加绑定。**数据库快照和 .mcba 应用归档均不包含此目录**，已使用插件的安装按[独立备份步骤](../BACKUP_RECOVERY.md#社区插件包目录单独备份)保留整个目录与匹配宿主修订。
 

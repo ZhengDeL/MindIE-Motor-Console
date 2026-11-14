@@ -1,0 +1,558 @@
+{
+  "id": "console.ui.default",
+  "version": "1.0.0",
+  "sdkVersion": "1.0.0",
+  "provides": [
+    {
+      "slot": "component.AccountsPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.AgentDetails",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.AgentNpuResources",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.AgentRolloutDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.AllocationRecords",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.AppearanceSettings",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Badge",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Brand",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.BrandIdentity",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.BrandingSettings",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Button",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.CapabilitiesPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ClusterNodesPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.CommandPalette",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.CommunityPluginPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ConfigurationFields",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Confirm",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Copy",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.CredentialFields",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.CredentialStatus",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.DeferredPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.DeviceObservations",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.DockerNpuValue",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Drawer",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Empty",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ErrorBox",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Fact",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Field",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.GatewayAuthorizationHelp",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.GatewayEditor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.GatewaysPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.IdentityFields",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ImageContractPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ImageOperations",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ImagesPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ImportPluginPackage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.InferenceResponse",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.InfoBox",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.InfrastructureSettings",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.JobProgress",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.JsonEditor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.KubernetesEndpoints",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.KubernetesNpuContent",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.LogsPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ManifestReview",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Modal",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ModelMetadata",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NativeAigwEditor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NativeAigwModelsPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodeCredentialsModal",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodeModal",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodeMoreMenu",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodeResourceDetails",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodesPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NodeTlsStatus",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.NpuResourceCard",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.OfflineGuide",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.OverviewPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Pagination",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PasswordDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PasswordInput",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PlacementPlanDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PlanReview",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PlatformBrand",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PluginPackagesPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.PluginSettings",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RateChart",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ReadNotice",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RecordDetails",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RecoveryArchiveStatus",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Resources",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RolloutHistory",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RolloutJobDetails",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RuntimeLogFilters",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RuntimeLogLine",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.RuntimeTag",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ScaleDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.SearchInput",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Segment",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Select",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.SelectPluginPackage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ServiceDetail",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ServiceEditor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ServiceMenu",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.ServiceMetricsPanel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.SettingsPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Spinner",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.StatBar",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.SystemLogs",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.SystemMaintenance",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.TemplateEditor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.TemplatesPage",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.TrafficTrend",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.UndeployDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.UserDialog",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.Value",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "layout.panel",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "layout.sidebar",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "layout.topbar",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "layout.workspace",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.accounts",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.audit",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.features",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.gateways",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.images",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.login",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.logs",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.maintenance",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.nodes",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.overview",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.services",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.settings",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.systemlogs",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "page.templates",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.deploy.0",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.deploy.1",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.deploy.2",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.deploy.3",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.aigw",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.config",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.logs",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.monitor",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.overview",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.playground",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.revisions",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "tab.service.topology",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.actions",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.appearance",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.button",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.i18n",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.icons",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.shell",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.theme",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.UiPluginPackages",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "component.UiPluginReview",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.element",
+      "version": "1.0.0"
+    },
+    {
+      "slot": "ui.notifications",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": [],
+  "schemaVersion": 1,
+  "buildDigest": "79107e9fff85bd7d9fcd519cea20492c4e454a3069a3d223c5bc6252a196380e"
+}

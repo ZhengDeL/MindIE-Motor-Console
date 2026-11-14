@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { readCount } from "./readState";
 import {
@@ -105,7 +106,7 @@ function queryFor(
   return query.toString();
 }
 
-export default function SystemLogs({ audit = false }: { audit?: boolean }) {
+function DefaultSystemLogs({ audit = false }: { audit?: boolean }) {
   const [draft, setDraft] = useState<Filters>(initial);
   const [filters, setFilters] = useState<Filters>(initial);
   const [offset, setOffset] = useState(0);
@@ -155,7 +156,7 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
   const hasRequests = data.items.some((item) => recordText(item.request_id));
   const field = (key: keyof Filters, label: string, type = "text") => (
     <Field label={label}>
-      <input
+      <UiElement as="input"
         aria-label={label}
         type={type}
         value={draft[key]}
@@ -167,8 +168,8 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
   );
   return (
     <>
-      <section className="panel query-panel">
-        <form
+      <UiRegion name="layout.panel" as="section" className="panel query-panel">
+        <UiElement as="form"
           className="record-filters"
           onSubmit={(event) => {
             event.preventDefault();
@@ -194,11 +195,11 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                 }
                 ariaLabel="操作结果"
               >
-                <option value="">全部结果</option>
-                <option value="success">成功</option>
-                <option value="partial">未完整</option>
-                <option value="error">异常</option>
-                <option value="failed">失败</option>
+                <UiElement as="option" value=""><UiText>{"全部结果"}</UiText></UiElement>
+                <UiElement as="option" value="success"><UiText>{"成功"}</UiText></UiElement>
+                <UiElement as="option" value="partial"><UiText>{"未完整"}</UiText></UiElement>
+                <UiElement as="option" value="error"><UiText>{"异常"}</UiText></UiElement>
+                <UiElement as="option" value="failed"><UiText>{"失败"}</UiText></UiElement>
               </Select>
             </Field>
           ) : (
@@ -210,12 +211,12 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                 }
                 ariaLabel="日志级别"
               >
-                <option value="">全部级别</option>
+                <UiElement as="option" value=""><UiText>{"全部级别"}</UiText></UiElement>
                 {["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"].map(
                   (value) => (
-                    <option key={value} value={value}>
+                    <UiElement as="option" key={value} value={value}>
                       {value}
-                    </option>
+                    </UiElement>
                   ),
                 )}
               </Select>
@@ -223,26 +224,26 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
           )}
           {field("since", "开始时间", "datetime-local")}
           {field("until", "结束时间", "datetime-local")}
-          <div className="query-actions">
-            <Button type="submit" kind="primary" loading={loading}>
+          <UiElement as="div" className="query-actions">
+            <Button actionId="action.SystemLogs.001" type="submit" kind="primary" loading={loading}>
               <Search size={14} />
-              查询
+              <UiText>{"查询"}</UiText>
             </Button>
-            <Button
+            <Button actionId="action.SystemLogs.002"
               onClick={() => {
                 setDraft(initial);
                 setFilters({ ...initial });
                 setOffset(0);
               }}
             >
-              重置
+              <UiText>{"重置"}</UiText>
             </Button>
-            <Button kind="text" onClick={() => setMore(!more)}>
+            <Button actionId="action.SystemLogs.003" kind="text" onClick={() => setMore(!more)}>
               {more ? "收起条件" : "更多条件"}
             </Button>
-          </div>
+          </UiElement>
           {more && (
-            <div className="record-more-filters">
+            <UiElement as="div" className="record-more-filters">
               {field("actor", audit ? "操作账号或身份标识" : "操作身份标识")}
               {field("request_id", "请求 ID")}
               {!audit && (
@@ -252,29 +253,29 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                   {field("status_code", "HTTP 状态码", "number")}
                 </>
               )}
-            </div>
+            </UiElement>
           )}
-        </form>
-        <div className="query-note">
-          时间按当前浏览器时区填写；记录显示北京时间 UTC+8。
+        </UiElement>
+        <UiElement as="div" className="query-note">
+          <UiText>{"时间按当前浏览器时区填写；记录显示北京时间 UTC+8。"}</UiText>
           {audit
             ? "操作审计记录身份、对象与结果。"
             : "控制台系统日志按保留窗口查询；导出当前筛选结果，最多 10,000 条。"}
-        </div>
-      </section>
-      <section className="panel">
-        <div className="table-toolbar">
-          <b>{audit ? "操作审计" : "系统日志"}</b>
+        </UiElement>
+      </UiRegion>
+      <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="table-toolbar">
+          <UiElement as="b">{audit ? "操作审计" : "系统日志"}</UiElement>
           {hasSuccess && (
-            <span className="toolbar-right-note">
+            <UiElement as="span" className="toolbar-right-note">
               {readCount({ loaded: true, refreshing: loading, error }, data.total, "条")}
-            </span>
+            </UiElement>
           )}
-          <Button onClick={() => void load()} loading={loading}>
+          <Button actionId="action.SystemLogs.004" onClick={() => void load()} loading={loading}>
             <RefreshCw size={14} />
-            刷新
+            <UiText>{"刷新"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.SystemLogs.005"
             disabled={!hasSuccess || loading || !!error || !data.items.length}
             loading={downloading}
             onClick={async () => {
@@ -306,24 +307,24 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
             <Download size={14} />
             {audit ? "导出当前页" : "导出筛选结果"}
           </Button>
-        </div>
+        </UiElement>
         {error && <ErrorBox message={error} />}
         {loading && !hasSuccess ? (
           <Spinner />
         ) : hasSuccess && data.items.length ? (
-          <div className="table-wrap">
-            <table className="records-table">
-              <thead>
-                <tr>
-                  <th>时间（北京时间）</th>
-                  <th>{audit ? "结果" : "级别"}</th>
-                  {hasActors && <th>操作身份</th>}
-                  <th>{audit ? "操作 / 目标" : "事件 / 请求路径"}</th>
-                  {hasRequests && <th>请求 ID</th>}
-                  <th>详情</th>
-                </tr>
-              </thead>
-              <tbody>
+          <UiElement as="div" className="table-wrap">
+            <UiElement as="table" className="records-table">
+              <UiElement as="thead">
+                <UiElement as="tr">
+                  <UiElement as="th"><UiText>{"时间（北京时间）"}</UiText></UiElement>
+                  <UiElement as="th">{audit ? "结果" : "级别"}</UiElement>
+                  {hasActors && <UiElement as="th"><UiText>{"操作身份"}</UiText></UiElement>}
+                  <UiElement as="th">{audit ? "操作 / 目标" : "事件 / 请求路径"}</UiElement>
+                  {hasRequests && <UiElement as="th"><UiText>{"请求 ID"}</UiText></UiElement>}
+                  <UiElement as="th"><UiText>{"详情"}</UiText></UiElement>
+                </UiElement>
+              </UiElement>
+              <UiElement as="tbody">
                 {data.items.map((item) => {
                   const record = item as SystemLog;
                   const entry = item as AuditRecord;
@@ -336,12 +337,12 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                     ? auditTarget(entry)
                     : logContext(record);
                   return (
-                    <tr
+                    <UiElement as="tr"
                       key={item.id}
                       data-selected={selected?.id === item.id || undefined}
                     >
-                      <td className="tabular nowrap">{time && when(time)}</td>
-                      <td>
+                      <UiElement as="td" className="tabular nowrap">{time && when(time)}</UiElement>
+                      <UiElement as="td">
                         {audit ? (
                           recordText(entry.status) && (
                             <Badge status={entry.status}>
@@ -349,63 +350,63 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                             </Badge>
                           )
                         ) : recordText(record.severity_text) ? (
-                          <span
+                          <UiElement as="span"
                             className={`severity severity-${record.severity_text.toLowerCase()}`}
                           >
                             {record.severity_text}
-                          </span>
+                          </UiElement>
                         ) : null}
-                      </td>
+                      </UiElement>
                       {hasActors && (
-                        <td className="record-actor-cell">
+                        <UiElement as="td" className="record-actor-cell">
                           {actor ||
                             (recordText(item.actor) && (
-                              <button
+                              <UiButton actionId="action.SystemLogs.006"
                                 className="text-link"
                                 onClick={() => setSelected(item)}
                                 aria-haspopup="dialog"
                               >
-                                身份记录
-                              </button>
+                                <UiText>{"身份记录"}</UiText>
+                              </UiButton>
                             ))}
-                        </td>
+                        </UiElement>
                       )}
-                      <td className="record-subject-cell">
-                        <b>
+                      <UiElement as="td" className="record-subject-cell">
+                        <UiElement as="b">
                           {audit ? auditAction(entry) : recordText(record.body)}
-                        </b>
+                        </UiElement>
                         {context && (
-                          <span className="cell-secondary">{context}</span>
+                          <UiElement as="span" className="cell-secondary">{context}</UiElement>
                         )}
-                      </td>
+                      </UiElement>
                       {hasRequests && (
-                        <td>
+                        <UiElement as="td">
                           {request && (
                             <>
-                              <span className="request-id" title={request}>
+                              <UiElement as="span" className="request-id" title={request}>
                                 {request.slice(0, 12)}
-                              </span>
+                              </UiElement>
                               <Copy value={request} label="复制请求 ID" />
                             </>
                           )}
-                        </td>
+                        </UiElement>
                       )}
-                      <td>
-                        <button
+                      <UiElement as="td">
+                        <UiButton actionId="action.SystemLogs.007"
                           className="text-link"
                           aria-haspopup="dialog"
                           aria-expanded={selected?.id === item.id}
                           onClick={() => setSelected(item)}
                         >
-                          查看
-                        </button>
-                      </td>
-                    </tr>
+                          <UiText>{"查看"}</UiText>
+                        </UiButton>
+                      </UiElement>
+                    </UiElement>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </UiElement>
+            </UiElement>
+          </UiElement>
         ) : (
           <Empty
             title={!hasSuccess ? error ? "本次查询未完成" : "正在读取记录" : "暂无匹配记录"}
@@ -417,13 +418,13 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
           />
         )}
         {hasSuccess && !loading && !error && (
-          <div className="table-footer">
-            <span>
+          <UiElement as="div" className="table-footer">
+            <UiElement as="span">
               {data.total
                 ? `${offset + 1}–${Math.min(offset + data.items.length, data.total)}`
                 : "0"}{" "}
-              / {data.total} 条
-            </span>
+              <UiText>{"/"}</UiText> {data.total} <UiText>{"条"}</UiText>
+            </UiElement>
             <Select
               value={String(limit)}
               onChange={(value) => {
@@ -433,34 +434,34 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
               ariaLabel="每页记录数"
             >
               {[20, 50, 100].map((value) => (
-                <option key={value} value={value}>
-                  {value} 条 / 页
-                </option>
+                <UiElement as="option" key={value} value={value}>
+                  {value} <UiText>{"条 / 页"}</UiText>
+                </UiElement>
               ))}
             </Select>
-            <div className="pagination">
-              <button
+            <UiElement as="div" className="pagination">
+              <UiButton actionId="action.SystemLogs.008"
                 disabled={offset === 0 || loading}
                 onClick={() => setOffset(Math.max(0, offset - limit))}
                 aria-label="上一页记录"
               >
                 <ChevronLeft size={15} />
-              </button>
-              <span>
-                {Math.floor(offset / limit) + 1} /{" "}
+              </UiButton>
+              <UiElement as="span">
+                {Math.floor(offset / limit) + 1} <UiText>{"/"}</UiText>{" "}
                 {Math.max(1, Math.ceil(data.total / limit))}
-              </span>
-              <button
+              </UiElement>
+              <UiButton actionId="action.SystemLogs.009"
                 disabled={offset + limit >= data.total || loading}
                 onClick={() => setOffset(offset + limit)}
                 aria-label="下一页记录"
               >
                 <ChevronRight size={15} />
-              </button>
-            </div>
-          </div>
+              </UiButton>
+            </UiElement>
+          </UiElement>
         )}
-      </section>
+      </UiRegion>
       {selected && (
         <RecordDetails
           record={selected}
@@ -473,3 +474,9 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
     </>
   );
 }
+
+const SystemLogs = withUiSlot("component.SystemLogs", DefaultSystemLogs);
+export default SystemLogs;
+
+// Reference package implementation exports.
+export { DefaultSystemLogs };

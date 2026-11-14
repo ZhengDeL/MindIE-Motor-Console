@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useBranding } from "./brandingState";
 import { useState } from "react";
 import {
@@ -48,12 +49,12 @@ type Props = {
   onCreateService: () => void;
   onOpenService: (service: Service) => void;
 };
-function ReadNotice({ state, inline = false }: { state: ReadState; inline?: boolean }) {
+function DefaultReadNotice({ state, inline = false }: { state: ReadState; inline?: boolean }) {
   const message = readNotice(state);
   if (!message) return null;
   return inline
-    ? <span className="small-caption" role="status">{state.loaded ? " · " : ""}{message}</span>
-    : <p className="overview-empty-note" role="status">{message}</p>;
+    ? <UiElement as="span" className="small-caption" role="status">{state.loaded ? " · " : ""}{message}</UiElement>
+    : <UiElement as="p" className="overview-empty-note" role="status">{message}</UiElement>;
 }
 type Attention = {
   id: string;
@@ -87,7 +88,7 @@ const activityNames: Record<string, string> = {
   "auth.oidc_provision": "创建单点登录账号",
 };
 
-export default function OverviewPage({
+function DefaultOverviewPage({
   overview,
   services,
   nodes,
@@ -196,83 +197,90 @@ export default function OverviewPage({
   // Altered MindIE-Motor Console presentation adapted from Portainer 2.45.3 DashboardItem/Widget.
   // See NOTICE.md and /third-party-licenses.txt for the original zlib notice.
   return (
-    <div className="overview-page">
-      <header className="overview-heading">
-        <h1>集群概览</h1>
-        <div className="overview-heading-actions">
-          <button type="button" className="icon-btn" onClick={onRefresh} disabled={refreshing} aria-label="刷新集群概览">
+    <UiElement as="div" className="overview-page">
+      <UiElement as="header" className="overview-heading">
+        <UiElement as="h1"><UiText>{"集群概览"}</UiText></UiElement>
+        <UiElement as="div" className="overview-heading-actions">
+          <UiButton actionId="action.OverviewPage.001" type="button" className="icon-btn" onClick={onRefresh} disabled={refreshing} aria-label="刷新集群概览">
             <RefreshCw size={18} className={refreshing ? "spin" : ""} />
-          </button>
-        </div>
-      </header>
-      {demo && <p className="overview-demo-note">当前为演示环境，数据为模拟数据。</p>}
-      <section className="overview-widget" aria-labelledby="overview-info-title">
-        <header className="overview-widget-header">
-          <h2 id="overview-info-title"><Server size={16} />平台概况</h2>
-          <button className="text-link" onClick={() => setShowGuide(value => !value)} aria-expanded={showGuide}>
+          </UiButton>
+        </UiElement>
+      </UiElement>
+      {demo && <UiElement as="p" className="overview-demo-note"><UiText>{"当前为演示环境，数据为模拟数据。"}</UiText></UiElement>}
+      <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-info-title">
+        <UiElement as="header" className="overview-widget-header">
+          <UiElement as="h2" id="overview-info-title"><Server size={16} /><UiText>{"平台概况"}</UiText></UiElement>
+          <UiButton actionId="action.OverviewPage.002" className="text-link" onClick={() => setShowGuide(value => !value)} aria-expanded={showGuide}>
             <BookOpen size={14} />{showGuide ? "收起指引" : "接入指引"}
-          </button>
-        </header>
-        <dl className="overview-details">
-          <div><dt>推理服务</dt><dd>{servicesRead.loaded && <>{services.length} 项已登记<span className="overview-detail-separator">·</span>{running} 项运行中{processing > 0 && <><span className="overview-detail-separator">·</span>{processing} 项处理中</>}</>}<ReadNotice state={servicesRead} inline /></dd></div>
-          <div><dt>执行环境</dt><dd>{nodesRead.loaded && <>{nodes.length} 个 Agent<span className="overview-detail-separator">·</span>{connected} 个连接正常{latestSeen && <><span className="overview-detail-separator">·</span><time dateTime={latestSeen}>最近探测 {when(latestSeen)}</time></>}</>}<ReadNotice state={nodesRead} inline /></dd></div>
-        </dl>
-        {showGuide && <div className="overview-guide" aria-label={`开始使用${branding.name}`}>
-          <button onClick={() => onNavigate("nodes")}><Server size={16} /><span><b>接入执行节点</b><small>登记 Agent 并检查设备采样</small></span><ArrowRight size={14} /></button>
-          {templatesEnabled && <button onClick={() => onNavigate("templates")}><Layers3 size={16} /><span><b>选择配置模板</b><small>使用官方模板或自己的原生配置</small></span><ArrowRight size={14} /></button>}
-          <button onClick={onCreateService} disabled={!canOperate}><Plus size={16} /><span><b>创建推理服务</b><small>核对镜像、模型路径与布局，再执行预检</small></span><ArrowRight size={14} /></button>
-        </div>}
-      </section>
-      <div className="overview-metrics" aria-label="登记与连接状态">
-        <button onClick={() => onNavigate("services")} className="overview-metric">
-          <span className="overview-metric-icon"><Layers3 size={24} /></span><span>{servicesRead.loaded && <strong>{services.length}</strong>}<span className="overview-metric-label">推理服务</span></span>
-          <span className="overview-metric-note">{readNotice(servicesRead) || <>{running} 项运行中{errors.length > 0 && <Badge status="error">{errors.length} 项需关注</Badge>}</>}</span>
-        </button>
-        <button onClick={() => onNavigate("nodes")} className="overview-metric">
-          <span className="overview-metric-icon"><Server size={24} /></span><span>{nodesRead.loaded && <strong>{nodes.length}</strong>}<span className="overview-metric-label">执行 Agent</span></span>
-          <span className="overview-metric-note">{readNotice(nodesRead) || `${connected} 个连接正常`}</span>
-        </button>
-        {nodesRead.loaded && docker.total !== null && <button onClick={() => onNavigate("nodes")} className="overview-metric">
-          <span className="overview-metric-icon"><Cpu size={24} /></span><span><strong>{docker.total}</strong><span className="overview-metric-label">Docker 设备</span></span>
-          <span className="overview-metric-note">{readNotice(nodesRead) || `已采集 ${docker.knownAgentCount} / ${docker.agentCount} 个 Agent`}</span>
-        </button>}
-        <button onClick={() => attention.length ? attention[0].action() : onNavigate("nodes")} className="overview-metric">
-          <span className="overview-metric-icon"><AlertCircle size={24} /></span><span>{attentionLoaded && <strong>{attention.length}</strong>}<span className="overview-metric-label">待关注事项</span></span>
-          <span className="overview-metric-note">{readNotice(attentionRead) || (attention.length ? "查看服务与资源观测状态" : "已登记状态中暂无待处理项")}</span>
-        </button>
-      </div>
-      <section className="overview-widget" aria-labelledby="overview-services-title">
-        <header className="overview-widget-header"><h2 id="overview-services-title"><Layers3 size={16} />推理服务</h2><div className="overview-widget-actions"><Button onClick={() => onNavigate("services")}>全部服务<ArrowUpRight size={14} /></Button>{canOperate && <Button kind="primary" onClick={onCreateService}><Plus size={14} />创建推理服务</Button>}</div></header>
+          </UiButton>
+        </UiElement>
+        <UiElement as="dl" className="overview-details">
+          <UiElement as="div"><UiElement as="dt"><UiText>{"推理服务"}</UiText></UiElement><UiElement as="dd">{servicesRead.loaded && <>{services.length} <UiText>{"项已登记"}</UiText><UiElement as="span" className="overview-detail-separator"><UiText>{"·"}</UiText></UiElement>{running} <UiText>{"项运行中"}</UiText>{processing > 0 && <><UiElement as="span" className="overview-detail-separator"><UiText>{"·"}</UiText></UiElement>{processing} <UiText>{"项处理中"}</UiText></>}</>}<ReadNotice state={servicesRead} inline /></UiElement></UiElement>
+          <UiElement as="div"><UiElement as="dt"><UiText>{"执行环境"}</UiText></UiElement><UiElement as="dd">{nodesRead.loaded && <>{nodes.length} <UiText>{"个 Agent"}</UiText><UiElement as="span" className="overview-detail-separator"><UiText>{"·"}</UiText></UiElement>{connected} <UiText>{"个连接正常"}</UiText>{latestSeen && <><UiElement as="span" className="overview-detail-separator"><UiText>{"·"}</UiText></UiElement><UiElement as="time" dateTime={latestSeen}><UiText>{"最近探测"}</UiText> {when(latestSeen)}</UiElement></>}</>}<ReadNotice state={nodesRead} inline /></UiElement></UiElement>
+        </UiElement>
+        {showGuide && <UiElement as="div" className="overview-guide" aria-label={`开始使用${branding.name}`}>
+          <UiButton actionId="action.OverviewPage.003" onClick={() => onNavigate("nodes")}><Server size={16} /><UiElement as="span"><UiElement as="b"><UiText>{"接入执行节点"}</UiText></UiElement><UiElement as="small"><UiText>{"登记 Agent 并检查设备采样"}</UiText></UiElement></UiElement><ArrowRight size={14} /></UiButton>
+          {templatesEnabled && <UiButton actionId="action.OverviewPage.004" onClick={() => onNavigate("templates")}><Layers3 size={16} /><UiElement as="span"><UiElement as="b"><UiText>{"选择配置模板"}</UiText></UiElement><UiElement as="small"><UiText>{"使用官方模板或自己的原生配置"}</UiText></UiElement></UiElement><ArrowRight size={14} /></UiButton>}
+          <UiButton actionId="action.OverviewPage.005" onClick={onCreateService} disabled={!canOperate}><Plus size={16} /><UiElement as="span"><UiElement as="b"><UiText>{"创建推理服务"}</UiText></UiElement><UiElement as="small"><UiText>{"核对镜像、模型路径与布局，再执行预检"}</UiText></UiElement></UiElement><ArrowRight size={14} /></UiButton>
+        </UiElement>}
+      </UiRegion>
+      <UiElement as="div" className="overview-metrics" aria-label="登记与连接状态">
+        <UiButton actionId="action.OverviewPage.006" onClick={() => onNavigate("services")} className="overview-metric">
+          <UiElement as="span" className="overview-metric-icon"><Layers3 size={24} /></UiElement><UiElement as="span">{servicesRead.loaded && <UiElement as="strong">{services.length}</UiElement>}<UiElement as="span" className="overview-metric-label"><UiText>{"推理服务"}</UiText></UiElement></UiElement>
+          <UiElement as="span" className="overview-metric-note">{readNotice(servicesRead) || <>{running} <UiText>{"项运行中"}</UiText>{errors.length > 0 && <Badge status="error">{errors.length} <UiText>{"项需关注"}</UiText></Badge>}</>}</UiElement>
+        </UiButton>
+        <UiButton actionId="action.OverviewPage.007" onClick={() => onNavigate("nodes")} className="overview-metric">
+          <UiElement as="span" className="overview-metric-icon"><Server size={24} /></UiElement><UiElement as="span">{nodesRead.loaded && <UiElement as="strong">{nodes.length}</UiElement>}<UiElement as="span" className="overview-metric-label"><UiText>{"执行 Agent"}</UiText></UiElement></UiElement>
+          <UiElement as="span" className="overview-metric-note">{readNotice(nodesRead) || `${connected} 个连接正常`}</UiElement>
+        </UiButton>
+        {nodesRead.loaded && docker.total !== null && <UiButton actionId="action.OverviewPage.008" onClick={() => onNavigate("nodes")} className="overview-metric">
+          <UiElement as="span" className="overview-metric-icon"><Cpu size={24} /></UiElement><UiElement as="span"><UiElement as="strong">{docker.total}</UiElement><UiElement as="span" className="overview-metric-label"><UiText>{"Docker 设备"}</UiText></UiElement></UiElement>
+          <UiElement as="span" className="overview-metric-note">{readNotice(nodesRead) || `已采集 ${docker.knownAgentCount} / ${docker.agentCount} 个 Agent`}</UiElement>
+        </UiButton>}
+        <UiButton actionId="action.OverviewPage.009" onClick={() => attention.length ? attention[0].action() : onNavigate("nodes")} className="overview-metric">
+          <UiElement as="span" className="overview-metric-icon"><AlertCircle size={24} /></UiElement><UiElement as="span">{attentionLoaded && <UiElement as="strong">{attention.length}</UiElement>}<UiElement as="span" className="overview-metric-label"><UiText>{"待关注事项"}</UiText></UiElement></UiElement>
+          <UiElement as="span" className="overview-metric-note">{readNotice(attentionRead) || (attention.length ? "查看服务与资源观测状态" : "已登记状态中暂无待处理项")}</UiElement>
+        </UiButton>
+      </UiElement>
+      <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-services-title">
+        <UiElement as="header" className="overview-widget-header"><UiElement as="h2" id="overview-services-title"><Layers3 size={16} /><UiText>{"推理服务"}</UiText></UiElement><UiElement as="div" className="overview-widget-actions"><Button actionId="action.OverviewPage.010" onClick={() => onNavigate("services")}><UiText>{"全部服务"}</UiText><ArrowUpRight size={14} /></Button>{canOperate && <Button actionId="action.OverviewPage.011" kind="primary" onClick={onCreateService}><Plus size={14} /><UiText>{"创建推理服务"}</UiText></Button>}</UiElement></UiElement>
         <ReadNotice state={servicesRead} />
-        {shownServices.length ? <div className="table-wrap"><table className="overview-services" aria-label="最近更新的推理服务"><thead><tr><th>名称</th><th>状态</th><th>模型</th><th>运行环境</th><th>更新时间</th></tr></thead><tbody>{shownServices.slice(0, 4).map(service => <tr key={service.id}>
-          <td><button className="text-link" onClick={() => onOpenService(service)}>{service.name}</button></td>
-          <td><Badge status={service.status}>{statusName(service.status)}</Badge></td>
-          <td>{knownText(service.model) && service.model}</td>
-          <td>{["docker", "kubernetes"].includes(service.runtime) && <span className="overview-runtime">{service.runtime === "kubernetes" ? <Layers3 size={13} /> : <Box size={13} />}{service.runtime === "kubernetes" ? "Kubernetes" : "Docker"}</span>}</td>
-          <td>{when(service.updated_at || service.created_at)}</td>
-        </tr>)}</tbody></table></div> : servicesRead.loaded ? <Empty title="创建第一项推理服务" description="保存原生配置，核对资源后执行部署预检。" icon={<Layers3 size={25} />} action={canOperate ? <Button onClick={onCreateService}><Plus size={14} />创建服务配置</Button> : undefined} /> : <p className="overview-empty-note">{servicesRead.error ? "尚未取得服务列表，不能确认已登记服务数量。" : "正在读取服务列表，其他资源可继续查看。"}</p>}
-      </section>
-      <section className="overview-widget" aria-labelledby="overview-resources-title">
-        <header className="overview-widget-header"><h2 id="overview-resources-title"><Cpu size={16} />资源观测</h2><Button onClick={() => onNavigate("nodes")}>节点资源<ArrowUpRight size={14} /></Button></header>
+        {shownServices.length ? <UiElement as="div" className="table-wrap"><UiElement as="table" className="overview-services" aria-label="最近更新的推理服务"><UiElement as="thead"><UiElement as="tr"><UiElement as="th"><UiText>{"名称"}</UiText></UiElement><UiElement as="th"><UiText>{"状态"}</UiText></UiElement><UiElement as="th"><UiText>{"模型"}</UiText></UiElement><UiElement as="th"><UiText>{"运行环境"}</UiText></UiElement><UiElement as="th"><UiText>{"更新时间"}</UiText></UiElement></UiElement></UiElement><UiElement as="tbody">{shownServices.slice(0, 4).map(service => <UiElement as="tr" key={service.id}>
+          <UiElement as="td"><UiButton actionId="action.OverviewPage.012" className="text-link" onClick={() => onOpenService(service)}>{service.name}</UiButton></UiElement>
+          <UiElement as="td"><Badge status={service.status}>{statusName(service.status)}</Badge></UiElement>
+          <UiElement as="td">{knownText(service.model) && service.model}</UiElement>
+          <UiElement as="td">{["docker", "kubernetes"].includes(service.runtime) && <UiElement as="span" className="overview-runtime">{service.runtime === "kubernetes" ? <Layers3 size={13} /> : <Box size={13} />}{service.runtime === "kubernetes" ? "Kubernetes" : "Docker"}</UiElement>}</UiElement>
+          <UiElement as="td">{when(service.updated_at || service.created_at)}</UiElement>
+        </UiElement>)}</UiElement></UiElement></UiElement> : servicesRead.loaded ? <Empty title="创建第一项推理服务" description="保存原生配置，核对资源后执行部署预检。" icon={<Layers3 size={25} />} action={canOperate ? <Button actionId="action.OverviewPage.013" onClick={onCreateService}><Plus size={14} /><UiText>{"创建服务配置"}</UiText></Button> : undefined} /> : <UiElement as="p" className="overview-empty-note">{servicesRead.error ? "尚未取得服务列表，不能确认已登记服务数量。" : "正在读取服务列表，其他资源可继续查看。"}</UiElement>}
+      </UiRegion>
+      <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-resources-title">
+        <UiElement as="header" className="overview-widget-header"><UiElement as="h2" id="overview-resources-title"><Cpu size={16} /><UiText>{"资源观测"}</UiText></UiElement><Button actionId="action.OverviewPage.014" onClick={() => onNavigate("nodes")}><UiText>{"节点资源"}</UiText><ArrowUpRight size={14} /></Button></UiElement>
         <ReadNotice state={nodesRead} />
-        <div className="overview-resource-body">
-          {nodesRead.loaded && !!docker.agentCount && <section className="overview-runtime-block"><header><Box size={16} /><b>Docker</b><span>{docker.agentCount} 个 Agent</span></header><DockerNpuValue nodes={nodes} now={now} demo={demo} />{docker.used !== null && <p>容器声明使用 {docker.used} 个设备</p>}</section>}
-          {nodesRead.loaded && !!k8sAgents && <section className="overview-runtime-block"><header><Layers3 size={16} /><b>Kubernetes</b><span>{k8sAgents} 个 Agent</span></header><KubernetesNpuContent summary={npuResources.summary} demo={demo} /><p>调度上限是资源额度，不是当前空闲量。</p></section>}
-          {nodesRead.loaded && !docker.agentCount && !k8sAgents && <p>接入执行 Agent 后显示已经采集的设备与资源份额。</p>}
-        </div>
-      </section>
-      <div className="overview-operations">
-        <section className="overview-widget" aria-labelledby="overview-attention-title">
-          <header className="overview-widget-header"><h2 id="overview-attention-title"><AlertCircle size={16} />运行关注</h2></header>
+        <UiElement as="div" className="overview-resource-body">
+          {nodesRead.loaded && !!docker.agentCount && <UiRegion name="layout.panel" as="section" className="overview-runtime-block"><UiElement as="header"><Box size={16} /><UiElement as="b"><UiText>{"Docker"}</UiText></UiElement><UiElement as="span">{docker.agentCount} <UiText>{"个 Agent"}</UiText></UiElement></UiElement><DockerNpuValue nodes={nodes} now={now} demo={demo} />{docker.used !== null && <UiElement as="p"><UiText>{"容器声明使用"}</UiText> {docker.used} <UiText>{"个设备"}</UiText></UiElement>}</UiRegion>}
+          {nodesRead.loaded && !!k8sAgents && <UiRegion name="layout.panel" as="section" className="overview-runtime-block"><UiElement as="header"><Layers3 size={16} /><UiElement as="b"><UiText>{"Kubernetes"}</UiText></UiElement><UiElement as="span">{k8sAgents} <UiText>{"个 Agent"}</UiText></UiElement></UiElement><KubernetesNpuContent summary={npuResources.summary} demo={demo} /><UiElement as="p"><UiText>{"调度上限是资源额度，不是当前空闲量。"}</UiText></UiElement></UiRegion>}
+          {nodesRead.loaded && !docker.agentCount && !k8sAgents && <UiElement as="p"><UiText>{"接入执行 Agent 后显示已经采集的设备与资源份额。"}</UiText></UiElement>}
+        </UiElement>
+      </UiRegion>
+      <UiElement as="div" className="overview-operations">
+        <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-attention-title">
+          <UiElement as="header" className="overview-widget-header"><UiElement as="h2" id="overview-attention-title"><AlertCircle size={16} /><UiText>{"运行关注"}</UiText></UiElement></UiElement>
           <ReadNotice state={attentionRead} />
-          {attention.length ? <div className="overview-records">{attention.slice(0, 4).map(item => <button key={item.id} onClick={item.action}><AlertCircle size={14} className={item.tone} /><span><b>{item.title}</b><small>{item.detail}</small></span><ArrowUpRight size={14} /></button>)}</div> : attentionLoaded ? <p className="overview-empty-note">{nodes.length ? "已登记状态中暂无待处理事项；实际可用性以服务检查结果为准。" : "接入节点后集中查看连接和采集事项。"}</p> : <p className="overview-empty-note">等待服务与节点读取结果后汇总。</p>}
-        </section>
-        {canAdminister && auditEnabled && <section className="overview-widget" aria-labelledby="overview-activity-title">
-          <header className="overview-widget-header"><h2 id="overview-activity-title"><Clock3 size={16} />最近操作</h2><button className="text-link" onClick={() => onNavigate("audit")}>操作审计<ArrowUpRight size={13} /></button></header>
-          {overview?.activities?.length ? <div className="overview-records">{overview.activities.slice(0, 3).map(item => <button key={item.id} onClick={() => onNavigate("audit")}><Clock3 size={14} /><span><b>{activityNames[item.title] ?? item.title}</b>{knownText(activityDetail(item)) && <small>{activityDetail(item)}</small>}</span><time dateTime={item.time}>{when(item.time)}</time></button>)}</div> : <p className="overview-empty-note">还没有操作记录</p>}
-        </section>}
-      </div>
-      {!!series.length && <section className="overview-widget" aria-labelledby="overview-traffic-title"><header className="overview-widget-header"><h2 id="overview-traffic-title"><Activity size={16} />流量采样</h2><span>{demo ? "演示指标" : "请求速率与时延"}</span></header><div className="overview-traffic-body"><div className="chart-legend"><span><i className="chart-dot orange" />完成请求速率 <small>req/s</small></span><span><i className="chart-dot blue" />请求时延 <small>ms</small></span></div><TrafficTrend series={series} /></div></section>}
-    </div>
+          {attention.length ? <UiElement as="div" className="overview-records">{attention.slice(0, 4).map(item => <UiButton actionId="action.OverviewPage.015" key={item.id} onClick={item.action}><AlertCircle size={14} className={item.tone} /><UiElement as="span"><UiElement as="b">{item.title}</UiElement><UiElement as="small">{item.detail}</UiElement></UiElement><ArrowUpRight size={14} /></UiButton>)}</UiElement> : attentionLoaded ? <UiElement as="p" className="overview-empty-note">{nodes.length ? "已登记状态中暂无待处理事项；实际可用性以服务检查结果为准。" : "接入节点后集中查看连接和采集事项。"}</UiElement> : <UiElement as="p" className="overview-empty-note"><UiText>{"等待服务与节点读取结果后汇总。"}</UiText></UiElement>}
+        </UiRegion>
+        {canAdminister && auditEnabled && <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-activity-title">
+          <UiElement as="header" className="overview-widget-header"><UiElement as="h2" id="overview-activity-title"><Clock3 size={16} /><UiText>{"最近操作"}</UiText></UiElement><UiButton actionId="action.OverviewPage.016" className="text-link" onClick={() => onNavigate("audit")}><UiText>{"操作审计"}</UiText><ArrowUpRight size={13} /></UiButton></UiElement>
+          {overview?.activities?.length ? <UiElement as="div" className="overview-records">{overview.activities.slice(0, 3).map(item => <UiButton actionId="action.OverviewPage.017" key={item.id} onClick={() => onNavigate("audit")}><Clock3 size={14} /><UiElement as="span"><UiElement as="b">{activityNames[item.title] ?? item.title}</UiElement>{knownText(activityDetail(item)) && <UiElement as="small">{activityDetail(item)}</UiElement>}</UiElement><UiElement as="time" dateTime={item.time}>{when(item.time)}</UiElement></UiButton>)}</UiElement> : <UiElement as="p" className="overview-empty-note"><UiText>{"还没有操作记录"}</UiText></UiElement>}
+        </UiRegion>}
+      </UiElement>
+      {!!series.length && <UiRegion name="layout.panel" as="section" className="overview-widget" aria-labelledby="overview-traffic-title"><UiElement as="header" className="overview-widget-header"><UiElement as="h2" id="overview-traffic-title"><Activity size={16} /><UiText>{"流量采样"}</UiText></UiElement><UiElement as="span">{demo ? "演示指标" : "请求速率与时延"}</UiElement></UiElement><UiElement as="div" className="overview-traffic-body"><UiElement as="div" className="chart-legend"><UiElement as="span"><UiElement as="i" className="chart-dot orange" /><UiText>{"完成请求速率"}</UiText> <UiElement as="small"><UiText>{"req/s"}</UiText></UiElement></UiElement><UiElement as="span"><UiElement as="i" className="chart-dot blue" /><UiText>{"请求时延"}</UiText> <UiElement as="small"><UiText>{"ms"}</UiText></UiElement></UiElement></UiElement><TrafficTrend series={series} /></UiElement></UiRegion>}
+    </UiElement>
   );
 }
+
+const ReadNotice = withUiSlot("component.ReadNotice", DefaultReadNotice);
+const OverviewPage = withUiSlot("component.OverviewPage", DefaultOverviewPage);
+export default OverviewPage;
+
+// Reference package implementation exports.
+export { DefaultReadNotice, DefaultOverviewPage };

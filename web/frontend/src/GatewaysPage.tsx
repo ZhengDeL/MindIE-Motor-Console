@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readCount, readNotice, type ReadState } from "./readState";
 import { api, download, when } from "./api";
@@ -83,7 +84,7 @@ function directServiceExamples(services: Service[]): DirectExample[] {
   });
 }
 
-function GatewayAuthorizationHelp({
+function DefaultGatewayAuthorizationHelp({
   baseUrl,
   approved = false,
 }: {
@@ -92,27 +93,27 @@ function GatewayAuthorizationHelp({
 }) {
   const address = connectionAddress(baseUrl);
   return (
-    <div className="gateway-authorization-help">
-      <p>
+    <UiElement as="div" className="gateway-authorization-help">
+      <UiElement as="p">
         {approved
           ? "该服务器地址已获检查授权。检查仅读取 /models，不修改网关路由。"
           : "保存连接不会自动开放网络访问；模型列表检查需由部署管理员授权服务器地址，不含 /v1 路径。"}
-      </p>
+      </UiElement>
       {address && !approved && (
         <>
-          <code className="integration-code">
-            MOTOR_GATEWAY_ALLOWED_ORIGINS={address.origin}
-          </code>
-          <p>
-            将此地址追加到现有允许清单，多个地址用英文逗号分隔。部署配置生效后，刷新本页再检查连接。
-          </p>
+          <UiElement as="code" className="integration-code">
+            <UiText>{"MOTOR_GATEWAY_ALLOWED_ORIGINS="}</UiText>{address.origin}
+          </UiElement>
+          <UiElement as="p">
+            <UiText>{"将此地址追加到现有允许清单，多个地址用英文逗号分隔。部署配置生效后，刷新本页再检查连接。"}</UiText>
+          </UiElement>
         </>
       )}
-    </div>
+    </UiElement>
   );
 }
 
-function GatewayEditor({
+function DefaultGatewayEditor({
   original,
   services,
   servicesRead,
@@ -243,73 +244,70 @@ function GatewayEditor({
       onClose={close}
       footer={
         <>
-          <Button onClick={close} disabled={busy}>
-            取消
+          <Button actionId="action.GatewaysPage.001" onClick={close} disabled={busy}>
+            <UiText>{"取消"}</UiText>
           </Button>
-          <Button kind="primary" loading={busy} onClick={() => void save()}>
-            保存连接
+          <Button actionId="action.GatewaysPage.002" kind="primary" loading={busy} onClick={() => void save()}>
+            <UiText>{"保存连接"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
       {!original && (
-        <details className="gateway-entry-help">
-          <summary>填写示例与接入说明</summary>
-          <div className="gateway-entry-help-body">
-            <p>
-              已有独立网关：填写网关实际提供的 OpenAI 兼容 API 基础地址。
-              未部署独立网关：可先用已运行服务的 Coordinator 地址检查模型列表。
-            </p>
+        <UiElement as="details" className="gateway-entry-help">
+          <UiElement as="summary"><UiText>{"填写示例与接入说明"}</UiText></UiElement>
+          <UiElement as="div" className="gateway-entry-help-body">
+            <UiElement as="p">
+              <UiText>{"已有独立网关：填写网关实际提供的 OpenAI 兼容 API 基础地址。 未部署独立网关：可先用已运行服务的 Coordinator 地址检查模型列表。"}</UiText>
+            </UiElement>
             {example ? (
               <>
                 <Field label="选择服务直连示例">
-                  <select
+                  <UiElement as="select"
                     aria-label="选择服务直连示例"
                     value={example.serviceId}
                     disabled={busy || !!pendingExample}
                     onChange={(event) => setExampleId(event.target.value)}
                   >
                     {examples.map((item) => (
-                      <option key={item.serviceId} value={item.serviceId}>
+                      <UiElement as="option" key={item.serviceId} value={item.serviceId}>
                         {
                           services.find(
                             (service) => service.id === item.serviceId,
                           )?.name
                         }
-                      </option>
+                      </UiElement>
                     ))}
-                  </select>
+                  </UiElement>
                 </Field>
-                <code className="integration-code">{example.baseUrl}</code>
-                <p>
-                  直连示例会填入名称、地址并勾选该服务，API Key
-                  留空。若服务已开启认证，请自行填写其凭据并使用 HTTPS。
-                </p>
+                <UiElement as="code" className="integration-code">{example.baseUrl}</UiElement>
+                <UiElement as="p">
+                  <UiText>{"直连示例会填入名称、地址并勾选该服务，API Key 留空。若服务已开启认证，请自行填写其凭据并使用 HTTPS。"}</UiText>
+                </UiElement>
                 {pendingExample ? (
-                  <div
+                  <UiElement as="div"
                     className="gateway-example-confirm"
                     role="group"
                     aria-label="替换填写内容确认"
                   >
-                    <p>
-                      将替换当前名称、地址和服务绑定，并清空已填写的 API
-                      Key；只修改表单，不会保存连接。
-                    </p>
-                    <div className="integration-actions">
-                      <Button onClick={() => setPendingExample(null)}>
-                        保留当前填写
+                    <UiElement as="p">
+                      <UiText>{"将替换当前名称、地址和服务绑定，并清空已填写的 API Key；只修改表单，不会保存连接。"}</UiText>
+                    </UiElement>
+                    <UiElement as="div" className="integration-actions">
+                      <Button actionId="action.GatewaysPage.003" onClick={() => setPendingExample(null)}>
+                        <UiText>{"保留当前填写"}</UiText>
                       </Button>
-                      <Button
+                      <Button actionId="action.GatewaysPage.004"
                         kind="primary"
                         onClick={() => applyExample(pendingExample)}
                       >
-                        替换并填入
+                        <UiText>{"替换并填入"}</UiText>
                       </Button>
-                    </div>
-                  </div>
+                    </UiElement>
+                  </UiElement>
                 ) : (
-                  <Button
+                  <Button actionId="action.GatewaysPage.005"
                     disabled={busy}
                     onClick={() => {
                       if (name || baseUrl || apiKey || serviceIds.length)
@@ -317,26 +315,24 @@ function GatewayEditor({
                       else applyExample(example);
                     }}
                   >
-                    填入服务直连示例
+                    <UiText>{"填入服务直连示例"}</UiText>
                   </Button>
                 )}
               </>
             ) : (
-              <p>
-                运行中的服务尚未提供可用 API 地址。可填写独立网关地址，例如
-                https://gateway.example.com/v1。
-              </p>
+              <UiElement as="p">
+                <UiText>{"运行中的服务尚未提供可用 API 地址。可填写独立网关地址，例如 https://gateway.example.com/v1。"}</UiText>
+              </UiElement>
             )}
-            <p className="gateway-entry-boundary">
-              原生服务直连不是独立
-              AIGW。保存与绑定仅建立连接记录，不会安装网关、创建路由或启动模型。
-            </p>
-          </div>
-        </details>
+            <UiElement as="p" className="gateway-entry-boundary">
+              <UiText>{"原生服务直连不是独立 AIGW。保存与绑定仅建立连接记录，不会安装网关、创建路由或启动模型。"}</UiText>
+            </UiElement>
+          </UiElement>
+        </UiElement>
       )}
-      <fieldset className="gateway-editor-fields" disabled={busy}>
+      <UiElement as="fieldset" className="gateway-editor-fields" disabled={busy}>
         <Field label="网关名称" required>
-          <input
+          <UiElement as="input"
             aria-label="网关名称"
             value={name}
             maxLength={100}
@@ -349,7 +345,7 @@ function GatewayEditor({
           required
           hint="填写网关的 OpenAI 兼容基础地址，例如 https://gateway.example.com/v1；检查时追加 /models。"
         >
-          <input
+          <UiElement as="input"
             aria-label="API 基础地址"
             value={baseUrl}
             onChange={(event) => setBaseUrl(event.target.value)}
@@ -364,7 +360,7 @@ function GatewayEditor({
               : "未开启认证时留空；填写 API Key 时必须使用 HTTPS。"
           }
         >
-          <input
+          <UiElement as="input"
             aria-label="网关 API Key"
             type="password"
             autoComplete="new-password"
@@ -377,8 +373,8 @@ function GatewayEditor({
           />
         </Field>
         {original?.has_api_key && (
-          <label className="integration-checkbox">
-            <input
+          <UiElement as="label" className="integration-checkbox">
+            <UiElement as="input"
               type="checkbox"
               checked={clearKey}
               onChange={(event) => {
@@ -386,56 +382,55 @@ function GatewayEditor({
                 if (event.target.checked) setApiKey("");
               }}
             />
-            明确清除已保存的 API Key
-          </label>
+            <UiText>{"明确清除已保存的 API Key"}</UiText>
+          </UiElement>
         )}
-        <div className="gateway-service-picker">
-          <span className="field-label">绑定推理服务</span>
-          <p className="integration-caption">
-            用于核对网关模型列表是否包含绑定服务的模型
-            ID；保存连接不会修改网关路由。
-          </p>
-          {!servicesRead.loaded ? <p className="integration-caption" role="status">{readNotice(servicesRead)}推理服务列表；暂不判断原绑定服务是否存在。</p> : services.length || missingIds.length ? (
-            <div className="gateway-service-options">
+        <UiElement as="div" className="gateway-service-picker">
+          <UiElement as="span" className="field-label"><UiText>{"绑定推理服务"}</UiText></UiElement>
+          <UiElement as="p" className="integration-caption">
+            <UiText>{"用于核对网关模型列表是否包含绑定服务的模型 ID；保存连接不会修改网关路由。"}</UiText>
+          </UiElement>
+          {!servicesRead.loaded ? <UiElement as="p" className="integration-caption" role="status">{readNotice(servicesRead)}<UiText>{"推理服务列表；暂不判断原绑定服务是否存在。"}</UiText></UiElement> : services.length || missingIds.length ? (
+            <UiElement as="div" className="gateway-service-options">
               {services.map((service) => (
-                <label className="gateway-service-option" key={service.id}>
-                  <input
+                <UiElement as="label" className="gateway-service-option" key={service.id}>
+                  <UiElement as="input"
                     type="checkbox"
                     checked={serviceIds.includes(service.id)}
                     onChange={(event) =>
                       toggleService(service.id, event.target.checked)
                     }
                   />
-                  <span>
-                    <strong>{service.name}</strong>
-                    <small>
+                  <UiElement as="span">
+                    <UiElement as="strong">{service.name}</UiElement>
+                    <UiElement as="small">
                       {service.model ? `${service.model} · ` : ""}
                       {service.runtime === "docker" ? "Docker" : "Kubernetes"}
-                    </small>
-                  </span>
-                </label>
+                    </UiElement>
+                  </UiElement>
+                </UiElement>
               ))}
               {missingIds.map((id) => (
-                <label className="gateway-service-option" key={id}>
-                  <input
+                <UiElement as="label" className="gateway-service-option" key={id}>
+                  <UiElement as="input"
                     type="checkbox"
                     checked
                     onChange={() => toggleService(id, false)}
                   />
-                  <span>
-                    <strong>当前服务列表未包含该绑定</strong>
-                    <small>{id}；取消勾选后可移除此关联。</small>
-                  </span>
-                </label>
+                  <UiElement as="span">
+                    <UiElement as="strong"><UiText>{"当前服务列表未包含该绑定"}</UiText></UiElement>
+                    <UiElement as="small">{id}<UiText>{"；取消勾选后可移除此关联。"}</UiText></UiElement>
+                  </UiElement>
+                </UiElement>
               ))}
-            </div>
+            </UiElement>
           ) : (
-            <p className="integration-caption">
-              暂无可绑定的推理服务，可以先保存网关连接。
-            </p>
+            <UiElement as="p" className="integration-caption">
+              <UiText>{"暂无可绑定的推理服务，可以先保存网关连接。"}</UiText>
+            </UiElement>
           )}
-        </div>
-      </fieldset>
+        </UiElement>
+      </UiElement>
       <InfoBox>
         <GatewayAuthorizationHelp
           baseUrl={baseUrl}
@@ -451,7 +446,7 @@ function GatewayEditor({
   );
 }
 
-export default function GatewaysPage({
+function DefaultGatewaysPage({
   services,
   servicesRead,
   role,
@@ -597,22 +592,22 @@ export default function GatewaysPage({
   );
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>网关接入</h1>
-          <p>维护已有 AIGW 实例的连接，核对网关对外模型与 Motor 服务的关联。</p>
-        </div>
-        <div className="heading-actions">
-          <Button
+      <UiElement as="div" className="page-heading">
+        <UiElement as="div">
+          <UiElement as="h1"><UiText>{"网关接入"}</UiText></UiElement>
+          <UiElement as="p"><UiText>{"维护已有 AIGW 实例的连接，核对网关对外模型与 Motor 服务的关联。"}</UiText></UiElement>
+        </UiElement>
+        <UiElement as="div" className="heading-actions">
+          <Button actionId="action.GatewaysPage.006"
             onClick={() => void load()}
             disabled={Boolean(busyId)}
             loading={loading}
           >
             <RefreshCw size={14} />
-            刷新数据
+            <UiText>{"刷新数据"}</UiText>
           </Button>
           {canManage && (
-            <Button
+            <Button actionId="action.GatewaysPage.007"
               kind="primary"
               onClick={() => {
                 setEditor("new");
@@ -620,47 +615,46 @@ export default function GatewaysPage({
               }}
             >
               <Plus size={14} />
-              接入网关
+              <UiText>{"接入网关"}</UiText>
             </Button>
           )}
-        </div>
-      </div>
+        </UiElement>
+      </UiElement>
       <InfoBox>
-        接入已部署的推理网关，校验可访问的模型列表并绑定推理服务。
-        保存连接后可按需检查，网关路由由其自身管理。
+        <UiText>{"接入已部署的推理网关，校验可访问的模型列表并绑定推理服务。 保存连接后可按需检查，网关路由由其自身管理。"}</UiText>
       </InfoBox>
       {error && <ErrorBox message={error} />}
       {actionError && <ErrorBox message={actionError} />}
-      <section className="panel gateway-list-panel">
-        <div className="gateway-toolbar">
+      <UiRegion name="layout.panel" as="section" className="panel gateway-list-panel">
+        <UiElement as="div" className="gateway-toolbar">
           <SearchInput
             value={query}
             onChange={setQuery}
             placeholder="搜索网关名称、地址或绑定服务"
           />
-          <span className="integration-caption">
+          <UiElement as="span" className="integration-caption">
             {readCount({ loaded: hasSuccess, refreshing: loading, error }, visible.length, "个连接")}
-          </span>
-        </div>
+          </UiElement>
+        </UiElement>
         {loading && !hasSuccess ? (
           <Spinner label="正在读取网关连接" />
         ) : visible.length ? (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">网关 / API 基础地址</th>
-                  <th scope="col">绑定服务</th>
-                  <th scope="col">上次模型核对</th>
-                  <th scope="col">访问凭据</th>
-                  <th scope="col">操作</th>
-                </tr>
-              </thead>
-              <tbody>
+          <UiElement as="div" className="table-wrap">
+            <UiElement as="table">
+              <UiElement as="thead">
+                <UiElement as="tr">
+                  <UiElement as="th" scope="col"><UiText>{"网关 / API 基础地址"}</UiText></UiElement>
+                  <UiElement as="th" scope="col"><UiText>{"绑定服务"}</UiText></UiElement>
+                  <UiElement as="th" scope="col"><UiText>{"上次模型核对"}</UiText></UiElement>
+                  <UiElement as="th" scope="col"><UiText>{"访问凭据"}</UiText></UiElement>
+                  <UiElement as="th" scope="col"><UiText>{"操作"}</UiText></UiElement>
+                </UiElement>
+              </UiElement>
+              <UiElement as="tbody">
                 {visible.map((gateway) => (
-                  <tr key={gateway.id}>
-                    <td>
-                      <button
+                  <UiElement as="tr" key={gateway.id}>
+                    <UiElement as="td">
+                      <UiButton actionId="action.GatewaysPage.008"
                         className="gateway-name-link"
                         onClick={() => {
                           setDetails(gateway);
@@ -669,28 +663,28 @@ export default function GatewaysPage({
                       >
                         {gateway.name}
                         <ArrowUpRight size={13} />
-                      </button>
-                      <code className="integration-code">
+                      </UiButton>
+                      <UiElement as="code" className="integration-code">
                         {gateway.base_url}
-                      </code>
-                      <span className="integration-caption">
-                        修订 {gateway.revision}
-                      </span>
-                    </td>
-                    <td>
+                      </UiElement>
+                      <UiElement as="span" className="integration-caption">
+                        <UiText>{"修订"}</UiText> {gateway.revision}
+                      </UiElement>
+                    </UiElement>
+                    <UiElement as="td">
                       {gateway.service_ids.length ? (
                         gateway.service_ids.map((id) => (
-                          <div className="gateway-service-name" key={id}>
+                          <UiElement as="div" className="gateway-service-name" key={id}>
                             {serviceName(id)}
-                          </div>
+                          </UiElement>
                         ))
                       ) : (
-                        <span className="integration-caption">
-                          尚未绑定服务
-                        </span>
+                        <UiElement as="span" className="integration-caption">
+                          <UiText>{"尚未绑定服务"}</UiText>
+                        </UiElement>
                       )}
-                    </td>
-                    <td>
+                    </UiElement>
+                    <UiElement as="td">
                       {gateway.last_check ? (
                         <>
                           <Badge
@@ -698,27 +692,27 @@ export default function GatewaysPage({
                           >
                             {labelForCheck(gateway.last_check)}
                           </Badge>
-                          <div className="integration-caption">
+                          <UiElement as="div" className="integration-caption">
                             {when(gateway.last_check.checked_at)}
-                          </div>
+                          </UiElement>
                         </>
                       ) : (
-                        <span className="integration-caption">待检查</span>
+                        <UiElement as="span" className="integration-caption"><UiText>{"待检查"}</UiText></UiElement>
                       )}
                       {!gateway.probe_allowed && (
-                        <details className="gateway-authorization-inline">
-                          <summary>检查地址尚未授权 · 查看配置方法</summary>
+                        <UiElement as="details" className="gateway-authorization-inline">
+                          <UiElement as="summary"><UiText>{"检查地址尚未授权 · 查看配置方法"}</UiText></UiElement>
                           <GatewayAuthorizationHelp
                             baseUrl={gateway.base_url}
                           />
-                        </details>
+                        </UiElement>
                       )}
-                    </td>
-                    <td>{gateway.has_api_key ? "已配置" : "未配置"}</td>
-                    <td>
-                      <div className="gateway-row-actions">
+                    </UiElement>
+                    <UiElement as="td">{gateway.has_api_key ? "已配置" : "未配置"}</UiElement>
+                    <UiElement as="td">
+                      <UiElement as="div" className="gateway-row-actions">
                         {canProbe && (
-                          <Button
+                          <Button actionId="action.GatewaysPage.009"
                             kind="text"
                             disabled={Boolean(busyId) || !gateway.probe_allowed}
                             loading={busyId === gateway.id}
@@ -729,20 +723,20 @@ export default function GatewaysPage({
                             }
                             onClick={() => void perform(gateway, "probe")}
                           >
-                            检查连接
+                            <UiText>{"检查连接"}</UiText>
                           </Button>
                         )}
-                        <Button
+                        <Button actionId="action.GatewaysPage.010"
                           kind="text"
                           disabled={Boolean(busyId)}
                           onClick={() => void perform(gateway, "export")}
                         >
                           <Download size={13} />
-                          导出连接
+                          <UiText>{"导出连接"}</UiText>
                         </Button>
                         {canManage && (
                           <>
-                            <Button
+                            <Button actionId="action.GatewaysPage.011"
                               kind="text"
                               disabled={Boolean(busyId)}
                               onClick={() => {
@@ -751,9 +745,9 @@ export default function GatewaysPage({
                               }}
                             >
                               <Settings2 size={13} />
-                              编辑
+                              <UiText>{"编辑"}</UiText>
                             </Button>
-                            <Button
+                            <Button actionId="action.GatewaysPage.012"
                               kind="text"
                               className="danger-text"
                               disabled={Boolean(busyId)}
@@ -763,17 +757,17 @@ export default function GatewaysPage({
                               }}
                             >
                               <Trash2 size={13} />
-                              移除
+                              <UiText>{"移除"}</UiText>
                             </Button>
                           </>
                         )}
-                      </div>
-                    </td>
-                  </tr>
+                      </UiElement>
+                    </UiElement>
+                  </UiElement>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </UiElement>
+            </UiElement>
+          </UiElement>
         ) : (
           <Empty
             title={!hasSuccess ? readNotice({ loaded: false, refreshing: loading, error }) : query ? "没有匹配的网关连接" : "尚未接入网关"}
@@ -786,14 +780,14 @@ export default function GatewaysPage({
             }
             action={
               !query && canManage ? (
-                <Button kind="primary" onClick={() => setEditor("new")}>
-                  接入已有网关
+                <Button actionId="action.GatewaysPage.013" kind="primary" onClick={() => setEditor("new")}>
+                  <UiText>{"接入已有网关"}</UiText>
                 </Button>
               ) : undefined
             }
           />
         )}
-      </section>
+      </UiRegion>
       {editor && canManage && (
         <GatewayEditor
           key={editor === "new" ? "new" : `${editor.id}:${editor.revision}`}
@@ -820,8 +814,8 @@ export default function GatewaysPage({
           onConfirm={() => void perform(remove, "delete")}
           description={
             <>
-              仅移除控制台中的“{remove.name}
-              ”连接记录。网关进程、路由配置和推理服务继续运行。
+              <UiText>{"仅移除控制台中的“"}</UiText>{remove.name}
+              <UiText>{"”连接记录。网关进程、路由配置和推理服务继续运行。"}</UiText>
             </>
           }
         />
@@ -833,61 +827,61 @@ export default function GatewaysPage({
           onClose={() => setDetails(null)}
           wide
         >
-          <dl className="integration-facts">
-            <dt>API 基础地址</dt>
-            <dd>
-              <code className="integration-code">{details.base_url}</code>
-            </dd>
-            <dt>绑定服务</dt>
-            <dd>
+          <UiElement as="dl" className="integration-facts">
+            <UiElement as="dt"><UiText>{"API 基础地址"}</UiText></UiElement>
+            <UiElement as="dd">
+              <UiElement as="code" className="integration-code">{details.base_url}</UiElement>
+            </UiElement>
+            <UiElement as="dt"><UiText>{"绑定服务"}</UiText></UiElement>
+            <UiElement as="dd">
               {details.service_ids.map(serviceName).join("、") || "尚未绑定"}
-            </dd>
-            <dt>访问凭据</dt>
-            <dd>{details.has_api_key ? "已保存，凭据不回显" : "未配置"}</dd>
-            <dt>探测授权</dt>
-            <dd>
+            </UiElement>
+            <UiElement as="dt"><UiText>{"访问凭据"}</UiText></UiElement>
+            <UiElement as="dd">{details.has_api_key ? "已保存，凭据不回显" : "未配置"}</UiElement>
+            <UiElement as="dt"><UiText>{"探测授权"}</UiText></UiElement>
+            <UiElement as="dd">
               {details.probe_allowed
                 ? "服务器地址已获部署授权"
                 : "服务器地址尚未获部署授权"}
-            </dd>
-            <dt>最近更新</dt>
-            <dd>
-              {when(details.updated_at)} · 修订 {details.revision}
-            </dd>
-          </dl>
+            </UiElement>
+            <UiElement as="dt"><UiText>{"最近更新"}</UiText></UiElement>
+            <UiElement as="dd">
+              {when(details.updated_at)} <UiText>{"· 修订"}</UiText> {details.revision}
+            </UiElement>
+          </UiElement>
           <GatewayAuthorizationHelp
             baseUrl={details.base_url}
             approved={details.probe_allowed}
           />
           <InfoBox>{details.deployment.message}</InfoBox>
           {details.last_check ? (
-            <div className="gateway-check-detail">
-              <h3>
-                上次模型核对{" "}
+            <UiElement as="div" className="gateway-check-detail">
+              <UiElement as="h3">
+                <UiText>{"上次模型核对"}</UiText>{" "}
                 <Badge status={checkStatus[details.last_check.status]}>
                   {labelForCheck(details.last_check)}
                 </Badge>
-              </h3>
-              <p className="integration-caption">
-                {when(details.last_check.checked_at)} ·{" "}
+              </UiElement>
+              <UiElement as="p" className="integration-caption">
+                {when(details.last_check.checked_at)} <UiText>{"·"}</UiText>{" "}
                 {details.last_check.message}
-              </p>
-              <p>网关返回 {details.last_check.model_count} 个模型</p>
-              <div className="gateway-model-list">
+              </UiElement>
+              <UiElement as="p"><UiText>{"网关返回"}</UiText> {details.last_check.model_count} <UiText>{"个模型"}</UiText></UiElement>
+              <UiElement as="div" className="gateway-model-list">
                 {details.last_check.model_ids.map((id) => (
-                  <code key={id}>{id}</code>
+                  <UiElement as="code" key={id}>{id}</UiElement>
                 ))}
-              </div>
+              </UiElement>
               {details.last_check.bindings.map((binding) => (
-                <div className="gateway-binding-check" key={binding.service_id}>
-                  <strong>{serviceName(binding.service_id)}</strong>
-                  <div className="integration-caption">
+                <UiElement as="div" className="gateway-binding-check" key={binding.service_id}>
+                  <UiElement as="strong">{serviceName(binding.service_id)}</UiElement>
+                  <UiElement as="div" className="integration-caption">
                     {details.last_check?.stale
                       ? "上次检查时的预期模型："
                       : "预期模型："}
                     {binding.expected_model_ids.join("、") || "尚未配置模型 ID"}
-                  </div>
-                  <div className="integration-caption">
+                  </UiElement>
+                  <UiElement as="div" className="integration-caption">
                     {details.last_check?.stale
                       ? "绑定服务配置已变更，请重新检查后确认模型关联。"
                       : binding.status === "matched"
@@ -895,17 +889,25 @@ export default function GatewaysPage({
                         : binding.status === "unconfigured"
                           ? "服务尚未配置可核对的模型 ID"
                           : `缺失模型：${binding.missing_model_ids.join("、")}`}
-                  </div>
-                </div>
+                  </UiElement>
+                </UiElement>
               ))}
-            </div>
+            </UiElement>
           ) : (
-            <p className="integration-caption">
-              尚未检查模型列表。连接保存不会自动修改网关路由。
-            </p>
+            <UiElement as="p" className="integration-caption">
+              <UiText>{"尚未检查模型列表。连接保存不会自动修改网关路由。"}</UiText>
+            </UiElement>
           )}
         </Modal>
       )}
     </>
   );
 }
+
+const GatewayAuthorizationHelp = withUiSlot("component.GatewayAuthorizationHelp", DefaultGatewayAuthorizationHelp);
+const GatewayEditor = withUiSlot("component.GatewayEditor", DefaultGatewayEditor);
+const GatewaysPage = withUiSlot("component.GatewaysPage", DefaultGatewaysPage);
+export default GatewaysPage;
+
+// Reference package implementation exports.
+export { DefaultGatewayAuthorizationHelp, DefaultGatewayEditor, DefaultGatewaysPage };

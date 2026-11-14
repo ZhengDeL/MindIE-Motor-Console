@@ -24,7 +24,7 @@ from scripts.tls_material import validate_server_identity
 
 
 def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, agent_rollout_root="/var/lib/motor-console-agents",
-            web_image=None, web_tls_dir=None, log_dir=None):
+            web_image=None, web_tls_dir=None, log_dir=None, plugin_host_image=None):
     if any(any(ord(c) < 32 for c in str(value)) for value in (project_dir, data_dir, image, origin, public_key)):
         raise ValueError("Deployment settings must not contain control characters")
     project = require_product_path(project_dir, "Project directory")
@@ -40,6 +40,11 @@ def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, age
         raise ValueError("Independent Web image must use an immutable registry digest or local image ID")
     if bool(web_image) != bool(web_tls_dir):
         raise ValueError("Independent Web deployment requires both --web-image and --web-tls-dir")
+    if plugin_host_image is not None:
+        if not isinstance(plugin_host_image, str) or not _IMAGE.fullmatch(plugin_host_image):
+            raise ValueError("Plugin host image must use an immutable registry digest or local image ID")
+        if not web_image or not (project / "web/compose.plugins.yaml").is_file():
+            raise ValueError("Plugin host deployment requires independent Web/TLS and compose.plugins.yaml")
     tls_files = None
     if web_image:
         tls_source = Path(web_tls_dir).resolve()
@@ -79,6 +84,8 @@ def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, age
                         MOTOR_WEB_PORT=parsed.port or 443, MOTOR_WEB_BIND_IP="0.0.0.0",
                         MOTOR_WEB_CONFIG_FILE=str(data / "config/web/nginx.conf"),
                         MOTOR_WEB_TLS_DIR=str(data / "config/web/tls"))
+    if plugin_host_image:
+        settings.update(MOTOR_COMPOSE_FILE="compose.plugins.yaml", MOTOR_PLUGIN_HOST_IMAGE=plugin_host_image)
     if any("'" in str(value) for value in settings.values()):
         raise ValueError("Deployment settings must not contain single quotes")
     created = []
@@ -113,7 +120,7 @@ def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, age
     write(env, ("# Generated local deployment settings; keep private.\n" + "\n".join(f"{k}='{v}'" for k, v in settings.items()) + "\n").encode())
     return {"prepared": True, "services_started": False, "environment_file": str(env), "data_directory": str(data),
             "bootstrap_token_file": str(data / "secrets/bootstrap.token"),
-            "next_command": "docker compose --env-file web/.env.production -f web/" + ("compose.modular.yaml up -d control web" if web_image else "compose.production.yaml up -d control"),
+            "next_command": "docker compose --env-file web/.env.production -f web/" + ("compose.plugins.yaml up -d worker control web" if plugin_host_image else "compose.modular.yaml up -d control web" if web_image else "compose.production.yaml up -d control"),
             "public_origin": origin, "requires_https_entrypoint": True}
 
 
@@ -128,12 +135,14 @@ def main():
     parser.add_argument("--agent-rollout-root", default="/var/lib/motor-console-agents")
     parser.add_argument("--web-image", help="Independent immutable Web image; requires a TLS directory")
     parser.add_argument("--web-tls-dir", help="Directory containing the reviewed server.crt and server.key")
+    parser.add_argument("--plugin-host-image", help="Immutable Node plugin host image; requires independent Web/TLS")
     parser.add_argument("--log-dir", help="Independent absolute host log directory")
     args = parser.parse_args()
     try:
         result = prepare(args.project_dir, args.data_dir, args.image, args.origin, args.release_public_key,
                          port=args.port, agent_rollout_root=args.agent_rollout_root,
-                         web_image=args.web_image, web_tls_dir=args.web_tls_dir, log_dir=args.log_dir)
+                         web_image=args.web_image, web_tls_dir=args.web_tls_dir, log_dir=args.log_dir,
+                         plugin_host_image=args.plugin_host_image)
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (OSError, ValueError) as exc:
         print(json.dumps({"prepared": False, "error": str(exc)}), file=sys.stderr)

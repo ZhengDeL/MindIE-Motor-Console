@@ -124,7 +124,7 @@ python3 web/scripts/console_admin.py apply --project-dir /opt/motor-console/sour
 
 工具验证产品、签名、镜像、Compose 身份并记录日志。失败按计划回滚；显式回滚使用相同参数将 `apply` 改为 `rollback`。`rollback_failed` 时保留标记和日志，停止新维护动作，核对实际镜像、数据库及回执，不能删锁强启。维护期间不改 Compose/env，不并行运行第二个工具。
 
-Agent 与平台独立升级，保留本 Agent 的 data、凭据和工作区，先排空管理任务。更新 Agent 不自动重建模型，但中断的管理操作仍需按操作 ID 对账。社区插件由[插件宿主说明](backend/plugin_host/README.md)约束；数据库驱动不是网页导入的社区包。
+Agent 与平台独立升级，保留本 Agent 的 data、凭据和工作区，先排空管理任务。更新 Agent 不自动重建模型，但中断的管理操作仍需按操作 ID 对账。保留的增量社区格式由[社区宿主说明](backend/plugin_host/README.md)约束；数据库、安全、运行时及完整 UI 替换使用[Provider/UI SDK](docs/PROVIDER_PLUGINS.md)，不能把选择新提供者当作自动迁移。
 
 ## 上线检查
 

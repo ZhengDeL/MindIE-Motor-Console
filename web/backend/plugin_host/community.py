@@ -82,7 +82,7 @@ class DeselectionInput(BaseModel):
 
 
 class CommunityRuntime:
-    def __init__(self, data_directory, *, mode, storage_backend):
+    def __init__(self, data_directory, *, mode, storage_backend, prepared_profiles=None):
         self.mode, self.storage_backend = mode, storage_backend
         configured = os.getenv("MOTOR_PLUGIN_DIR", "")
         self.directory = Path(configured) if configured else Path(data_directory).resolve() / "plugin-packages"
@@ -91,7 +91,7 @@ class CommunityRuntime:
         self.store = PackageStore(self.directory, recover=mode == "control") if mode != "agent" else None
         # The unauthenticated demo and privileged Agent are never execution
         # owners for uploaded control-plane code.
-        self.profiles = self.store.active_profiles() if mode == "control" else ()
+        self.profiles = (tuple(prepared_profiles) if prepared_profiles is not None else self.store.active_profiles()) if mode == "control" else ()
         self.by_id = {profile.manifest["id"]: profile for profile in self.profiles}
         self.loaded = {}
 
@@ -151,7 +151,11 @@ class CommunityRuntime:
                 "import_executes_code": False, "activation": "next-start", "maximum_package_bytes": MAX_PACKAGE_BYTES,
                 "maximum_configuration_bytes": MAX_CONFIGURATION_BYTES}
 
-    def _validate_selection(self, identifier, digest, expected_revision):
+    def import_bytes(self, raw): return self.store.import_bytes(raw)
+    def activate(self, identifier, digest, **options): return self.store.activate(identifier, digest, **options)
+    def deactivate(self, identifier, **options): return self.store.deactivate(identifier, **options)
+
+    def validate_selection(self, identifier, digest, expected_revision):
         state = self.store.list()
         if state["revision"] != expected_revision:
             raise PackageConflict("Plugin selection changed; reload before saving")
@@ -167,6 +171,8 @@ class CommunityRuntime:
         # Check host disable selections as well as the package dependency graph.
         build_registry(storage_backend=self.storage_backend,
                        extra_manifests=[declaration(item) for item in candidates.values()])
+
+    _validate_selection = validate_selection
 
 
 def create_package_router(runtime, registry, store, mutation_lock, role_for_request):
@@ -199,7 +205,7 @@ def create_package_router(runtime, registry, store, mutation_lock, role_for_requ
                 digest = hashlib.sha256(raw).hexdigest()
                 store.audit("导入插件包请求", digest, "accepted", "仅校验与暂存；不执行第三方代码")
                 try:
-                    result = runtime.store.import_bytes(raw)
+                    result = runtime.import_bytes(raw)
                 except PluginPackageError as exc:
                     store.audit("导入插件包", digest, "failed", metadata={"error_code": exc.code})
                     raise
@@ -211,10 +217,10 @@ def create_package_router(runtime, registry, store, mutation_lock, role_for_requ
     def select_package(data: SelectionInput, request: Request):
         admin(request, mutate=True)
         with mutation_lock:
-            runtime._validate_selection(data.id, data.digest, data.expected_revision)
+            runtime.validate_selection(data.id, data.digest, data.expected_revision)
             store.audit("选择插件包请求", data.id, "accepted", metadata={"digest": data.digest})
             try:
-                runtime.store.activate(data.id, data.digest, expected_revision=data.expected_revision,
+                runtime.activate(data.id, data.digest, expected_revision=data.expected_revision,
                                        trust_code=data.trust_code, configuration=data.configuration)
             except PluginPackageError as exc:
                 store.audit("选择插件包", data.id, "failed", metadata={"digest": data.digest, "error_code": exc.code})
@@ -227,10 +233,10 @@ def create_package_router(runtime, registry, store, mutation_lock, role_for_requ
     def deselect_package(data: DeselectionInput, request: Request):
         admin(request, mutate=True)
         with mutation_lock:
-            runtime._validate_selection(data.id, None, data.expected_revision)
+            runtime.validate_selection(data.id, None, data.expected_revision)
             store.audit("取消插件选择请求", data.id, "accepted")
             try:
-                runtime.store.deactivate(data.id, expected_revision=data.expected_revision)
+                runtime.deactivate(data.id, expected_revision=data.expected_revision)
             except PluginPackageError as exc:
                 store.audit("取消插件选择", data.id, "failed", metadata={"error_code": exc.code})
                 raise

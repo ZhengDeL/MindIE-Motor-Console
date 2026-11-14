@@ -1,5 +1,7 @@
 # 社区插件开发指南
 
+本文是增量 `.qhplugin` SDK 的开发说明。若要替换默认业务、数据库、身份或执行提供者，使用 [Provider SDK](backend/provider_host/README.md) 和 [提供者部署](docs/PROVIDER_PLUGINS.md)；完整 UI/图标/按钮等使用[浏览器 SDK](frontend/sdk/README.md)。这些合同与包格式分别维护，不能把增量 API 包当作完整 UI 或启动前存储提供者。
+
 本文面向使用 Python 为 MindIE-Motor Console 开发可选能力的作者。社区插件可以提供受保护 HTTP API、声明式数据页、具名服务和有清理合同的后台工作。原生推理和部署仍由 MindIE-Motor 负责，插件不能绕过账号权限、资源准入或资源所有权。
 
 本指南使用插件 API 1、包清单 `schemaVersion: 1` 和 `status-table-v1` 页面。使用对应发布源码或经过审查的后续基线，保持文档、包工具及目标宿主配套。版本及获取方式见[文档入口](docs/README.md)。

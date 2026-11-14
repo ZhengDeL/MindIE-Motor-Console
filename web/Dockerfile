@@ -27,7 +27,7 @@ RUN curl -fL --retry 3 "https://www.sqlite.org/2026/${SQLITE_ARCHIVE}.tar.gz" -o
 
 FROM ${PYTHON_BUILD_IMAGE} AS runtime
 ARG ASCEND_VISIBLE_DEVICES=void
-ARG CONSOLE_VERSION=0.11.2
+ARG CONSOLE_VERSION=0.12.0
 ARG VCS_REF=""
 LABEL org.opencontainers.image.title="MindIE-Motor Console" \
     io.motor.product="motor-console" \
@@ -63,6 +63,7 @@ RUN pip install --index-url "${PYPI_INDEX_URL}" --no-cache-dir --require-hashes 
 COPY mindie-motor/upstream /opt/motor/upstream
 RUN chmod -R a-w /opt/motor/upstream
 COPY web/backend /app/backend
+COPY --from=frontend-build /build/dist/ui-default-manifest.json /app/ui-default-manifest.json
 COPY web/scripts /app/scripts
 COPY web/compose.docker-agent.yaml web/compose.kubernetes-agent.yaml \
      web/compose.docker-kubernetes-agent.yaml web/compose.agent-kubectl-client.yaml /app/rollout-assets/
@@ -77,7 +78,7 @@ ENV MOTOR_STATIC_ENABLED=false
 
 FROM ${NGINX_BUILD_IMAGE} AS web
 ARG ASCEND_VISIBLE_DEVICES=void
-ARG CONSOLE_VERSION=0.11.2
+ARG CONSOLE_VERSION=0.12.0
 ARG VCS_REF=""
 LABEL org.opencontainers.image.title="MindIE-Motor Console Web" \
     io.motor.product="motor-console" \

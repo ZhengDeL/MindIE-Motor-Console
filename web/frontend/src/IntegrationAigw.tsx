@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import type { Json } from "./api";
 import { Field, InfoBox } from "./ui";
 import { ChevronDown } from "./icons";
@@ -62,7 +63,7 @@ export function applyNativeAigwField(
   };
 }
 
-export default function NativeAigwEditor({
+function DefaultNativeAigwEditor({
   config,
   onChange,
   onError,
@@ -93,23 +94,22 @@ export default function NativeAigwEditor({
     }
   };
   return (
-    <details className="integration-section">
-      <summary>
-        <span>原生 AIGW 模型配置</span>
-        <span className="integration-summary-hint">
-          <small>模型发现 · 上下文与 SLO</small>
+    <UiElement as="details" className="integration-section">
+      <UiElement as="summary">
+        <UiElement as="span"><UiText>{"原生 AIGW 模型配置"}</UiText></UiElement>
+        <UiElement as="span" className="integration-summary-hint">
+          <UiElement as="small"><UiText>{"模型发现 · 上下文与 SLO"}</UiText></UiElement>
           <ChevronDown size={15} />
-        </span>
-      </summary>
-      <div className="integration-section-body">
-        <p className="integration-explanation">
-          配置 Coordinator
-          对外提供的模型元数据。空白字段保持原生推导；清空输入只移除该字段，其他配置与自定义字段继续保留。
-        </p>
-        <div className="form-two">
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="integration-section-body">
+        <UiElement as="p" className="integration-explanation">
+          <UiText>{"配置 Coordinator 对外提供的模型元数据。空白字段保持原生推导；清空输入只移除该字段，其他配置与自定义字段继续保留。"}</UiText>
+        </UiElement>
+        <UiElement as="div" className="form-two">
           {textFields.map(([field, label, hint]) => (
             <Field key={field} label={label} hint={hint}>
-              <input
+              <UiElement as="input"
                 aria-label={label}
                 value={display(aigw[field])}
                 onChange={(event) => update(field, event.target.value)}
@@ -119,7 +119,7 @@ export default function NativeAigwEditor({
           ))}
           {numberFields.map(([field, label, hint]) => (
             <Field key={field} label={label} hint={hint}>
-              <input
+              <UiElement as="input"
                 aria-label={label}
                 inputMode="numeric"
                 value={display(aigw[field])}
@@ -128,12 +128,17 @@ export default function NativeAigwEditor({
               />
             </Field>
           ))}
-        </div>
+        </UiElement>
         <InfoBox>
-          业务链路：应用 → AIGW → Motor Coordinator → 推理引擎。此处配置由原生
-          /v1/models 等接口使用；独立网关实例的连接在“网关接入”中管理。
+          <UiText>{"业务链路：应用 → AIGW → Motor Coordinator → 推理引擎。此处配置由原生 /v1/models 等接口使用；独立网关实例的连接在“网关接入”中管理。"}</UiText>
         </InfoBox>
-      </div>
-    </details>
+      </UiElement>
+    </UiElement>
   );
 }
+
+const NativeAigwEditor = withUiSlot("component.NativeAigwEditor", DefaultNativeAigwEditor);
+export default NativeAigwEditor;
+
+// Reference package implementation exports.
+export { DefaultNativeAigwEditor };

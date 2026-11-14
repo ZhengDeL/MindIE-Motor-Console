@@ -21,9 +21,13 @@ from .image_operations import ImageOperations, ImagePullInput, ImageRemoveInput
 
 
 def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled: bool = True,
-                        kubernetes_enabled: bool = True) -> APIRouter:
+                        kubernetes_enabled: bool = True, kubernetes_runtime=None,
+                        host_telemetry=None, agent_policy=None, operation_tracker=None, native_adapter=None) -> APIRouter:
     if type(docker_enabled) is not bool or type(kubernetes_enabled) is not bool:
         raise ValueError("Agent runtime selections must be booleans")
+    def selected_authorize(authorization: str | None = Header(default=None)):
+        return agent_policy.authorize(authorization)
+    auth_dependency = selected_authorize if agent_policy is not None else authorize
     router = APIRouter(prefix="/agent", tags=["docker-node-agent"])
     # A disabled provider must not acquire its daemon, workspace or operation
     # database merely to expose the shared Agent health and telemetry routes.
@@ -31,7 +35,7 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
     host_root = getattr(docker_runtime, "host_root", None) or Path(os.getenv("MOTOR_HOST_ROOT", "/"))
     inventory_cache = getattr(docker_runtime, "_inventory_cache", None) or ObservationCache()
     if docker_runtime is not None:
-        image_inspector = ImageContractInspector(docker_runtime)
+        image_inspector = ImageContractInspector(docker_runtime, profile_provider=native_adapter)
         image_operations = ImageOperations(docker_runtime)
         router.add_event_handler("shutdown", image_operations.close)
 
@@ -59,22 +63,25 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
         except Exception as exc:
             raise HTTPException(502, "Node Agent operation failed: " + detail(exc)) from exc
 
+    def tracked(action, payload, result):
+        return operation_tracker("result", "docker", action, payload, result) if operation_tracker is not None else result
+
     @router.get("/health")
     def health():
-        profile = call(public_profile)
+        profile = call(native_adapter.public_profile if native_adapter is not None else public_profile)
         return {"status": "ok", "service": "motor-docker-node-agent" if docker_enabled else "motor-node-agent", "product_id": PRODUCT_ID,
                 "motor_commit": profile["commit"], "motor_profile_id": profile["profile_id"]}
 
-    @router.get("/meta", dependencies=[Depends(authorize)])
+    @router.get("/meta", dependencies=[Depends(auth_dependency)])
     def meta():
         mode = execution_metadata(getattr(docker_runtime, "read_only", None))
-        metadata = agent_metadata()
+        metadata = native_adapter.agent_metadata() if native_adapter is not None else agent_metadata()
         metadata.update(mode)
         metadata["supported_runtimes"] = (["docker"] if docker_enabled else []) + (["kubernetes"] if kubernetes_enabled else [])
         metadata["execution_capabilities"]["mutations"] = not mode["read_only"]
         for name in ("operation_receipts", "resource_ledger", "resource_admission", "image_operations"):
             metadata["execution_capabilities"][name] = docker_enabled
-        return {**metadata, "credential_policy": agent_credential_metadata()}
+        return {**metadata, "credential_policy": agent_policy.metadata() if agent_policy is not None else agent_credential_metadata()}
 
     def host_inventory(*, docker_unavailable: bool = False):
         from .resource_inventory import observation_times
@@ -85,8 +92,11 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
         if kubernetes_enabled and os.getenv("KUBECONFIG"):
             # This path also supports a Kubernetes-only Agent. It must not
             # instantiate or probe Docker before observing the configured API.
-            from .kubernetes_runtime import KubernetesRuntime
-            version = KubernetesRuntime().observation_version()
+            if kubernetes_runtime is None:
+                from .kubernetes_runtime import KubernetesRuntime
+                version = KubernetesRuntime().observation_version()
+            else:
+                version = kubernetes_runtime.observation_version()
             if not version.get("gitVersion"):
                 raise HTTPException(503, "Kubernetes API version could not be verified")
         elif kubernetes_enabled:
@@ -97,7 +107,7 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
                            "message": "Docker inventory is unavailable; Kubernetes API was verified separately"})
         return {"status": "online", "inventory_schema": 2, **observation_times(),
                 "inventory_status": "partial", "collection_errors": errors,
-                **collect_resource_telemetry(host_root), "architecture": platform.machine(),
+                **(host_telemetry or collect_resource_telemetry)(host_root), "architecture": platform.machine(),
                 "docker_version": "", "docker_available": False,
                 "kubernetes_available": bool(version.get("gitVersion")),
                 "kubernetes_version": version.get("gitVersion", ""),
@@ -116,7 +126,7 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
                 raise
             return host_inventory(docker_unavailable=True)
 
-    @router.get("/inventory", dependencies=[Depends(authorize)])
+    @router.get("/inventory", dependencies=[Depends(auth_dependency)])
     def inventory(response: Response, observation_nonce: str | None = Header(default=None, alias=OBSERVATION_NONCE_HEADER),
                   node_address: IPv4Address | None = Query(default=None)):
         # Cache the complete result, including the Kubernetes-only fallback.
@@ -137,49 +147,49 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
     if docker_runtime is None:
         return router
 
-    @router.get("/operations/{operation_id}", dependencies=[Depends(authorize)])
+    @router.get("/operations/{operation_id}", dependencies=[Depends(auth_dependency)])
     def operation(operation_id: str):
         receipt = call(docker_runtime.operation, operation_id)
         if receipt is None:
             raise HTTPException(404, "No operation receipt exists for this identifier")
-        return receipt
+        return tracked(receipt.get("action", "receipt"), {"operation_id": operation_id, "service_id": receipt.get("service_id")}, receipt)
 
-    @router.get("/images", dependencies=[Depends(authorize)])
+    @router.get("/images", dependencies=[Depends(auth_dependency)])
     def images():
         return {"items": call(docker_runtime.images)}
 
-    @router.get("/status", dependencies=[Depends(authorize)])
+    @router.get("/status", dependencies=[Depends(auth_dependency)])
     def status(service_id: str, node_id: str):
         return call(docker_runtime.status, service_id, node_id)
 
-    @router.post("/images/inspect", dependencies=[Depends(authorize)])
+    @router.post("/images/inspect", dependencies=[Depends(auth_dependency)])
     def inspect_image(payload: ImageInspectionInput):
         # Contract inspection may create a short-lived CPU-only container.
         call(require_mutations, getattr(docker_runtime, "read_only", None))
         return call(image_inspector.inspect, payload)
 
-    @router.post("/images/pull", dependencies=[Depends(authorize)], status_code=202)
+    @router.post("/images/pull", dependencies=[Depends(auth_dependency)], status_code=202)
     def pull_image(payload: ImagePullInput):
-        return call(image_operations.submit, "image_pull", payload)
+        return tracked("image_pull", payload.model_dump(), call(image_operations.submit, "image_pull", payload))
 
-    @router.post("/images/remove", dependencies=[Depends(authorize)], status_code=202)
+    @router.post("/images/remove", dependencies=[Depends(auth_dependency)], status_code=202)
     def remove_image(payload: ImageRemoveInput):
-        return call(image_operations.submit, "image_remove", payload)
+        return tracked("image_remove", payload.model_dump(), call(image_operations.submit, "image_remove", payload))
 
-    @router.get("/images/operations/{operation_id}", dependencies=[Depends(authorize)])
+    @router.get("/images/operations/{operation_id}", dependencies=[Depends(auth_dependency)])
     def image_operation(operation_id: str):
         receipt = call(image_operations.receipt, operation_id)
         if receipt is None:
             raise HTTPException(404, "No image operation exists for this identifier")
-        return receipt
+        return tracked("image_receipt", {"operation_id": operation_id}, receipt)
 
-    @router.post("/preflight", dependencies=[Depends(authorize)])
+    @router.post("/preflight", dependencies=[Depends(auth_dependency)])
     def preflight(payload: dict):
         return call(docker_runtime.preflight, payload)
 
-    @router.post("/deploy", dependencies=[Depends(authorize)])
+    @router.post("/deploy", dependencies=[Depends(auth_dependency)])
     def deploy(payload: dict):
-        return call(docker_runtime.deploy, payload)
+        return tracked("deploy", payload, call(docker_runtime.deploy, payload))
 
     def lifecycle(action: str, payload: dict):
         node = payload.get("node") or {}
@@ -190,21 +200,21 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
             raise HTTPException(400, "node_id is required for an Agent lifecycle operation")
         if any(value != node_id for value in (payload.get("node_id", node_id), node.get("id", node_id))):
             raise HTTPException(400, "node_id and node.id must identify the same target")
-        return call(docker_runtime.action, action, payload.get("service_id"), node_id, payload.get("operation_id"))
+        return tracked(action, payload, call(docker_runtime.action, action, payload.get("service_id"), node_id, payload.get("operation_id")))
 
-    @router.post("/stop", dependencies=[Depends(authorize)])
+    @router.post("/stop", dependencies=[Depends(auth_dependency)])
     def stop(payload: dict):
         return lifecycle("stop", payload)
 
-    @router.post("/restart", dependencies=[Depends(authorize)])
+    @router.post("/restart", dependencies=[Depends(auth_dependency)])
     def restart(payload: dict):
         return lifecycle("restart", payload)
 
-    @router.post("/remove", dependencies=[Depends(authorize)])
+    @router.post("/remove", dependencies=[Depends(auth_dependency)])
     def remove(payload: dict):
         return lifecycle("remove", payload)
 
-    @router.get("/logs", dependencies=[Depends(authorize)])
+    @router.get("/logs", dependencies=[Depends(auth_dependency)])
     def logs(service_id: str, tail: int = Query(200, ge=1, le=2000), node_id: str | None = None,
              role: str | None = Query(None, min_length=1, max_length=48, pattern=r"^[a-z][a-z0-9_-]*$")):
         return call(docker_runtime.logs, service_id, tail, node_id, role)

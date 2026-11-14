@@ -1,6 +1,7 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, MemoryStick, MoreHorizontal, Plus, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, MemoryStick, MoreHorizontal, Plus, Upload } from "./icons";
 import { Activity, Clock3, Cpu, Layers3, RefreshCw, Server, Settings2, Trash2 } from "./icons";
 import { api, isReadOnlyAgent, post, when } from "./api";
 import type { NodeDetail, NodeInfo } from "./api";
@@ -55,7 +56,7 @@ function nodeConnectionGroup(node: NodeInfo) {
   return "unknown";
 }
 
-function NodeMoreMenu({ node, busy, canAdminister, onSummary, onCluster, onProbe, onDelete }: {
+function DefaultNodeMoreMenu({ node, busy, canAdminister, onSummary, onCluster, onProbe, onDelete }: {
   node: NodeInfo; busy: boolean; canAdminister: boolean;
   onSummary: () => void; onCluster?: () => void; onProbe: () => void; onDelete: () => void;
 }) {
@@ -94,21 +95,21 @@ function NodeMoreMenu({ node, busy, canAdminister, onSummary, onCluster, onProbe
   }, [open]);
   const choose = (action: () => void) => { setOpen(false); trigger.current?.focus(); action(); };
   return <>
-    <button ref={trigger} type="button" className="node-more-trigger" aria-label={`${node.name} 更多操作`} title="更多操作" aria-haspopup="menu" aria-expanded={open} onClick={() => {
+    <UiButton actionContext={{node, canAdminister}} actionId="nodes.menu.open" ref={trigger} type="button" className="node-more-trigger" aria-label={`${node.name} 更多操作`} title="更多操作" aria-haspopup="menu" aria-expanded={open} onClick={() => {
       const rect = trigger.current!.getBoundingClientRect();
       setPosition({ left: Math.max(8, Math.min(innerWidth - 188, rect.left)), top: innerHeight - rect.bottom > 190 ? rect.bottom + 5 : Math.max(8, rect.top - 180) });
       setOpen(!open);
-    }}><MoreHorizontal size={14} /></button>
-    {open && createPortal(<div ref={menu} className="floating-actions node-more-menu" role="menu" aria-label={`${node.name} 节点操作`} style={position}>
-      <button type="button" role="menuitem" onClick={() => choose(onSummary)}><Server size={13} />连接摘要</button>
-      {onCluster && <button type="button" role="menuitem" onClick={() => choose(onCluster)}><Layers3 size={13} />集群节点</button>}
-      <button type="button" role="menuitem" disabled={busy || !canAdminister} onClick={() => choose(onProbe)}><RefreshCw size={13} className={busy ? "spin" : undefined} />{busy ? "探测中…" : "连接探测"}</button>
-      <button type="button" role="menuitem" className="danger-text" disabled={!canAdminister} onClick={() => choose(onDelete)}><Trash2 size={13} />移除节点</button>
-    </div>, document.body)}
+    }}><MoreHorizontal size={14} /></UiButton>
+    {open && createPortal(<UiElement as="div" ref={menu} className="floating-actions node-more-menu" role="menu" aria-label={`${node.name} 节点操作`} style={position}>
+      <UiButton actionContext={{node, canAdminister}} actionId="nodes.summary.open" type="button" role="menuitem" onClick={() => choose(onSummary)}><Server size={13} /><UiText>{"连接摘要"}</UiText></UiButton>
+      {onCluster && <UiButton actionContext={{node, canAdminister}} actionId="nodes.cluster.open" type="button" role="menuitem" onClick={() => choose(onCluster)}><Layers3 size={13} /><UiText>{"集群节点"}</UiText></UiButton>}
+      <UiButton actionContext={{node, canAdminister}} actionId="nodes.probe" type="button" role="menuitem" disabled={busy || !canAdminister} onClick={() => choose(onProbe)}><RefreshCw size={13} className={busy ? "spin" : undefined} />{busy ? "探测中…" : "连接探测"}</UiButton>
+      <UiButton actionContext={{node, canAdminister}} actionId="nodes.remove" type="button" role="menuitem" className="danger-text" disabled={!canAdminister} onClick={() => choose(onDelete)}><Trash2 size={13} /><UiText>{"移除节点"}</UiText></UiButton>
+    </UiElement>, document.body)}
   </>;
 }
 
-export default function NodesPage({
+function DefaultNodesPage({
   canAdminister,
   demo,
   nodes,
@@ -238,74 +239,74 @@ export default function NodesPage({
   return (
     <>
       {probeError && <ErrorBox message={probeError} />}
-      {!!nodes.length && <div className="node-environment-summary" role="radiogroup" aria-label="按节点连接状态筛选">
-        {[{ key: "all", label: "总计", count: nodes.length }, { key: "online", label: "在线", count: nodes.filter((n) => nodeConnectionGroup(n) === "online").length }, { key: "offline", label: "离线", count: nodes.filter((n) => nodeConnectionGroup(n) === "offline").length }, { key: "unknown", label: "未探测", count: nodes.filter((n) => nodeConnectionGroup(n) === "unknown").length }].filter((segment) => segment.count > 0 || filter === segment.key).map((segment) => <label key={segment.key} className={`node-status-segment ${segment.key} ${filter === segment.key ? "selected" : ""}`}>
-          <input type="radio" name="node-connection-filter" value={segment.key} checked={filter === segment.key} onChange={() => setFilter(segment.key)} />
-          {segment.key !== "all" && <i aria-hidden="true" />}
-          <span><b>{segment.count}</b><small>{segment.label}</small></span>
-        </label>)}
-      </div>}
-      <section className="panel nodes-management-panel" aria-label="执行节点列表">
-        <div className="node-list-toolbar">
-          <div className="node-sort-controls"><span>排序：</span><div role="group" aria-label="节点排序">
-            {[{ key: "name", label: "名称" }, { key: "last_seen", label: "最近连接" }, { key: "runtime", label: "运行环境" }, { key: "status", label: "连接状态" }].map((option) => <button key={option.key} type="button" aria-pressed={sort === option.key} className={sort === option.key ? "active" : ""} onClick={() => { setSort(option.key); setDescending(sort === option.key ? !descending : option.key === "last_seen"); }}>
-              {option.label}{sort === option.key && <span className="node-sort-order">{descending ? <ArrowDown size={10} /> : <ArrowUp size={10} />}</span>}
-            </button>)}
-          </div></div>
-          <div className="node-list-tools">
-            {canAdminister && !demo && onRolloutHistory && <Button onClick={onRolloutHistory}><Clock3 size={14} />推送记录</Button>}
+      {!!nodes.length && <UiElement as="div" className="node-environment-summary" role="radiogroup" aria-label="按节点连接状态筛选">
+        {[{ key: "all", label: "总计", count: nodes.length }, { key: "online", label: "在线", count: nodes.filter((n) => nodeConnectionGroup(n) === "online").length }, { key: "offline", label: "离线", count: nodes.filter((n) => nodeConnectionGroup(n) === "offline").length }, { key: "unknown", label: "未探测", count: nodes.filter((n) => nodeConnectionGroup(n) === "unknown").length }].filter((segment) => segment.count > 0 || filter === segment.key).map((segment) => <UiElement as="label" key={segment.key} className={`node-status-segment ${segment.key} ${filter === segment.key ? "selected" : ""}`}>
+          <UiElement as="input" type="radio" name="node-connection-filter" value={segment.key} checked={filter === segment.key} onChange={() => setFilter(segment.key)} />
+          {segment.key !== "all" && <UiElement as="i" aria-hidden="true" />}
+          <UiElement as="span"><UiElement as="b">{segment.count}</UiElement><UiElement as="small">{segment.label}</UiElement></UiElement>
+        </UiElement>)}
+      </UiElement>}
+      <UiRegion name="layout.panel" as="section" className="panel nodes-management-panel" aria-label="执行节点列表">
+        <UiElement as="div" className="node-list-toolbar">
+          <UiElement as="div" className="node-sort-controls"><UiElement as="span"><UiText>{"排序："}</UiText></UiElement><UiElement as="div" role="group" aria-label="节点排序">
+            {[{ key: "name", label: "名称" }, { key: "last_seen", label: "最近连接" }, { key: "runtime", label: "运行环境" }, { key: "status", label: "连接状态" }].map((option) => <UiButton actionId="nodes.sort" key={option.key} type="button" aria-pressed={sort === option.key} className={sort === option.key ? "active" : ""} onClick={() => { setSort(option.key); setDescending(sort === option.key ? !descending : option.key === "last_seen"); }}>
+              {option.label}{sort === option.key && <UiElement as="span" className="node-sort-order">{descending ? <ArrowDown size={10} /> : <ArrowUp size={10} />}</UiElement>}
+            </UiButton>)}
+          </UiElement></UiElement>
+          <UiElement as="div" className="node-list-tools">
+            {canAdminister && !demo && onRolloutHistory && <Button actionId="agents.rollout.history" onClick={onRolloutHistory}><Clock3 size={14} /><UiText>{"推送记录"}</UiText></Button>}
             <SearchInput value={search} onChange={setSearch} placeholder="搜索节点名称、IP 或标签" />
-            {onRolloutAgent && <Button onClick={onRolloutAgent}><Upload size={14} />推送 Agent</Button>}
-            {onAddNode && <Button kind="primary" disabled={!canAdminister} onClick={onAddNode}><Plus size={14} />接入节点</Button>}
-          </div>
-        </div>
-        {items.length ? <div className="node-environment-list" role="list" aria-label="执行节点列表">
+            {onRolloutAgent && <Button actionId="agents.rollout.open" onClick={onRolloutAgent}><Upload size={14} /><UiText>{"推送 Agent"}</UiText></Button>}
+            {onAddNode && <Button actionId="nodes.connect.open" kind="primary" disabled={!canAdminister} onClick={onAddNode}><Plus size={14} /><UiText>{"接入节点"}</UiText></Button>}
+          </UiElement>
+        </UiElement>
+        {items.length ? <UiElement as="div" className="node-environment-list" role="list" aria-label="执行节点列表">
           {visibleItems.map((node) => {
             const kubernetes = isKubernetesAgent(node);
             const hostFresh = nodeObservation(node, now, demo).state === "fresh";
-            return <div key={node.id} className="node-environment-card" role="listitem">
-              <div className="node-environment-main">
-                <div className="node-environment-identity">
-                  <div className="node-icon"><img src={kubernetes ? "/runtime/kubernetes.png" : "/runtime/docker.svg"} width="60" alt="" /></div>
-                  <div className="node-environment-copy">
-                    <div className="node-environment-heading"><button type="button" className="node-environment-name" onClick={() => setDetailNodeId(node.id)} aria-label={`查看 ${node.name} 的 Agent 详情与配置`}>{node.name}</button><Badge status={node.status} />{isReadOnlyAgent(node) && <span className="tag" title="仅采集与查看；完成资源归属交接后才可启用运行变更。">只读接入</span>}</div>
-                    <div className="node-environment-meta">
-                      {Number.isFinite(Date.parse(node.last_seen)) && <time title="最近连接探测" dateTime={node.last_seen}><Clock3 size={12} />{when(node.last_seen)}</time>}
-                      {nodeRuntimeInfo(node) && <span>{nodeRuntimeInfo(node)}</span>}
-                      <span className="tabular">{node.address}</span>
-                    </div>
-                    <div className="node-environment-meta node-environment-labels">
-                      {knownText(node.architecture) && <span>{node.architecture}</span>}
-                      {node.labels.length > 0 && <span title={node.labels.join("、")}>{node.labels.join("、")}</span>}
+            return <UiElement as="div" key={node.id} className="node-environment-card" role="listitem">
+              <UiElement as="div" className="node-environment-main">
+                <UiElement as="div" className="node-environment-identity">
+                  <UiElement as="div" className="node-icon"><UiElement as="img" src={kubernetes ? "/runtime/kubernetes.png" : "/runtime/docker.svg"} width="60" alt="" /></UiElement>
+                  <UiElement as="div" className="node-environment-copy">
+                    <UiElement as="div" className="node-environment-heading"><UiButton actionId="nodes.details.open" type="button" className="node-environment-name" onClick={() => setDetailNodeId(node.id)} aria-label={`查看 ${node.name} 的 Agent 详情与配置`}>{node.name}</UiButton><Badge status={node.status} />{isReadOnlyAgent(node) && <UiElement as="span" className="tag" title="仅采集与查看；完成资源归属交接后才可启用运行变更。"><UiText>{"只读接入"}</UiText></UiElement>}</UiElement>
+                    <UiElement as="div" className="node-environment-meta">
+                      {Number.isFinite(Date.parse(node.last_seen)) && <UiElement as="time" title="最近连接探测" dateTime={node.last_seen}><Clock3 size={12} />{when(node.last_seen)}</UiElement>}
+                      {nodeRuntimeInfo(node) && <UiElement as="span">{nodeRuntimeInfo(node)}</UiElement>}
+                      <UiElement as="span" className="tabular">{node.address}</UiElement>
+                    </UiElement>
+                    <UiElement as="div" className="node-environment-meta node-environment-labels">
+                      {knownText(node.architecture) && <UiElement as="span">{node.architecture}</UiElement>}
+                      {node.labels.length > 0 && <UiElement as="span" title={node.labels.join("、")}>{node.labels.join("、")}</UiElement>}
                       <NodeMoreMenu node={node} busy={busy === node.id} canAdminister={canAdminister} onSummary={() => setExpanded(expanded === node.id ? "" : node.id)} onCluster={kubernetes ? () => setClusterAgent(node) : undefined} onProbe={() => void probe(node)} onDelete={() => onDelete(node)} />
-                    </div>
-                  </div>
-                </div>
-                <div className="node-row-resources">
+                    </UiElement>
+                  </UiElement>
+                </UiElement>
+                <UiElement as="div" className="node-row-resources">
                   <AgentNpuResources node={node} source={resources.sources.find((source) => source.agentId === node.id)} demo={demo} now={now} />
-                  {hostFresh && isValidResourcePercent(node.cpu_percent) && <div className="node-resource-tile node-host-tile"><Cpu size={22} /><div><StatBar value={node.cpu_percent} /><span className="npu-runtime-label">宿主 CPU</span></div></div>}
-                  {hostFresh && isValidResourcePercent(node.memory_percent) && <div className="node-resource-tile node-host-tile"><MemoryStick size={22} /><div><StatBar value={node.memory_percent} kind="blue" /><span className="npu-runtime-label">宿主内存</span></div></div>}
-                </div>
-              </div>
-              <div className="node-actions" role="group" aria-label={`${node.name} 快捷操作`}>
-                <button type="button" onClick={() => setDetailNodeId(node.id)} aria-label={`查看 ${node.name} 的详情与配置`}><Settings2 size={15} /><span>查看配置</span></button>
-                <button type="button" onClick={() => setResourceNodeId(node.id)} aria-label={`查看 ${node.name} 的资源详情`}><Activity size={15} /><span>资源详情</span></button>
-              </div>
-              {expanded === node.id && <div className="node-expanded">
-                <div>Agent 连接 <span className="tabular">{node.agent_url}</span></div>
-                {knownText(node.nic_name) && <div>登记通信网卡 <code>{node.nic_name}</code></div>}
-                {knownText(node.os) && <div>系统 <span>{node.os}</span></div>}
+                  {hostFresh && isValidResourcePercent(node.cpu_percent) && <UiElement as="div" className="node-resource-tile node-host-tile"><Cpu size={22} /><UiElement as="div"><StatBar value={node.cpu_percent} /><UiElement as="span" className="npu-runtime-label"><UiText>{"宿主 CPU"}</UiText></UiElement></UiElement></UiElement>}
+                  {hostFresh && isValidResourcePercent(node.memory_percent) && <UiElement as="div" className="node-resource-tile node-host-tile"><MemoryStick size={22} /><UiElement as="div"><StatBar value={node.memory_percent} kind="blue" /><UiElement as="span" className="npu-runtime-label"><UiText>{"宿主内存"}</UiText></UiElement></UiElement></UiElement>}
+                </UiElement>
+              </UiElement>
+              <UiElement as="div" className="node-actions" role="group" aria-label={`${node.name} 快捷操作`}>
+                <UiButton actionId="nodes.details.open" type="button" onClick={() => setDetailNodeId(node.id)} aria-label={`查看 ${node.name} 的详情与配置`}><Settings2 size={15} /><UiElement as="span"><UiText>{"查看配置"}</UiText></UiElement></UiButton>
+                <UiButton actionId="nodes.resources.open" type="button" onClick={() => setResourceNodeId(node.id)} aria-label={`查看 ${node.name} 的资源详情`}><Activity size={15} /><UiElement as="span"><UiText>{"资源详情"}</UiText></UiElement></UiButton>
+              </UiElement>
+              {expanded === node.id && <UiElement as="div" className="node-expanded">
+                <UiElement as="div"><UiText>{"Agent 连接"}</UiText> <UiElement as="span" className="tabular">{node.agent_url}</UiElement></UiElement>
+                {knownText(node.nic_name) && <UiElement as="div"><UiText>{"登记通信网卡"}</UiText> <UiElement as="code">{node.nic_name}</UiElement></UiElement>}
+                {knownText(node.os) && <UiElement as="div"><UiText>{"系统"}</UiText> <UiElement as="span">{node.os}</UiElement></UiElement>}
                 <CredentialStatus node={node} /><NodeTlsStatus node={node} />
-                {node.error && <p className="danger-text">{node.error}</p>}
-              </div>}
-            </div>;
+                {node.error && <UiElement as="p" className="danger-text">{node.error}</UiElement>}
+              </UiElement>}
+            </UiElement>;
           })}
-        </div> : <Empty title={nodes.length ? "没有匹配的节点" : "尚未接入执行节点"} description={nodes.length ? "调整搜索条件或节点状态筛选。" : canAdminister ? "通过“推送 Agent”完成安装，再通过“接入节点”登记连接。" : "请联系管理员接入执行节点。"} icon={<Server size={28} />} />}
-        <div className="node-list-footer">
-          <div><span>{items.length ? <>{safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, items.length)} / {items.length} 个节点</> : "0 个节点"}</span><select value={pageSize} aria-label="每页节点数量" onChange={(event) => setPageSize(Number(event.target.value))}>{[10, 25, 50, 100].map((count) => <option key={count} value={count}>{count}</option>)}</select></div>
-          {pages > 1 && <nav className="node-list-pagination" aria-label="节点列表分页"><button type="button" disabled={safePage === 0} aria-label="上一页" onClick={() => setPage(safePage - 1)}><ChevronLeft size={14} /></button><span>{safePage + 1} / {pages}</span><button type="button" disabled={safePage >= pages - 1} aria-label="下一页" onClick={() => setPage(safePage + 1)}><ChevronRight size={14} /></button></nav>}
-        </div>
-      </section>
+        </UiElement> : <Empty title={nodes.length ? "没有匹配的节点" : "尚未接入执行节点"} description={nodes.length ? "调整搜索条件或节点状态筛选。" : canAdminister ? "通过“推送 Agent”完成安装，再通过“接入节点”登记连接。" : "请联系管理员接入执行节点。"} icon={<Server size={28} />} />}
+        <UiElement as="div" className="node-list-footer">
+          <UiElement as="div"><UiElement as="span">{items.length ? <>{safePage * pageSize + 1}<UiText>{"–"}</UiText>{Math.min((safePage + 1) * pageSize, items.length)} <UiText>{"/"}</UiText> {items.length} <UiText>{"个节点"}</UiText></> : "0 个节点"}</UiElement><UiElement as="select" value={pageSize} aria-label="每页节点数量" onChange={(event) => setPageSize(Number(event.target.value))}>{[10, 25, 50, 100].map((count) => <UiElement as="option" key={count} value={count}>{count}</UiElement>)}</UiElement></UiElement>
+          {pages > 1 && <UiElement as="nav" className="node-list-pagination" aria-label="节点列表分页"><UiButton actionId="nodes.page.previous" type="button" disabled={safePage === 0} aria-label="上一页" onClick={() => setPage(safePage - 1)}><ChevronLeft size={14} /></UiButton><UiElement as="span">{safePage + 1} <UiText>{"/"}</UiText> {pages}</UiElement><UiButton actionId="nodes.page.next" type="button" disabled={safePage >= pages - 1} aria-label="下一页" onClick={() => setPage(safePage + 1)}><ChevronRight size={14} /></UiButton></UiElement>}
+        </UiElement>
+      </UiRegion>
       {detailNode && (
         <AgentDetails
           key={detailNode.id}
@@ -356,7 +357,7 @@ export default function NodesPage({
           wide
           contentKey={clusterAgent.id}
           onClose={() => setClusterAgent(null)}
-          footer={(dismiss) => <Button onClick={dismiss}>关闭</Button>}
+          footer={(dismiss) => <Button actionId="nodes.dialog.dismiss" onClick={dismiss}><UiText>{"关闭"}</UiText></Button>}
         >
           <ClusterNodesPanel agent={clusterAgent} />
         </Drawer>
@@ -386,7 +387,7 @@ export default function NodesPage({
   );
 }
 
-function NodeTlsStatus({ node }: { node: NodeInfo }) {
+function DefaultNodeTlsStatus({ node }: { node: NodeInfo }) {
   let protocol: string;
   try {
     protocol = new URL(node.agent_url).protocol;
@@ -395,27 +396,27 @@ function NodeTlsStatus({ node }: { node: NodeInfo }) {
   }
   if (protocol === "http:")
     return (
-      <div>
-        连接传输<span>HTTP 连接，未使用 TLS。</span>
-      </div>
+      <UiElement as="div">
+        <UiText>{"连接传输"}</UiText><UiElement as="span"><UiText>{"HTTP 连接，未使用 TLS。"}</UiText></UiElement>
+      </UiElement>
     );
   if (protocol !== "https:") return null;
   const trust = node.tls_trust;
   if (!trust) return null;
   if (trust.kind === "invalid_node_ca")
     return (
-      <div role="status">
-        TLS 信任
-        <span style={{ color: "var(--danger)" }}>
-          节点 CA 无效，请更新信任配置后重新探测。
-        </span>
-      </div>
+      <UiElement as="div" role="status">
+        <UiText>{"TLS 信任"}</UiText>
+        <UiElement as="span" style={{ color: "var(--danger)" }}>
+          <UiText>{"节点 CA 无效，请更新信任配置后重新探测。"}</UiText>
+        </UiElement>
+      </UiElement>
     );
   if (trust.kind === "deployment_trust")
     return (
-      <div>
-        TLS 信任<span>使用部署环境的受信证书。</span>
-      </div>
+      <UiElement as="div">
+        <UiText>{"TLS 信任"}</UiText><UiElement as="span"><UiText>{"使用部署环境的受信证书。"}</UiText></UiElement>
+      </UiElement>
     );
   const expires = trust.ca_expires_at ? Date.parse(trust.ca_expires_at) : NaN;
   const remaining = expires - serverNow();
@@ -433,24 +434,24 @@ function NodeTlsStatus({ node }: { node: NodeInfo }) {
       }`;
   return (
     <>
-      <div>
-        TLS 信任
-        <span>
-          节点专属 CA
+      <UiElement as="div">
+        <UiText>{"TLS 信任"}</UiText>
+        <UiElement as="span">
+          <UiText>{"节点专属 CA"}</UiText>
           {trust.certificates ? ` · ${trust.certificates} 张证书` : ""}
-        </span>
-      </div>
+        </UiElement>
+      </UiElement>
       {trust.sha256 && (
-        <div>
-          CA 摘要
-          <code style={{ overflowWrap: "anywhere" }}>
-            SHA256:{trust.sha256}
-          </code>
-        </div>
+        <UiElement as="div">
+          <UiText>{"CA 摘要"}</UiText>
+          <UiElement as="code" style={{ overflowWrap: "anywhere" }}>
+            <UiText>{"SHA256:"}</UiText>{trust.sha256}
+          </UiElement>
+        </UiElement>
       )}
-      <div role={invalid || expired || nearExpiry ? "status" : undefined}>
-        CA 到期
-        <span
+      <UiElement as="div" role={invalid || expired || nearExpiry ? "status" : undefined}>
+        <UiText>{"CA 到期"}</UiText>
+        <UiElement as="span"
           style={{
             color:
               invalid || expired
@@ -461,13 +462,13 @@ function NodeTlsStatus({ node }: { node: NodeInfo }) {
           }}
         >
           {expiryText}
-        </span>
-      </div>
+        </UiElement>
+      </UiElement>
     </>
   );
 }
 
-function CredentialStatus({ node }: { node: NodeInfo }) {
+function DefaultCredentialStatus({ node }: { node: NodeInfo }) {
   const candidate = node.agent_metadata?.credential_policy;
   const policy =
     candidate &&
@@ -484,20 +485,20 @@ function CredentialStatus({ node }: { node: NodeInfo }) {
     <>
       {Number.isSafeInteger(node.credential_revision) &&
         (node.credential_revision ?? -1) >= 0 && (
-          <div>
-            控制台凭据版本 <span>{node.credential_revision}</span>
-          </div>
+          <UiElement as="div">
+            <UiText>{"控制台凭据版本"}</UiText> <UiElement as="span">{node.credential_revision}</UiElement>
+          </UiElement>
         )}
       {node.credentials_updated_at && (
-        <div>
-          凭据更新时间 <span>{when(node.credentials_updated_at)}</span>
-        </div>
+        <UiElement as="div">
+          <UiText>{"凭据更新时间"}</UiText> <UiElement as="span">{when(node.credentials_updated_at)}</UiElement>
+        </UiElement>
       )}
       {policy && (
         <>
-          <div>
-            Agent 凭据状态
-            <span
+          <UiElement as="div">
+            <UiText>{"Agent 凭据状态"}</UiText>
+            <UiElement as="span"
               className={
                 policy.disabled || !policy.current.active ? "danger-text" : ""
               }
@@ -509,38 +510,38 @@ function CredentialStatus({ node }: { node: NodeInfo }) {
                   : policy.legacy
                     ? "兼容旧式令牌"
                     : "当前凭据有效"}
-            </span>
-          </div>
-          <div>
-            当前凭据 ID <code>{policy.current.id}</code>
-          </div>
+            </UiElement>
+          </UiElement>
+          <UiElement as="div">
+            <UiText>{"当前凭据 ID"}</UiText> <UiElement as="code">{policy.current.id}</UiElement>
+          </UiElement>
           {policy.current.expires_at && (
-            <div>
-              当前凭据到期 <span>{when(policy.current.expires_at)}</span>
-            </div>
+            <UiElement as="div">
+              <UiText>{"当前凭据到期"}</UiText> <UiElement as="span">{when(policy.current.expires_at)}</UiElement>
+            </UiElement>
           )}
           {policy.previous &&
             typeof policy.previous.id === "string" &&
             typeof policy.previous.active === "boolean" && (
-              <div>
-                旧凭据过渡
-                <span>
+              <UiElement as="div">
+                <UiText>{"旧凭据过渡"}</UiText>
+                <UiElement as="span">
                   {policy.previous.active
                     ? `截至 ${when(policy.previous.expires_at ?? "")}`
                     : "已失效"}
-                </span>
-              </div>
+                </UiElement>
+              </UiElement>
             )}
-          <p className="muted-text">
-            状态来自最近一次 Agent 校验；以连接探测结果为准。
-          </p>
+          <UiElement as="p" className="muted-text">
+            <UiText>{"状态来自最近一次 Agent 校验；以连接探测结果为准。"}</UiText>
+          </UiElement>
         </>
       )}
     </>
   );
 }
 
-function NodeCredentialsModal({
+function DefaultNodeCredentialsModal({
   node,
   demo,
   onClose,
@@ -660,16 +661,16 @@ function NodeCredentialsModal({
       closeDisabled={busy}
       footer={
         <>
-          <Button onClick={close} disabled={busy}>
+          <Button actionId="nodes.connect.cancel" onClick={close} disabled={busy}>
             {outcomeUnknown ? "关闭并读取最新" : "取消"}
           </Button>
-          <Button
+          <Button actionId="nodes.connect"
             kind="primary"
             loading={busy}
             disabled={!token || outcomeUnknown || !credentialsAllowed}
             onClick={() => void save()}
           >
-            校验并保存
+            <UiText>{"校验并保存"}</UiText>
           </Button>
         </>
       }
@@ -678,17 +679,16 @@ function NodeCredentialsModal({
         {demo
           ? "演示环境不连接真实 Agent。"
           : "请先在节点上启用新令牌；控制台会验证连接后再保存。"}
-        节点 ID 和已有服务关联会保留。这里维护管理连接，不修改模型部署 IP
-        或网卡；旧令牌的撤销由节点管理员完成。
+        <UiText>{"节点 ID 和已有服务关联会保留。这里维护管理连接，不修改模型部署 IP 或网卡；旧令牌的撤销由节点管理员完成。"}</UiText>
       </InfoBox>
       {Number.isSafeInteger(node.credential_revision) &&
         (node.credential_revision ?? -1) >= 0 && (
-          <dl className="credential-node-info">
-            <div>
-              <dt>当前凭据版本</dt>
-              <dd>{node.credential_revision}</dd>
-            </div>
-          </dl>
+          <UiElement as="dl" className="credential-node-info">
+            <UiElement as="div">
+              <UiElement as="dt"><UiText>{"当前凭据版本"}</UiText></UiElement>
+              <UiElement as="dd">{node.credential_revision}</UiElement>
+            </UiElement>
+          </UiElement>
         )}
       {error && <ErrorBox message={error} />}
       {!credentialsAllowed && (
@@ -706,7 +706,7 @@ function NodeCredentialsModal({
               "当前 URL 不可更改，仍可在原地址轮换令牌和 CA。"
         }
       >
-        <input
+        <UiElement as="input"
           type="url"
           aria-label="Agent 连接地址（URL）"
           value={agentUrl}
@@ -724,7 +724,7 @@ function NodeCredentialsModal({
         required
         hint="令牌仅提交给控制台校验，不会回显或写入浏览器存储"
       >
-        <input
+        <UiElement as="input"
           type="password"
           autoComplete="new-password"
           disabled={busy || outcomeUnknown || !credentialsAllowed}
@@ -753,9 +753,9 @@ function NodeCredentialsModal({
             setError("");
           }}
         >
-          <option value="keep">保持现有信任（默认）</option>
-          <option value="replace">替换 CA PEM 证书</option>
-          <option value="default">使用部署默认信任</option>
+          <UiElement as="option" value="keep"><UiText>{"保持现有信任（默认）"}</UiText></UiElement>
+          <UiElement as="option" value="replace"><UiText>{"替换 CA PEM 证书"}</UiText></UiElement>
+          <UiElement as="option" value="default"><UiText>{"使用部署默认信任"}</UiText></UiElement>
         </Select>
       </Field>
       {caMode === "replace" && (
@@ -764,7 +764,7 @@ function NodeCredentialsModal({
           required
           hint="仅输入新的公开 CA 证书，最多 64 KiB；不回显已保存证书，不接受任何私钥。"
         >
-          <textarea
+          <UiElement as="textarea"
             aria-label="新的 CA PEM 证书"
             value={caPem}
             rows={7}
@@ -782,20 +782,19 @@ function NodeCredentialsModal({
       )}
       {caMode === "default" && (
         <InfoBox>
-          保存时将清除该节点的专属
-          CA，改用部署环境的默认信任。控制台会先按此信任验证连接，通过后才保存。
+          <UiText>{"保存时将清除该节点的专属 CA，改用部署环境的默认信任。控制台会先按此信任验证连接，通过后才保存。"}</UiText>
         </InfoBox>
       )}
       {busy && (
-        <p className="subtle-note">
-          正在验证管理连接，完成后会清除本次输入的令牌与 CA。
-        </p>
+        <UiElement as="p" className="subtle-note">
+          <UiText>{"正在验证管理连接，完成后会清除本次输入的令牌与 CA。"}</UiText>
+        </UiElement>
       )}
     </Modal>
   );
 }
 
-export function NodeModal({
+function DefaultNodeModal({
   onClose,
   onSaved,
 }: {
@@ -889,17 +888,17 @@ export function NodeModal({
       closeDisabled={busy}
       footer={
         <>
-          <Button onClick={close} disabled={busy}>{outcomeUnknown ? "关闭并核对节点列表" : "取消"}</Button>
-          <Button kind="primary" loading={busy} disabled={outcomeUnknown} onClick={submit}>
-            接入节点
+          <Button actionId="nodes.connect.cancel" onClick={close} disabled={busy}>{outcomeUnknown ? "关闭并核对节点列表" : "取消"}</Button>
+          <Button actionId="nodes.connect.submit" kind="primary" loading={busy} disabled={outcomeUnknown} onClick={submit}>
+            <UiText>{"接入节点"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
-      <div className="form-two">
+      <UiElement as="div" className="form-two">
         <Field label="节点名称" required>
-          <input
+          <UiElement as="input"
             placeholder="例如 npu-node-01"
             disabled={busy || outcomeUnknown}
             maxLength={100}
@@ -912,7 +911,7 @@ export function NodeModal({
           required
           hint="用于模型部署与通信，与 Agent 管理连接 URL 分开配置"
         >
-          <input
+          <UiElement as="input"
             placeholder="192.0.2.39"
             disabled={busy || outcomeUnknown}
             maxLength={64}
@@ -920,13 +919,13 @@ export function NodeModal({
             onChange={(e) => setData({ ...data, address: e.target.value })}
           />
         </Field>
-      </div>
+      </UiElement>
       <Field
         label="Agent 连接地址（URL）"
         required
         hint="生产远端节点使用 HTTPS；同机回环地址可使用 HTTP"
       >
-        <input
+        <UiElement as="input"
           placeholder="https://agent.example.com:8443"
           disabled={busy || outcomeUnknown}
           maxLength={2048}
@@ -935,7 +934,7 @@ export function NodeModal({
         />
       </Field>
       <Field label="Agent 访问令牌" hint="仅在保存时提交，控制台不会回显令牌">
-        <input
+        <UiElement as="input"
           type="password"
           disabled={busy || outcomeUnknown}
           maxLength={2000}
@@ -945,17 +944,17 @@ export function NodeModal({
           placeholder="输入节点 Agent 的访问令牌"
         />
       </Field>
-      <details>
-        <summary>自定义 CA 信任（可选）</summary>
+      <UiElement as="details">
+        <UiElement as="summary"><UiText>{"自定义 CA 信任（可选）"}</UiText></UiElement>
         <Field label="Agent CA PEM 证书" hint="留空使用部署默认信任；仅填写公开 CA 证书，不接受私钥，最多 64 KiB。">
-          <textarea value={data.agent_ca_pem} rows={5} maxLength={65536} autoComplete="off" spellCheck={false}
+          <UiElement as="textarea" value={data.agent_ca_pem} rows={5} maxLength={65536} autoComplete="off" spellCheck={false}
             disabled={busy || outcomeUnknown} onChange={(event) => setData({ ...data, agent_ca_pem: event.target.value })}
             placeholder="-----BEGIN CERTIFICATE-----" />
         </Field>
-      </details>
-      <div className="form-two">
+      </UiElement>
+      <UiElement as="div" className="form-two">
         <Field label="模型通信网卡" hint="留空时使用 Agent 上报网卡">
-          <input
+          <UiElement as="input"
             placeholder="例如 enp189s0f0"
             disabled={busy || outcomeUnknown}
             maxLength={15}
@@ -964,7 +963,7 @@ export function NodeModal({
           />
         </Field>
         <Field label="节点标签" hint="多个标签用逗号分隔">
-          <input
+          <UiElement as="input"
             placeholder="A3, production"
             disabled={busy || outcomeUnknown}
             maxLength={4096}
@@ -972,7 +971,18 @@ export function NodeModal({
             onChange={(e) => setData({ ...data, labels: e.target.value })}
           />
         </Field>
-      </div>
+      </UiElement>
     </Modal>
   );
 }
+
+const NodeMoreMenu = withUiSlot("component.NodeMoreMenu", DefaultNodeMoreMenu);
+const NodesPage = withUiSlot("component.NodesPage", DefaultNodesPage);
+export default NodesPage;
+const NodeTlsStatus = withUiSlot("component.NodeTlsStatus", DefaultNodeTlsStatus);
+const CredentialStatus = withUiSlot("component.CredentialStatus", DefaultCredentialStatus);
+const NodeCredentialsModal = withUiSlot("component.NodeCredentialsModal", DefaultNodeCredentialsModal);
+export const NodeModal = withUiSlot("component.NodeModal", DefaultNodeModal);
+
+// Reference package implementation exports.
+export { DefaultNodeMoreMenu, DefaultNodesPage, DefaultNodeTlsStatus, DefaultCredentialStatus, DefaultNodeCredentialsModal, DefaultNodeModal };

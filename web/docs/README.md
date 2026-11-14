@@ -60,8 +60,10 @@
 
 - [插件管理](../PLUGINS.md)：导入、信任、下次启动选择、停用及回退。
 - [插件开发](../PLUGIN_DEVELOPMENT.md)：Manifest、公开 Context、API/页面、限额与完整操作流程。
-- [扩展面](../PLUGIN_EXTENSION_POINTS.md)：当前公开合同与后续模块化方向。
-- [可替换插件架构设计](REPLACEABLE_PLUGIN_ARCHITECTURE.md)：默认实现与第三方同契约替换、完整 UI 插件、语言取舍及验收目标；尚未实现。
+- [扩展面](../PLUGIN_EXTENSION_POINTS.md)：业务、运行时及完整 UI 的实际替换合同与边界。
+- [提供者部署](PROVIDER_PLUGINS.md)：Node/Python/UI 包、导入、选择、恢复与三组件部署。
+- [可替换插件架构](REPLACEABLE_PLUGIN_ARCHITECTURE.md)：默认与第三方同契约装配、宿主边界及替换验收。
+- [Python Provider SDK](../backend/provider_host/README.md)、[浏览器 SDK](../frontend/sdk/README.md)、[Node SDK](../../platform/README.md)。
 - [宿主合同](../backend/plugin_host/README.md)、[包格式与恢复](../backend/plugin_host/packages/README.md)。
 - [完整示例](../plugins/examples/community-status/README.md)、[离线 Schema](../plugins/sdk/README.md)。
 - [贡献指南](../../CONTRIBUTING.md)、[安全报告](../../SECURITY.md)、[许可来源](../../NOTICE.md)。

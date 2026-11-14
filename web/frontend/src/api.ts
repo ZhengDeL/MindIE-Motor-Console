@@ -25,6 +25,18 @@ export type AuthStatus = {
   sso?: { enabled: boolean; login_url?: string };
 };
 let csrfToken = "";
+export const UI_GENERATION_CHANGED_EVENT = `${PRODUCT_ID}:ui-generation-changed`;
+let uiGeneration: { generation: string; hostGeneration?: string; providerGeneration?: string } | null = null;
+let uiGenerationFailure = "";
+/** Set once from the verified boot graph; a live page never adopts another generation. */
+export function configureUiGeneration(value: { generation: string; hostGeneration?: string; providerGeneration?: string }) {
+  if (uiGeneration && JSON.stringify(uiGeneration) !== JSON.stringify(value)) throw Error("A running UI cannot switch provider generations");
+  uiGeneration = Object.freeze({ generation: value.generation, hostGeneration: value.hostGeneration, providerGeneration: value.providerGeneration });
+}
+export function freezeUiGeneration(message = "UI 或宿主提供者代次已变化，请保存草稿并刷新页面。") {
+  uiGenerationFailure = message;
+  window.dispatchEvent(new CustomEvent(UI_GENERATION_CHANGED_EVENT, { detail: { message } }));
+}
 let productVerified = false;
 let productVerificationSequence = 0;
 export function setCsrfToken(value: string | null | undefined) {
@@ -528,9 +540,14 @@ export async function api<T>(
   const mutation = !["GET", "HEAD", "OPTIONS"].includes(
     (options.method ?? "GET").toUpperCase(),
   );
+  if (mutation && uiGenerationFailure)
+    throw Object.assign(new Error(uiGenerationFailure), { outcomeUnknown: false, generationChanged: true });
   if (mutation && !productVerified)
     throw Object.assign(new Error("平台身份尚未验证，未发送操作请求。请刷新页面并检查后端连接。"), { outcomeUnknown: false });
   const headers = new Headers(options.headers);
+  if (uiGeneration?.hostGeneration) headers.set("X-Console-Expected-Generation", uiGeneration.hostGeneration);
+  if (uiGeneration?.providerGeneration) headers.set("X-Motor-Expected-Generation", uiGeneration.providerGeneration);
+  if (mutation && uiGeneration) headers.set("X-Motor-UI-Generation", uiGeneration.generation);
   if (!headers.has("Content-Type"))
     headers.set("Content-Type", "application/json");
   if (mutation && csrfToken && !headers.has("X-CSRF-Token"))
@@ -554,6 +571,13 @@ export async function api<T>(
     throw reason;
   }
   observeServerClockResponse(clockRequest, response);
+  if (response.headers.get("X-Motor-Generation-Mismatch") === "true") freezeUiGeneration();
+  if (uiGeneration && (uiGeneration.hostGeneration && response.headers.get("X-Console-Generation") !== uiGeneration.hostGeneration
+      || uiGeneration.providerGeneration && response.headers.get("X-Motor-Provider-Generation") !== uiGeneration.providerGeneration)) {
+    freezeUiGeneration();
+    throw Object.assign(new Error(uiGenerationFailure), { status: 409, operationKey,
+      outcomeUnknown: mutation && response.ok, generationChanged: true });
+  }
   if (!response.ok) {
     if (productCheck && productCheck === productVerificationSequence) productVerified = false;
     if (response.status === 401 && !path.startsWith("/auth/")) {
@@ -570,6 +594,7 @@ export async function api<T>(
           : typeof body.detail?.message === "string" ? body.detail.message
           : JSON.stringify(body.detail ?? body);
     } catch {}
+    if (response.status === 409 && /generation|代次/i.test(detail)) freezeUiGeneration(detail);
     throw Object.assign(new Error(detail), {
       status: response.status,
       detail: structuredDetail,

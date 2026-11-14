@@ -235,13 +235,14 @@ def sanitize_inspection_result(payload: dict, *, expected_image: str | None = No
 
 
 class ImageContractInspector:
-    def __init__(self, runtime: DockerRuntime | None = None):
+    def __init__(self, runtime: DockerRuntime | None = None, *, profile_provider=None):
         self.runtime = runtime or DockerRuntime()
+        self.profile_provider = profile_provider
 
     def inspect(self, payload: ImageInspectionInput | dict) -> dict:
         request = payload if isinstance(payload, ImageInspectionInput) else ImageInspectionInput.model_validate(payload)
-        profile = check_binding(request.motor_profile)
-        client = self.runtime._docker()
+        profile = self.profile_provider.check_binding(request.motor_profile) if self.profile_provider is not None else check_binding(request.motor_profile)
+        client = self.runtime.engine_client()
         from docker.errors import ImageNotFound
         try:
             image = client.images.get(request.image)  # Deliberately never pull.

@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { api, createOperationKey, isReadOnlyAgent, post, when } from "./api";
 import type { NodeInfo } from "./api";
@@ -38,7 +39,7 @@ function stored(key: string): Tracked | null {
   return null;
 }
 
-export default function ImageOperations({ nodes, canOperate, principal, removal, onRemovalClosed, onCompleted }: {
+function DefaultImageOperations({ nodes, canOperate, principal, removal, onRemovalClosed, onCompleted }: {
   nodes: NodeInfo[]; canOperate: boolean; principal: string; removal: ImageRemoval | null;
   onRemovalClosed: () => void; onCompleted: () => void;
 }) {
@@ -153,44 +154,50 @@ export default function ImageOperations({ nodes, canOperate, principal, removal,
       setPullOpen(false); onRemovalClosed(); setUsername(""); setPassword("");
     } finally { submittingRef.current = false; if (mounted.current) { setSubmitting(false); history.invalidate(); } }
   };
-  return <div className="image-operations">
-    <div className="settings-actions">
-      {canOperate && <Button kind="primary" disabled={!writable.length || submitting || (!!tracked && !terminal(receipt))} title={!writable.length ? "需要在线且已启用管理的 Docker Agent" : undefined} onClick={() => { setNodeId(writable[0]?.id ?? ""); setFormError(""); setPullOpen(true); }}><Download size={14} />拉取镜像</Button>}
-      <Button disabled={submitting || !dockerNodes.length} onClick={() => { setNodeId(dockerNodes[0]?.id ?? ""); setLookupId(""); setLookupOpen(true); }}>查询操作回执</Button>
-    </div>
+  return <UiElement as="div" className="image-operations">
+    <UiElement as="div" className="settings-actions">
+      {canOperate && <Button actionId="action.ImageOperations.001" kind="primary" disabled={!writable.length || submitting || (!!tracked && !terminal(receipt))} title={!writable.length ? "需要在线且已启用管理的 Docker Agent" : undefined} onClick={() => { setNodeId(writable[0]?.id ?? ""); setFormError(""); setPullOpen(true); }}><Download size={14} /><UiText>{"拉取镜像"}</UiText></Button>}
+      <Button actionId="action.ImageOperations.002" disabled={submitting || !dockerNodes.length} onClick={() => { setNodeId(dockerNodes[0]?.id ?? ""); setLookupId(""); setLookupOpen(true); }}><UiText>{"查询操作回执"}</UiText></Button>
+    </UiElement>
     {error && <ErrorBox message={error} />}
-    {tracked && <div className="image-operation-status" aria-live="polite">
-      <div><strong>{receipt?.action === "image_remove" || tracked.action === "remove" ? "定向删除镜像" : tracked.action === "lookup" && !receipt?.action ? "镜像操作" : "镜像拉取"}</strong><Badge status={uncertain(receipt) ? "warn" : receipt?.operation_status ?? "pending"}>{statusLabel(receipt)}</Badge></div>
-      <p><code className="break-word">{knownText(receipt?.result?.image_reference) ? receipt!.result!.image_reference : tracked.image}</code> · {nodes.find((node) => node.id === tracked.node_id)?.name ?? tracked.node_id}</p>
-      <p>操作 ID：<code>{tracked.operation_id}</code><Copy value={tracked.operation_id} /><Button kind="text" onClick={() => operation.invalidate()} loading={operation.refreshing}><RefreshCw size={13} />核对回执</Button></p>
-      {receipt?.message && <p>{receipt.message}</p>}
-      {receipt?.result?.image_id && <p>本地镜像：<code className="break-word">{receipt.result.image_id}</code><Copy value={receipt.result.image_id} /></p>}
-      <small>镜像检查仅确认镜像可读取；部署前请核对原生版本与模型配置。操作结果待核实时，请先查询原操作回执，避免重复提交。</small>
-    </div>}
-    {pullOpen && <Modal title="拉取节点镜像" onClose={() => { if (!submitting) { setPullOpen(false); setUsername(""); setPassword(""); } }} closeDisabled={submitting} footer={<><Button disabled={submitting} onClick={() => { setPullOpen(false); setUsername(""); setPassword(""); }}>取消</Button><Button kind="primary" loading={submitting} onClick={() => void submit("pull", nodeId, image)}>提交拉取</Button></>}>
+    {tracked && <UiElement as="div" className="image-operation-status" aria-live="polite">
+      <UiElement as="div"><UiElement as="strong">{receipt?.action === "image_remove" || tracked.action === "remove" ? "定向删除镜像" : tracked.action === "lookup" && !receipt?.action ? "镜像操作" : "镜像拉取"}</UiElement><Badge status={uncertain(receipt) ? "warn" : receipt?.operation_status ?? "pending"}>{statusLabel(receipt)}</Badge></UiElement>
+      <UiElement as="p"><UiElement as="code" className="break-word">{knownText(receipt?.result?.image_reference) ? receipt!.result!.image_reference : tracked.image}</UiElement> <UiText>{"·"}</UiText> {nodes.find((node) => node.id === tracked.node_id)?.name ?? tracked.node_id}</UiElement>
+      <UiElement as="p"><UiText>{"操作 ID："}</UiText><UiElement as="code">{tracked.operation_id}</UiElement><Copy value={tracked.operation_id} /><Button actionId="action.ImageOperations.003" kind="text" onClick={() => operation.invalidate()} loading={operation.refreshing}><RefreshCw size={13} /><UiText>{"核对回执"}</UiText></Button></UiElement>
+      {receipt?.message && <UiElement as="p">{receipt.message}</UiElement>}
+      {receipt?.result?.image_id && <UiElement as="p"><UiText>{"本地镜像："}</UiText><UiElement as="code" className="break-word">{receipt.result.image_id}</UiElement><Copy value={receipt.result.image_id} /></UiElement>}
+      <UiElement as="small"><UiText>{"镜像检查仅确认镜像可读取；部署前请核对原生版本与模型配置。操作结果待核实时，请先查询原操作回执，避免重复提交。"}</UiText></UiElement>
+    </UiElement>}
+    {pullOpen && <Modal title="拉取节点镜像" onClose={() => { if (!submitting) { setPullOpen(false); setUsername(""); setPassword(""); } }} closeDisabled={submitting} footer={<><Button actionId="action.ImageOperations.004" disabled={submitting} onClick={() => { setPullOpen(false); setUsername(""); setPassword(""); }}><UiText>{"取消"}</UiText></Button><Button actionId="action.ImageOperations.005" kind="primary" loading={submitting} onClick={() => void submit("pull", nodeId, image)}><UiText>{"提交拉取"}</UiText></Button></>}>
       {formError && <ErrorBox message={formError} />}
-      <Field label="目标 Docker Agent" required><Select value={nodeId} onChange={setNodeId} disabled={submitting}>{writable.map((node) => <option key={node.id} value={node.id}>{node.name} · {node.address}</option>)}</Select></Field>
-      <Field label="镜像名称或摘要" required><input value={image} maxLength={256} onChange={(event) => setImage(event.target.value)} placeholder="registry.example.test/inference/motor:release" disabled={submitting} /></Field>
-      <details><summary>私有仓库授权（可选）</summary><Field label="仓库账号"><input value={username} maxLength={256} autoComplete="off" disabled={submitting} onChange={(event) => setUsername(event.target.value)} /></Field><Field label="仓库密码或访问令牌"><input type="password" maxLength={4096} data-private="true" autoComplete="new-password" disabled={submitting} value={password} onChange={(event) => setPassword(event.target.value)} /></Field><p className="small-caption">仅发送到本次拉取，凭据不写浏览器存储或回执。</p></details>
-      <InfoBox>只操作所选节点，拉取在 Agent 后台执行。关闭窗口或离开页面不会取消已受理任务；本页可凭操作标识继续核对。</InfoBox>
+      <Field label="目标 Docker Agent" required><Select value={nodeId} onChange={setNodeId} disabled={submitting}>{writable.map((node) => <UiElement as="option" key={node.id} value={node.id}>{node.name} <UiText>{"·"}</UiText> {node.address}</UiElement>)}</Select></Field>
+      <Field label="镜像名称或摘要" required><UiElement as="input" value={image} maxLength={256} onChange={(event) => setImage(event.target.value)} placeholder="registry.example.test/inference/motor:release" disabled={submitting} /></Field>
+      <UiElement as="details"><UiElement as="summary"><UiText>{"私有仓库授权（可选）"}</UiText></UiElement><Field label="仓库账号"><UiElement as="input" value={username} maxLength={256} autoComplete="off" disabled={submitting} onChange={(event) => setUsername(event.target.value)} /></Field><Field label="仓库密码或访问令牌"><UiElement as="input" type="password" maxLength={4096} data-private="true" autoComplete="new-password" disabled={submitting} value={password} onChange={(event) => setPassword(event.target.value)} /></Field><UiElement as="p" className="small-caption"><UiText>{"仅发送到本次拉取，凭据不写浏览器存储或回执。"}</UiText></UiElement></UiElement>
+      <InfoBox><UiText>{"只操作所选节点，拉取在 Agent 后台执行。关闭窗口或离开页面不会取消已受理任务；本页可凭操作标识继续核对。"}</UiText></InfoBox>
     </Modal>}
-    {removal && <Confirm title="删除此节点镜像？" busy={submitting} error={formError} confirmText="删除镜像" onClose={() => { onRemovalClosed(); setFormError(""); }} onConfirm={() => void submit("remove", removal.node_id, removal.id)} description={<><p>{removal.node_name} · {removal.tags[0] ?? "未标记镜像"}</p><code className="break-word">{removal.id}</code><p>仅删除此节点的指定镜像。任何容器（包括已停止容器）仍引用时，后端会拒绝；不强制删除、不清理其他镜像。</p></>} />}
-    {lookupOpen && <Modal title="查询镜像操作回执" onClose={() => setLookupOpen(false)} footer={<><Button onClick={() => setLookupOpen(false)}>取消</Button><Button kind="primary" disabled={!nodeId || !/^[A-Za-z0-9_.:-]{1,128}$/.test(lookupId)} onClick={() => { track({ node_id: nodeId, operation_id: lookupId, image: "按操作标识查询", action: "lookup" }); setLookupOpen(false); }}>读取回执</Button></>}>
-      <Field label="Docker Agent"><Select value={nodeId} onChange={setNodeId}>{dockerNodes.map((node) => <option key={node.id} value={node.id}>{node.name}</option>)}</Select></Field>
-      <Field label="操作 ID"><input value={lookupId} onChange={(event) => setLookupId(event.target.value.trim())} placeholder="image_…" /></Field>
+    {removal && <Confirm title="删除此节点镜像？" busy={submitting} error={formError} confirmText="删除镜像" onClose={() => { onRemovalClosed(); setFormError(""); }} onConfirm={() => void submit("remove", removal.node_id, removal.id)} description={<><UiElement as="p">{removal.node_name} <UiText>{"·"}</UiText> {removal.tags[0] ?? "未标记镜像"}</UiElement><UiElement as="code" className="break-word">{removal.id}</UiElement><UiElement as="p"><UiText>{"仅删除此节点的指定镜像。任何容器（包括已停止容器）仍引用时，后端会拒绝；不强制删除、不清理其他镜像。"}</UiText></UiElement></>} />}
+    {lookupOpen && <Modal title="查询镜像操作回执" onClose={() => setLookupOpen(false)} footer={<><Button actionId="action.ImageOperations.006" onClick={() => setLookupOpen(false)}><UiText>{"取消"}</UiText></Button><Button actionId="action.ImageOperations.007" kind="primary" disabled={!nodeId || !/^[A-Za-z0-9_.:-]{1,128}$/.test(lookupId)} onClick={() => { track({ node_id: nodeId, operation_id: lookupId, image: "按操作标识查询", action: "lookup" }); setLookupOpen(false); }}><UiText>{"读取回执"}</UiText></Button></>}>
+      <Field label="Docker Agent"><Select value={nodeId} onChange={setNodeId}>{dockerNodes.map((node) => <UiElement as="option" key={node.id} value={node.id}>{node.name}</UiElement>)}</Select></Field>
+      <Field label="操作 ID"><UiElement as="input" value={lookupId} onChange={(event) => setLookupId(event.target.value.trim())} placeholder="image_…" /></Field>
     </Modal>}
-    <details className="image-task-history">
-      <summary>镜像任务记录{historyTotal > 0 ? ` · ${historyTotal}` : ""}</summary>
-      <div className="image-task-history-actions"><span className="small-caption">任务保存在控制数据库；跨浏览器或管理员可按原操作标识继续核对。</span><Button loading={history.refreshing} onClick={() => void history.refresh()}><RefreshCw size={13} />刷新任务</Button></div>
+    <UiElement as="details" className="image-task-history">
+      <UiElement as="summary"><UiText>{"镜像任务记录"}</UiText>{historyTotal > 0 ? ` · ${historyTotal}` : ""}</UiElement>
+      <UiElement as="div" className="image-task-history-actions"><UiElement as="span" className="small-caption"><UiText>{"任务保存在控制数据库；跨浏览器或管理员可按原操作标识继续核对。"}</UiText></UiElement><Button actionId="action.ImageOperations.008" loading={history.refreshing} onClick={() => void history.refresh()}><RefreshCw size={13} /><UiText>{"刷新任务"}</UiText></Button></UiElement>
       {historyError && <ErrorBox message={historyError} />}
-      {history.hasSuccess && records.length > 0 ? <div className="table-wrap"><table><thead><tr><th>目标 / 操作标识</th><th>状态</th><th>操作</th></tr></thead><tbody>{records.map((record) => <tr key={record.operation_id}>
-        <td><strong>{nodes.find((node) => node.id === record.node_id)?.name ?? record.node_id}</strong><span className="cell-secondary break-word">{record.reference}</span><code className="cell-secondary">{record.operation_id}</code><Copy value={record.operation_id} /></td>
-        <td><Badge status={uncertain(record) ? "warn" : record.operation_status}>{statusLabel(record)}</Badge>{record.updated_at && <span className="cell-secondary">{when(record.updated_at)}</span>}</td>
-        <td><Button disabled={submitting} onClick={() => trackRecord(record)}>核对任务</Button></td>
-      </tr>)}</tbody></table></div> : !historyError && <p className="small-caption" role="status">{history.hasSuccess ? "尚无镜像任务记录。" : "正在读取镜像任务记录…"}</p>}
-      {historyTotal > 20 && <div className="table-footer"><span>共 {historyTotal} 项 · 每页 20 项</span><Pagination page={historyPage} totalPages={historyPages} onChange={setHistoryPage} ariaLabel="镜像任务分页" /></div>}
-      {historyTotal > 10_020 && <p className="small-caption">分页展示最近 10,020 项，更早记录可凭原操作 ID 查询。</p>}
-    </details>
-    <details className="settings-technical-detail"><summary>离线导入方式</summary><p>大型离线镜像由部署人员在目标宿主机使用 Docker CLI 导入，导入后刷新本页核对镜像 ID 与架构；此页面不上传多 GiB 镜像归档。</p><pre className="json-view">docker load --input /path/to/reviewed-image.tar</pre></details>
-  </div>;
+      {history.hasSuccess && records.length > 0 ? <UiElement as="div" className="table-wrap"><UiElement as="table"><UiElement as="thead"><UiElement as="tr"><UiElement as="th"><UiText>{"目标 / 操作标识"}</UiText></UiElement><UiElement as="th"><UiText>{"状态"}</UiText></UiElement><UiElement as="th"><UiText>{"操作"}</UiText></UiElement></UiElement></UiElement><UiElement as="tbody">{records.map((record) => <UiElement as="tr" key={record.operation_id}>
+        <UiElement as="td"><UiElement as="strong">{nodes.find((node) => node.id === record.node_id)?.name ?? record.node_id}</UiElement><UiElement as="span" className="cell-secondary break-word">{record.reference}</UiElement><UiElement as="code" className="cell-secondary">{record.operation_id}</UiElement><Copy value={record.operation_id} /></UiElement>
+        <UiElement as="td"><Badge status={uncertain(record) ? "warn" : record.operation_status}>{statusLabel(record)}</Badge>{record.updated_at && <UiElement as="span" className="cell-secondary">{when(record.updated_at)}</UiElement>}</UiElement>
+        <UiElement as="td"><Button actionId="action.ImageOperations.009" disabled={submitting} onClick={() => trackRecord(record)}><UiText>{"核对任务"}</UiText></Button></UiElement>
+      </UiElement>)}</UiElement></UiElement></UiElement> : !historyError && <UiElement as="p" className="small-caption" role="status">{history.hasSuccess ? "尚无镜像任务记录。" : "正在读取镜像任务记录…"}</UiElement>}
+      {historyTotal > 20 && <UiElement as="div" className="table-footer"><UiElement as="span"><UiText>{"共"}</UiText> {historyTotal} <UiText>{"项 · 每页 20 项"}</UiText></UiElement><Pagination page={historyPage} totalPages={historyPages} onChange={setHistoryPage} ariaLabel="镜像任务分页" /></UiElement>}
+      {historyTotal > 10_020 && <UiElement as="p" className="small-caption"><UiText>{"分页展示最近 10,020 项，更早记录可凭原操作 ID 查询。"}</UiText></UiElement>}
+    </UiElement>
+    <UiElement as="details" className="settings-technical-detail"><UiElement as="summary"><UiText>{"离线导入方式"}</UiText></UiElement><UiElement as="p"><UiText>{"大型离线镜像由部署人员在目标宿主机使用 Docker CLI 导入，导入后刷新本页核对镜像 ID 与架构；此页面不上传多 GiB 镜像归档。"}</UiText></UiElement><UiElement as="pre" className="json-view"><UiText>{"docker load --input /path/to/reviewed-image.tar"}</UiText></UiElement></UiElement>
+  </UiElement>;
 }
+
+const ImageOperations = withUiSlot("component.ImageOperations", DefaultImageOperations);
+export default ImageOperations;
+
+// Reference package implementation exports.
+export { DefaultImageOperations };

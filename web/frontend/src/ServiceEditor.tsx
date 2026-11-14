@@ -1,3 +1,4 @@
+import { UiElement, UiSlot, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { assertProductImport, isNativeMotorConfig } from "./productImports";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -100,7 +101,7 @@ const steps = [
   { title: "检查与部署", sub: "预检与命令预览", icon: ShieldCheck },
 ];
 
-export default function ServiceEditor({
+function DefaultServiceEditor({
   nodes,
   nodesRead,
   original,
@@ -586,39 +587,39 @@ export default function ServiceEditor({
       wide
       footer={
         <>
-          <div className="wizard-footer-meta">
+          <UiElement as="div" className="wizard-footer-meta">
             {saved ? (
               <>
                 <CheckCircle2 size={14} />
-                已保存草稿 {saved.name}
+                <UiText>{"已保存草稿"}</UiText> {saved.name}
                 {dirty ? " · 有未保存更改" : ""}
               </>
             ) : (
-              <>配置将在预检时保存为草稿</>
+              <><UiText>{"配置将在预检时保存为草稿"}</UiText></>
             )}
-          </div>
-          <Button onClick={requestClose} disabled={busy}>取消</Button>
+          </UiElement>
+          <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.close" onClick={requestClose} disabled={busy}><UiText>{"取消"}</UiText></Button>
           {step > 0 && (
-            <Button disabled={busy} onClick={() => setStep(step - 1)}>
+            <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.previous" disabled={busy} onClick={() => setStep(step - 1)}>
               <ArrowLeft size={14} />
-              上一步
+              <UiText>{"上一步"}</UiText>
             </Button>
           )}
           {step < 3 ? (
-            <Button kind="primary" disabled={!runtimeAccess.enabled} onClick={next}>
-              下一步
+            <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.next" kind="primary" disabled={!runtimeAccess.enabled} onClick={next}>
+              <UiText>{"下一步"}</UiText>
               <ArrowRight size={14} />
             </Button>
           ) : (
             <>
-              <Button onClick={saveDraft} loading={busy} disabled={!runtimeAccess.enabled}>
-                保存草稿
+              <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.draft.save" onClick={saveDraft} loading={busy} disabled={!runtimeAccess.enabled}>
+                <UiText>{"保存草稿"}</UiText>
               </Button>
-              <Button onClick={runCheck} loading={busy} disabled={!runtimeAccess.enabled}>
+              <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.plan" onClick={runCheck} loading={busy} disabled={!runtimeAccess.enabled}>
                 <ShieldCheck size={14} />
                 {plan ? "重新预检" : "执行预检"}
               </Button>
-              <Button
+              <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.deploy.confirm"
                 kind="primary"
                 disabled={
                   !runtimeAccess.enabled ||
@@ -667,9 +668,9 @@ export default function ServiceEditor({
         </>
       }
     >
-      <div className="wizard-steps">
+      <UiElement as="div" className="wizard-steps">
         {steps.map((s, i) => (
-          <button
+          <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.step"
             key={s.title}
             disabled={busy}
             className={`${step === i ? "current" : ""} ${step > i ? "done" : ""}`}
@@ -677,26 +678,26 @@ export default function ServiceEditor({
               if (i <= step) setStep(i);
             }}
           >
-            <span className="step-dot">
+            <UiElement as="span" className="step-dot">
               {step > i ? <Check size={16} /> : i + 1}
-            </span>
-            <span>
-              <b>{s.title}</b>
-              <small>{s.sub}</small>
-            </span>
-            {i < 3 && <i className="step-line" />}
-          </button>
+            </UiElement>
+            <UiElement as="span">
+              <UiElement as="b">{s.title}</UiElement>
+              <UiElement as="small">{s.sub}</UiElement>
+            </UiElement>
+            {i < 3 && <UiElement as="i" className="step-line" />}
+          </UiButton>
         ))}
-      </div>
+      </UiElement>
       {error && <ErrorBox message={error} />}
       {!runtimeAccess.enabled && <InfoBox>{unavailableDraftMessage}</InfoBox>}
-      {step === 0 && (
-        <div className="wizard-content">
-          <div className="form-section-title">
-            <span>运行环境</span>
-            <small>选择服务的部署方式</small>
-          </div>
-          <div className="runtime-options">
+      {step === 0 && <UiSlot name="tab.deploy.0" model={{original, nodes, step, setStep, runtime, setRuntime, name, setName, userText, setUserText, envText, setEnvText, extraText, setExtraText, rows, setRows, dirty, setDirty, plan, saved, busy}}>{(
+        <UiElement as="div" className="wizard-content">
+          <UiElement as="div" className="form-section-title">
+            <UiElement as="span"><UiText>{"运行环境"}</UiText></UiElement>
+            <UiElement as="small"><UiText>{"选择服务的部署方式"}</UiText></UiElement>
+          </UiElement>
+          <UiElement as="div" className="runtime-options">
             {[
               {
                 id: "docker",
@@ -711,7 +712,7 @@ export default function ServiceEditor({
                 icon: Layers3,
               },
             ].filter((r) => r.id === "docker" ? dockerEnabled : kubernetesEnabled).map((r) => (
-              <button
+              <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.runtime"
                 key={r.id}
                 className={`runtime-option ${runtime === r.id ? "selected" : ""}`}
                 onClick={() => {
@@ -720,106 +721,106 @@ export default function ServiceEditor({
                   change();
                 }}
               >
-                <div className="runtime-icon">
+                <UiElement as="div" className="runtime-icon">
                   <r.icon size={24} />
-                </div>
-                <div>
-                  <b>{r.name}</b>
-                  <small>{r.desc}</small>
-                </div>
-                <span className="radio-dot" />
-              </button>
+                </UiElement>
+                <UiElement as="div">
+                  <UiElement as="b">{r.name}</UiElement>
+                  <UiElement as="small">{r.desc}</UiElement>
+                </UiElement>
+                <UiElement as="span" className="radio-dot" />
+              </UiButton>
             ))}
-          </div>
-          {templatesEnabled && <><div className="form-section-title">
-            <span>模型配置模板</span>
-            <small>官方原生配置与已保存的自定义模板</small>
-            <div className="template-search">
-              <input
+          </UiElement>
+          {templatesEnabled && <><UiElement as="div" className="form-section-title">
+            <UiElement as="span"><UiText>{"模型配置模板"}</UiText></UiElement>
+            <UiElement as="small"><UiText>{"官方原生配置与已保存的自定义模板"}</UiText></UiElement>
+            <UiElement as="div" className="template-search">
+              <UiElement as="input"
                 placeholder="搜索模型 / 硬件 / 引擎"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-            </div>
-          </div>
-          <div className="tab-list compact template-source-tabs">
+            </UiElement>
+          </UiElement>
+          <UiElement as="div" className="tab-list compact template-source-tabs">
             {[
               ["all", "全部模板"],
               ["official", "官方模板"],
               ["custom", "自定义模板"],
             ].map(([id, label]) => (
-              <button
+              <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.template-source"
                 key={id}
                 className={templateSourceFilter === id ? "active" : ""}
                 onClick={() => setTemplateSourceFilter(id)}
               >
                 {label}
-              </button>
+              </UiButton>
             ))}
-          </div>
+          </UiElement>
           {loading ? (
             <Spinner label="正在获取模板" />
           ) : displayed.length ? (
-            <div className="template-grid">
+            <UiElement as="div" className="template-grid">
               {displayed.map((t) => (
-                <button
+                <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.editor.template"
                   key={t.id}
                   className={`template-card ${selected === t.id ? "selected" : ""}`}
                   onClick={() => pick(t)}
                   disabled={t.config_redacted}
                 >
-                  <div className="template-card-icon">
+                  <UiElement as="div" className="template-card-icon">
                     <Box size={20} />
-                  </div>
-                  <div className="template-card-info">
-                    <b>{t.name}</b>
-                    <div>
-                      <span>
+                  </UiElement>
+                  <UiElement as="div" className="template-card-info">
+                    <UiElement as="b">{t.name}</UiElement>
+                    <UiElement as="div">
+                      <UiElement as="span">
                         {templateSource(t) === "custom" ? "自定义" : "官方"}
-                      </span>
-                      <span>{t.hardware}</span>
-                      <span>{t.engine}</span>
-                      <span>
+                      </UiElement>
+                      <UiElement as="span">{t.hardware}</UiElement>
+                      <UiElement as="span">{t.engine}</UiElement>
+                      <UiElement as="span">
                         {t.scenario === "hybrid" ? "PD 混部" : "PD 分离"}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="radio-dot" />
-                </button>
+                      </UiElement>
+                    </UiElement>
+                  </UiElement>
+                  <UiElement as="span" className="radio-dot" />
+                </UiButton>
               ))}
-            </div>
+            </UiElement>
           ) : (
             <Empty
               title={templatesLoaded ? "没有匹配的模板" : "模板列表尚未读取"}
               description={templatesLoaded ? "可以调整搜索条件，或在下一步导入自己的原生配置。" : "请检查错误提示；也可跳过模板，在下一步导入原生配置。"}
             />
           )}
-          <div className="subtle-note">
+          <UiElement as="div" className="subtle-note">
             <FileJson size={14} />
-            也可以跳过模板，在下一步导入已有配置；所有原生字段都会保留。
-          </div>
+            <UiText>{"也可以跳过模板，在下一步导入已有配置；所有原生字段都会保留。"}</UiText>
+          </UiElement>
           </>}
-          {!templatesEnabled && <InfoBox>模板插件未启用。下一步可导入或编辑完整原生 JSON 配置。</InfoBox>}
-        </div>
-      )}
-      {step === 1 && (
-        <div className="wizard-content">
+          {!templatesEnabled && <InfoBox><UiText>{"模板插件未启用。下一步可导入或编辑完整原生 JSON 配置。"}</UiText></InfoBox>}
+        </UiElement>
+      )}</UiSlot>}
+      {step === 1 && <UiSlot name="tab.deploy.1" model={{original, nodes, step, setStep, runtime, setRuntime, name, setName, userText, setUserText, envText, setEnvText, extraText, setExtraText, rows, setRows, dirty, setDirty, plan, saved, busy}}>{(
+        <UiElement as="div" className="wizard-content">
           {templateSavedName && (
-            <InfoBox>已保存为模板“{templateSavedName}”。</InfoBox>
+            <InfoBox><UiText>{"已保存为模板“"}</UiText>{templateSavedName}<UiText>{"”。"}</UiText></InfoBox>
           )}
           {initialTemplate && selected === initialTemplate.id && (
-            <div className="template-selected-note">
+            <UiElement as="div" className="template-selected-note">
               <FileJson size={14} />
-              当前模板：{initialTemplate.name}
-            </div>
+              <UiText>{"当前模板："}</UiText>{initialTemplate.name}
+            </UiElement>
           )}
-          <div className="form-two">
+          <UiElement as="div" className="form-two">
             <Field
               label="服务名称"
               required
               hint="建议使用容易识别的模型与环境名称"
             >
-              <input
+              <UiElement as="input"
                 placeholder="例如 glm-production"
                 value={name}
                 onChange={(e) => {
@@ -829,7 +830,7 @@ export default function ServiceEditor({
               />
             </Field>
             <Field label="服务镜像" required>
-              <input
+              <UiElement as="input"
                 placeholder="完整 Motor 镜像名称或 ID"
                 value={deployment.image_name ?? ""}
                 onChange={(e) => updateDeploy("image_name", e.target.value)}
@@ -840,16 +841,16 @@ export default function ServiceEditor({
                 value={deployment.hardware_type ?? "800I_A3"}
                 onChange={(v) => updateDeploy("hardware_type", v)}
               >
-                <option value="800I_A3">Atlas 800I A3</option>
-                <option value="800I_A2">Atlas 800I A2</option>
-                <option value="950PR">Ascend 950PR</option>
+                <UiElement as="option" value="800I_A3"><UiText>{"Atlas 800I A3"}</UiText></UiElement>
+                <UiElement as="option" value="800I_A2"><UiText>{"Atlas 800I A2"}</UiText></UiElement>
+                <UiElement as="option" value="950PR"><UiText>{"Ascend 950PR"}</UiText></UiElement>
                 {deployment.hardware_type &&
                   !["800I_A3", "800I_A2", "950PR"].includes(
                     deployment.hardware_type,
                   ) && (
-                    <option value={deployment.hardware_type}>
+                    <UiElement as="option" value={deployment.hardware_type}>
                       {deployment.hardware_type}
-                    </option>
+                    </UiElement>
                   )}
               </Select>
             </Field>
@@ -857,7 +858,7 @@ export default function ServiceEditor({
               label="Motor 兼容配置"
               hint="已有服务与导入配置保留绑定；新服务由后端匹配已探测的执行节点"
             >
-              <input
+              <UiElement as="input"
                 aria-label="Motor 兼容配置"
                 readOnly
                 value={motorProfile}
@@ -865,7 +866,7 @@ export default function ServiceEditor({
               />
             </Field>
             <Field label="权重挂载路径">
-              <input
+              <UiElement as="input"
                 value={deployment.weight_mount_path ?? ""}
                 placeholder="/mnt/weight"
                 onChange={(e) =>
@@ -873,7 +874,7 @@ export default function ServiceEditor({
                 }
               />
             </Field>
-          </div>
+          </UiElement>
           {imagesEnabled && <ImageContractPanel
             image={
               typeof deployment.image_name === "string"
@@ -906,29 +907,29 @@ export default function ServiceEditor({
             }}
             onError={setError}
           />}
-          <div className="editor-toolbar">
-            <div className="tab-list compact">
-              <button
+          <UiElement as="div" className="editor-toolbar">
+            <UiElement as="div" className="tab-list compact">
+              <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.config.user"
                 className={configTab === "user" ? "active" : ""}
                 onClick={() => setConfigTab("user")}
               >
-                服务配置 <span>user_config.json</span>
-              </button>
-              <button
+                <UiText>{"服务配置"}</UiText> <UiElement as="span"><UiText>{"user_config.json"}</UiText></UiElement>
+              </UiButton>
+              <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.config.env"
                 className={configTab === "env" ? "active" : ""}
                 onClick={() => setConfigTab("env")}
               >
-                环境变量 <span>env.json</span>
-              </button>
-              <button
+                <UiText>{"环境变量"}</UiText> <UiElement as="span"><UiText>{"env.json"}</UiText></UiElement>
+              </UiButton>
+              <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.config.extra"
                 className={configTab === "extra" ? "active" : ""}
                 onClick={() => setConfigTab("extra")}
               >
-                高级清单 <span>Kubernetes</span>
-              </button>
-            </div>
-            <div className="template-editor-actions">
-              {templatesEnabled && <Button
+                <UiText>{"高级清单"}</UiText> <UiElement as="span"><UiText>{"Kubernetes"}</UiText></UiElement>
+              </UiButton>
+            </UiElement>
+            <UiElement as="div" className="template-editor-actions">
+              {templatesEnabled && <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.template.save"
                 onClick={() => {
                   try {
                     const { user, env } = parsed();
@@ -949,14 +950,14 @@ export default function ServiceEditor({
                 }}
               >
                 <FileJson size={14} />
-                保存为模板
+                <UiText>{"保存为模板"}</UiText>
               </Button>}
-              <Button onClick={() => fileRef.current?.click()}>
+              <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.config.import" onClick={() => fileRef.current?.click()}>
                 <Upload size={14} />
-                导入 JSON
+                <UiText>{"导入 JSON"}</UiText>
               </Button>
-            </div>
-            <input
+            </UiElement>
+            <UiElement as="input"
               ref={fileRef}
               hidden
               type="file"
@@ -967,14 +968,10 @@ export default function ServiceEditor({
                 e.target.value = "";
               }}
             />
-          </div>
+          </UiElement>
           {configTab === "extra" && (
             <InfoBox>
-              以 JSON 对象数组填写额外 Kubernetes 资源；留空列表 []
-              表示不添加。资源使用执行节点的管理员权限提交；命名空间不限制
-              hostPath 或
-              privileged。请核对资源权限、挂载与安全上下文，部署前需单独确认。Web
-              不会自动增加权限或修改原始 Motor 配置。
+              <UiText>{"以 JSON 对象数组填写额外 Kubernetes 资源；留空列表 [] 表示不添加。资源使用执行节点的管理员权限提交；命名空间不限制 hostPath 或 privileged。请核对资源权限、挂载与安全上下文，部署前需单独确认。Web 不会自动增加权限或修改原始 Motor 配置。"}</UiText>
             </InfoBox>
           )}
           <JsonEditor
@@ -1001,47 +998,46 @@ export default function ServiceEditor({
               change();
             }}
           />
-          <div className="subtle-note">
+          <UiElement as="div" className="subtle-note">
             <Settings2 size={14} />
-            支持直接编辑全部 Motor 配置字段。可视化表单与 JSON 编辑器保持同步。
-          </div>
-        </div>
-      )}
-      {step === 2 && (
-        <div className="wizard-content">
-          <div className="section-heading">
-            <div>
-              <h3>
+            <UiText>{"支持直接编辑全部 Motor 配置字段。可视化表单与 JSON 编辑器保持同步。"}</UiText>
+          </UiElement>
+        </UiElement>
+      )}</UiSlot>}
+      {step === 2 && <UiSlot name="tab.deploy.2" model={{original, nodes, step, setStep, runtime, setRuntime, name, setName, userText, setUserText, envText, setEnvText, extraText, setExtraText, rows, setRows, dirty, setDirty, plan, saved, busy}}>{(
+        <UiElement as="div" className="wizard-content">
+          <UiElement as="div" className="section-heading">
+            <UiElement as="div">
+              <UiElement as="h3">
                 {runtime === "docker" ? "多节点实例布局" : "集群执行入口"}
-              </h3>
-              <p>
+              </UiElement>
+              <UiElement as="p">
                 {runtime === "docker"
                   ? "为管理面与每个推理实例选择节点、设备和端口。"
                   : "选择持有 kubeconfig 的执行 Agent。实际 Pod 调度由原生配置与集群调度器决定。"}
-              </p>
-            </div>
-            <Button onClick={generateLayout} disabled={!runtimeAccess.enabled || !nodesRead.loaded}>
+              </UiElement>
+            </UiElement>
+            <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.layout.generate" onClick={generateLayout} disabled={!runtimeAccess.enabled || !nodesRead.loaded}>
               <Layers3 size={14} />
               {runtime === "docker" ? "按配置生成布局" : "设置执行入口"}
             </Button>
-          </div>
-          {!nodesRead.loaded ? <InfoBox>{readNotice(nodesRead)}节点列表；取得节点连接信息后再规划布局。</InfoBox> : !runtimeNodes.length && (
+          </UiElement>
+          {!nodesRead.loaded ? <InfoBox>{readNotice(nodesRead)}<UiText>{"节点列表；取得节点连接信息后再规划布局。"}</UiText></InfoBox> : !runtimeNodes.length && (
             <InfoBox>
-              还没有接入节点，请先在“节点管理”中注册并探测
-              Agent，再回来分配资源。
+              <UiText>{"还没有接入节点，请先在“节点管理”中注册并探测 Agent，再回来分配资源。"}</UiText>
             </InfoBox>
           )}
           {rows.length ? (
-            <div className="placement-list">
+            <UiElement as="div" className="placement-list">
               {rows.map((r, i) => (
-                <div className="placement-editor" key={i}>
-                  <div className="placement-editor-head">
-                    <span className={`role-chip role-${r.role}`}>
+                <UiElement as="div" className="placement-editor" key={i}>
+                  <UiElement as="div" className="placement-editor-head">
+                    <UiElement as="span" className={`role-chip role-${r.role}`}>
                       <Box size={13} />
                       {roleName(r.role)}
-                    </span>
-                    <b>{r.instance_name || "未命名实例"}</b>
-                    <button
+                    </UiElement>
+                    <UiElement as="b">{r.instance_name || "未命名实例"}</UiElement>
+                    <UiButton actionContext={{service: saved ?? original, runtime, step}} actionId="services.layout.remove"
                       className="icon-btn danger-text"
                       aria-label={`删除实例布局 ${r.instance_name}`}
                       onClick={() => {
@@ -1050,9 +1046,9 @@ export default function ServiceEditor({
                       }}
                     >
                       <Trash2 size={15} />
-                    </button>
-                  </div>
-                  <div className="placement-fields">
+                    </UiButton>
+                  </UiElement>
+                  <UiElement as="div" className="placement-fields">
                     <Field label="角色">
                       <Select
                         value={r.role}
@@ -1067,14 +1063,14 @@ export default function ServiceEditor({
                           })
                         }
                       >
-                        <option value="coordinator_controller">管理面</option>
-                        <option value="single_container">单容器全组件</option>
+                        <UiElement as="option" value="coordinator_controller"><UiText>{"管理面"}</UiText></UiElement>
+                        <UiElement as="option" value="single_container"><UiText>{"单容器全组件"}</UiText></UiElement>
                         {runtime === "docker" && (
                           <>
-                            <option value="prefill">Prefill</option>
-                            <option value="decode">Decode</option>
-                            <option value="union">PD 混部</option>
-                            <option value="kv_store">KV Store</option>
+                            <UiElement as="option" value="prefill"><UiText>{"Prefill"}</UiText></UiElement>
+                            <UiElement as="option" value="decode"><UiText>{"Decode"}</UiText></UiElement>
+                            <UiElement as="option" value="union"><UiText>{"PD 混部"}</UiText></UiElement>
+                            <UiElement as="option" value="kv_store"><UiText>{"KV Store"}</UiText></UiElement>
                           </>
                         )}
                       </Select>
@@ -1088,30 +1084,30 @@ export default function ServiceEditor({
                         value={r.node_id}
                         onChange={(v) => editRow(i, { node_id: v })}
                       >
-                        <option value="">请选择节点</option>
+                        <UiElement as="option" value=""><UiText>{"请选择节点"}</UiText></UiElement>
                         {nodes.some(
                           (n) =>
                             n.id === r.node_id && !runtimeAvailable(n, runtime),
                         ) && (
-                          <option value={r.node_id} disabled>
-                            当前 Agent 不支持此运行时，请重新选择
-                          </option>
+                          <UiElement as="option" value={r.node_id} disabled>
+                            <UiText>{"当前 Agent 不支持此运行时，请重新选择"}</UiText>
+                          </UiElement>
                         )}
                         {runtimeNodes.map((n) => (
-                          <option key={n.id} value={n.id}>
-                            {n.name} · {n.address}
+                          <UiElement as="option" key={n.id} value={n.id}>
+                            {n.name} <UiText>{"·"}</UiText> {n.address}
                             {isReadOnlyAgent(n) ? "（只读接入）" : ""}
                             {n.status === "online"
                               ? ""
                               : "（未在线，请先探测）"}
-                          </option>
+                          </UiElement>
                         ))}
                       </Select>
                     </Field>
                     {runtime === "docker" && (
                       <>
                         <Field label="实例标识">
-                          <input
+                          <UiElement as="input"
                             value={r.instance_name}
                             onChange={(e) =>
                               editRow(i, { instance_name: e.target.value })
@@ -1126,7 +1122,7 @@ export default function ServiceEditor({
                               : "以逗号分隔，例如 0,1,2,3"
                           }
                         >
-                          <input
+                          <UiElement as="input"
                             disabled={r.role === "coordinator_controller"}
                             value={r.devices_text}
                             placeholder="0,1,2,3"
@@ -1137,12 +1133,12 @@ export default function ServiceEditor({
                         </Field>
                       </>
                     )}
-                  </div>
+                  </UiElement>
                   {runtime === "docker" &&
                     ["prefill", "decode", "union"].includes(r.role) && (
-                      <details className="port-details">
-                        <summary>高级端口配置</summary>
-                        <div className="port-fields">
+                      <UiElement as="details" className="port-details">
+                        <UiElement as="summary"><UiText>{"高级端口配置"}</UiText></UiElement>
+                        <UiElement as="div" className="port-fields">
                           {(
                             [
                               ["node_manager", "NodeManager"],
@@ -1156,7 +1152,7 @@ export default function ServiceEditor({
                             )
                             .map(([key, label]) => (
                               <Field key={key} label={label}>
-                                <input
+                                <UiElement as="input"
                                   type="number"
                                   min="1"
                                   max="65535"
@@ -1172,12 +1168,12 @@ export default function ServiceEditor({
                                 />
                               </Field>
                             ))}
-                        </div>
-                      </details>
+                        </UiElement>
+                      </UiElement>
                     )}
-                </div>
+                </UiElement>
               ))}
-            </div>
+            </UiElement>
           ) : (
             <Empty
               title={
@@ -1192,16 +1188,16 @@ export default function ServiceEditor({
               }
               icon={<Layers3 size={25} />}
               action={
-                <Button onClick={generateLayout} disabled={!runtimeAccess.enabled || !nodesRead.loaded}>
+                <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.layout.generate" onClick={generateLayout} disabled={!runtimeAccess.enabled || !nodesRead.loaded}>
                   {runtime === "docker" ? "生成布局" : "选择执行入口"}
                 </Button>
               }
             />
           )}
           {runtime === "docker" && (
-            <Button className="add-placement" onClick={addRow}>
+            <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.layout.add" className="add-placement" onClick={addRow}>
               <Plus size={15} />
-              添加角色实例
+              <UiText>{"添加角色实例"}</UiText>
             </Button>
           )}
           {runtime === "kubernetes" &&
@@ -1217,92 +1213,90 @@ export default function ServiceEditor({
                 />
                 {deployment.deploy_mode === "single_container" ? (
                   <InfoBox>
-                    当前固定版 Motor 的 single-container
-                    模式按硬件标签调度，不消费角色节点选择器；此处只展示集群节点。最终条件请检查生成清单。
+                    <UiText>{"当前固定版 Motor 的 single-container 模式按硬件标签调度，不消费角色节点选择器；此处只展示集群节点。最终条件请检查生成清单。"}</UiText>
                   </InfoBox>
                 ) : currentConfig.motor_engine_union_config ? (
                   <InfoBox>
-                    当前固定版 Motor 的 Union 混部引擎不消费 Prefill / Decode
-                    节点选择器；上方快捷选择只作用于明确列出的角色，不改变混部引擎调度。
+                    <UiText>{"当前固定版 Motor 的 Union 混部引擎不消费 Prefill / Decode 节点选择器；上方快捷选择只作用于明确列出的角色，不改变混部引擎调度。"}</UiText>
                   </InfoBox>
                 ) : null}
               </>
             )}
-          <div className="subtle-note">
+          <UiElement as="div" className="subtle-note">
             {runtime === "docker"
               ? "同一节点的设备和整段端口需互不冲突，实际可用性由预检返回。"
               : "节点选择写入 motor_deploy_config 中相应的 *_node_selector 字段。命名空间由控制台生成并管理；预检清单是最终调度配置的核对依据。"}
-          </div>
-        </div>
-      )}
-      {step === 3 && (
-        <div className="wizard-content">
+          </UiElement>
+        </UiElement>
+      )}</UiSlot>}
+      {step === 3 && <UiSlot name="tab.deploy.3" model={{original, nodes, step, setStep, runtime, setRuntime, name, setName, userText, setUserText, envText, setEnvText, extraText, setExtraText, rows, setRows, dirty, setDirty, plan, saved, busy}}>{(
+        <UiElement as="div" className="wizard-content">
           {saved?.needs_rebuild && (
             <InfoBox>
-              配置已更新。应用时将重建本服务已停止的受管容器，模型权重保留；普通重启不会应用此修订。
+              <UiText>{"配置已更新。应用时将重建本服务已停止的受管容器，模型权重保留；普通重启不会应用此修订。"}</UiText>
             </InfoBox>
           )}
-          <div className="review-summary">
-            <div className="review-symbol">
+          <UiElement as="div" className="review-summary">
+            <UiElement as="div" className="review-symbol">
               <Rocket size={26} />
-            </div>
-            <div>
-              <h3>{name || "未命名服务"}</h3>
-              <p>
+            </UiElement>
+            <UiElement as="div">
+              <UiElement as="h3">{name || "未命名服务"}</UiElement>
+              <UiElement as="p">
                 {runtime === "docker" ? "Docker" : "Kubernetes"}
-                <span>·</span>
+                <UiElement as="span"><UiText>{"·"}</UiText></UiElement>
                 {modelSection?.engine_type ?? "vllm"}
-                <span>·</span>
+                <UiElement as="span"><UiText>{"·"}</UiText></UiElement>
                 {scenario === "hybrid" ? "PD 混部" : "PD 分离"}
-                <span>·</span>
-                {rows.length} 个角色布局
-              </p>
-            </div>
+                <UiElement as="span"><UiText>{"·"}</UiText></UiElement>
+                {rows.length} <UiText>{"个角色布局"}</UiText>
+              </UiElement>
+            </UiElement>
             <Badge status={plan?.valid ? "pass" : "draft"}>
               {plan?.valid ? "预检通过" : "等待预检"}
             </Badge>
-          </div>
-          <div className="review-kv">
-            <span>
-              服务镜像
-              <b title={deployment.image_name}>
+          </UiElement>
+          <UiElement as="div" className="review-kv">
+            <UiElement as="span">
+              <UiText>{"服务镜像"}</UiText>
+              <UiElement as="b" title={deployment.image_name}>
                 {deployment.image_name || "尚未填写"}
-              </b>
-            </span>
-            <span>
-              模型路径
-              <b>
+              </UiElement>
+            </UiElement>
+            <UiElement as="span">
+              <UiText>{"模型路径"}</UiText>
+              <UiElement as="b">
                 {modelSection?.engine_config?.model ??
                   modelSection?.engine_config?.["model-path"] ??
                   "尚未填写"}
-              </b>
-            </span>
-            <span>
-              权重目录<b>{deployment.weight_mount_path || "—"}</b>
-            </span>
-            <span>
-              硬件类型<b>{deployment.hardware_type || "—"}</b>
-            </span>
-          </div>
+              </UiElement>
+            </UiElement>
+            <UiElement as="span">
+              <UiText>{"权重目录"}</UiText><UiElement as="b">{deployment.weight_mount_path || "—"}</UiElement>
+            </UiElement>
+            <UiElement as="span">
+              <UiText>{"硬件类型"}</UiText><UiElement as="b">{deployment.hardware_type || "—"}</UiElement>
+            </UiElement>
+          </UiElement>
           {plan ? (
             <>
-              <div className="section-heading">
-                <h3>
-                  预检结果{" "}
-                  <span className="count-pill">{plan.checks.length}</span>
-                </h3>
-              </div>
-              <div className="check-list">
+              <UiElement as="div" className="section-heading">
+                <UiElement as="h3">
+                  <UiText>{"预检结果"}</UiText>{" "}
+                  <UiElement as="span" className="count-pill">{plan.checks.length}</UiElement>
+                </UiElement>
+              </UiElement>
+              <UiElement as="div" className="check-list">
                 {plan.checks.map((c, i) => (
-                  <div key={i}>
+                  <UiElement as="div" key={i}>
                     <Badge status={c.status} />
-                    <div>
-                      <b>{c.name}</b>
-                      <p>{c.detail}</p>
-                    </div>
-                  </div>
+                    <UiElement as="div">
+                      <UiElement as="b">{c.name}</UiElement>
+                      <UiElement as="p">{c.detail}</UiElement>
+                    </UiElement>
+                  </UiElement>
                 ))}
-              </div>
+              </UiElement>
               {plan.warnings?.length > 0 && (
                 <InfoBox>{plan.warnings.join("；")}</InfoBox>
               )}
@@ -1315,35 +1309,35 @@ export default function ServiceEditor({
                 onApprovalChange={setExtraApproved}
               />
               {plan.commands.length > 0 && (
-                <details className="command-preview">
-                  <summary>
-                    查看执行计划 · {plan.commands.length} 条命令
-                  </summary>
+                <UiElement as="details" className="command-preview">
+                  <UiElement as="summary">
+                    <UiText>{"查看执行计划 ·"}</UiText> {plan.commands.length} <UiText>{"条命令"}</UiText>
+                  </UiElement>
                   {plan.commands.map((c, i) => (
-                    <div key={i}>
-                      <label>
+                    <UiElement as="div" key={i}>
+                      <UiElement as="label">
                         {nodes.find((n) => n.id === c.node_id)?.name ??
                           c.node_id}{" "}
-                        / {roleName(c.role)}
-                      </label>
-                      <pre>{c.command}</pre>
-                    </div>
+                        <UiText>{"/"}</UiText> {roleName(c.role)}
+                      </UiElement>
+                      <UiElement as="pre">{c.command}</UiElement>
+                    </UiElement>
                   ))}
-                </details>
+                </UiElement>
               )}
             </>
           ) : (
-            <div className="preflight-placeholder">
+            <UiElement as="div" className="preflight-placeholder">
               <ShieldCheck size={33} />
-              <h3>部署前，让每一项准备就绪</h3>
-              <p>保存配置并执行预检，检查结果与执行计划将在这里展示。</p>
-              <Button onClick={runCheck} kind="primary" loading={busy} disabled={!runtimeAccess.enabled}>
-                保存并执行预检
+              <UiElement as="h3"><UiText>{"部署前，让每一项准备就绪"}</UiText></UiElement>
+              <UiElement as="p"><UiText>{"保存配置并执行预检，检查结果与执行计划将在这里展示。"}</UiText></UiElement>
+              <Button actionContext={{service: saved ?? original, runtime, step}} actionId="services.plan" onClick={runCheck} kind="primary" loading={busy} disabled={!runtimeAccess.enabled}>
+                <UiText>{"保存并执行预检"}</UiText>
               </Button>
-            </div>
+            </UiElement>
           )}
-        </div>
-      )}
+        </UiElement>
+      )}</UiSlot>}
       {resourceProposal && (
         <PlacementPlanDialog
           configuration={resourceProposal}
@@ -1367,3 +1361,9 @@ export default function ServiceEditor({
     </Modal>
   );
 }
+
+const ServiceEditor = withUiSlot("component.ServiceEditor", DefaultServiceEditor);
+export default ServiceEditor;
+
+// Reference package implementation exports.
+export { DefaultServiceEditor };

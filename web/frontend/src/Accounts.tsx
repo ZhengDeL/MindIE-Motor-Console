@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { readCount, readNotice } from "./readState";
 import {
@@ -25,7 +26,7 @@ const roles: UserRole[] = ["admin", "operator", "viewer"];
 const passwordValid = (value: string) =>
   value.length >= 15 && value.length <= 128;
 
-export function PasswordDialog({
+function DefaultPasswordDialog({
   onClose,
   onChanged,
 }: {
@@ -45,10 +46,10 @@ export function PasswordDialog({
       closeDisabled={busy}
       footer={
         <>
-          <Button disabled={busy} onClick={onClose}>
-            取消
+          <Button actionId="action.Accounts.001" disabled={busy} onClick={onClose}>
+            <UiText>{"取消"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.Accounts.002"
             kind="primary"
             loading={busy}
             disabled={!current || !next || !repeat}
@@ -74,14 +75,14 @@ export function PasswordDialog({
             }}
           >
             <KeyRound size={14} />
-            修改密码
+            <UiText>{"修改密码"}</UiText>
           </Button>
         </>
       }
     >
       {error && <ErrorBox message={error} />}
       <Field label="当前密码" required>
-        <input
+        <UiElement as="input"
           aria-label="当前密码"
           type="password"
           autoComplete="current-password"
@@ -91,7 +92,7 @@ export function PasswordDialog({
         />
       </Field>
       <Field label="新密码" required hint="15–128 个字符">
-        <input
+        <UiElement as="input"
           aria-label="新密码"
           type="password"
           autoComplete="new-password"
@@ -101,7 +102,7 @@ export function PasswordDialog({
         />
       </Field>
       <Field label="确认新密码" required>
-        <input
+        <UiElement as="input"
           aria-label="确认新密码"
           type="password"
           autoComplete="new-password"
@@ -118,7 +119,7 @@ type UserEditor = {
   user?: ConsoleUser;
   action: "create" | "edit" | "password" | "delete" | "disable" | "enable";
 };
-export default function AccountsPage({
+function DefaultAccountsPage({
   currentUser,
   onSessionChanged,
 }: {
@@ -170,86 +171,86 @@ export default function AccountsPage({
   return (
     <>
       <InfoBox>
-        系统管理员管理账号、节点与系统维护；运维操作员管理推理服务；只读用户查看资源与状态。权限由服务端校验。
+        <UiText>{"系统管理员管理账号、节点与系统维护；运维操作员管理推理服务；只读用户查看资源与状态。权限由服务端校验。"}</UiText>
       </InfoBox>
-      <section className="panel">
-        <div className="table-toolbar">
+      <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="table-toolbar">
           <SearchInput
             value={query}
             onChange={setQuery}
             placeholder="搜索用户名或显示名称"
           />
           <Select value={role} onChange={setRole} ariaLabel="筛选账号角色">
-            <option value="all">全部角色</option>
+            <UiElement as="option" value="all"><UiText>{"全部角色"}</UiText></UiElement>
             {roles.map((value) => (
-              <option key={value} value={value}>
+              <UiElement as="option" key={value} value={value}>
                 {roleLabel(value)}
-              </option>
+              </UiElement>
             ))}
           </Select>
-          <Button loading={loading} onClick={() => void load()}>
+          <Button actionId="action.Accounts.003" loading={loading} onClick={() => void load()}>
             <RefreshCw size={14} />
-            刷新
+            <UiText>{"刷新"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.Accounts.004"
             kind="primary"
             onClick={() => setEditor({ action: "create" })}
           >
             <Plus size={14} />
-            创建账号
+            <UiText>{"创建账号"}</UiText>
           </Button>
-          <span className="toolbar-right-note" role="status">{readCount({ loaded: hasSuccess, refreshing: loading, error }, displayed.length, "个账号")}</span>
-        </div>
+          <UiElement as="span" className="toolbar-right-note" role="status">{readCount({ loaded: hasSuccess, refreshing: loading, error }, displayed.length, "个账号")}</UiElement>
+        </UiElement>
         {error && <ErrorBox message={error} />}
         {loading && !hasSuccess ? (
           <Spinner />
         ) : displayed.length ? (
-          <div className="table-wrap">
-            <table className="accounts-table">
-              <thead>
-                <tr>
-                  <th>用户名</th>
-                  <th>显示名称</th>
-                  <th>角色</th>
-                  <th>状态</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
+          <UiElement as="div" className="table-wrap">
+            <UiElement as="table" className="accounts-table">
+              <UiElement as="thead">
+                <UiElement as="tr">
+                  <UiElement as="th"><UiText>{"用户名"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"显示名称"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"角色"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"状态"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"创建时间"}</UiText></UiElement>
+                  <UiElement as="th"><UiText>{"操作"}</UiText></UiElement>
+                </UiElement>
+              </UiElement>
+              <UiElement as="tbody">
                 {displayed.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <b>{user.username}</b>
+                  <UiElement as="tr" key={user.id}>
+                    <UiElement as="td">
+                      <UiElement as="b">{user.username}</UiElement>
                       {currentUser?.id === user.id && (
-                        <span className="tag small">当前账号</span>
+                        <UiElement as="span" className="tag small"><UiText>{"当前账号"}</UiText></UiElement>
                       )}
-                    </td>
-                    <td>{user.display_name || user.username}</td>
-                    <td>{roleLabel(user.role)}</td>
-                    <td>
+                    </UiElement>
+                    <UiElement as="td">{user.display_name || user.username}</UiElement>
+                    <UiElement as="td">{roleLabel(user.role)}</UiElement>
+                    <UiElement as="td">
                       <Badge status={user.disabled ? "stopped" : "running"}>
                         {user.disabled ? "已禁用" : "启用"}
                       </Badge>
-                    </td>
-                    <td className="tabular">{when(user.created_at ?? "")}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button
+                    </UiElement>
+                    <UiElement as="td" className="tabular">{when(user.created_at ?? "")}</UiElement>
+                    <UiElement as="td">
+                      <UiElement as="div" className="row-actions">
+                        <UiButton actionId="action.Accounts.005"
                           onClick={() => setEditor({ user, action: "edit" })}
                         >
-                          编辑
-                        </button>
+                          <UiText>{"编辑"}</UiText>
+                        </UiButton>
                         {user.auth_source !== "oidc" && (
-                          <button
+                          <UiButton actionId="action.Accounts.006"
                             onClick={() =>
                               setEditor({ user, action: "password" })
                             }
                           >
-                            重置密码
-                          </button>
+                            <UiText>{"重置密码"}</UiText>
+                          </UiButton>
                         )}
-                        <button
+                        <UiButton actionId="action.Accounts.007"
                           className={user.disabled ? "" : "danger-text"}
                           onClick={() =>
                             setEditor({
@@ -259,20 +260,20 @@ export default function AccountsPage({
                           }
                         >
                           {user.disabled ? "启用" : "禁用"}
-                        </button>
-                        <button
+                        </UiButton>
+                        <UiButton actionId="action.Accounts.008"
                           className="danger-text"
                           onClick={() => setEditor({ user, action: "delete" })}
                         >
-                          删除
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          <UiText>{"删除"}</UiText>
+                        </UiButton>
+                      </UiElement>
+                    </UiElement>
+                  </UiElement>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </UiElement>
+            </UiElement>
+          </UiElement>
         ) : (
           <Empty
             title={!hasSuccess ? readNotice({ loaded: false, refreshing: loading, error }) : query || role !== "all" ? "没有匹配的账号" : "暂无账号"}
@@ -280,7 +281,7 @@ export default function AccountsPage({
             icon={<UserRound size={25} />}
           />
         )}
-      </section>
+      </UiRegion>
       {editor && (
         <UserDialog
           editor={editor}
@@ -295,7 +296,7 @@ export default function AccountsPage({
   );
 }
 
-function UserDialog({
+function DefaultUserDialog({
   editor,
   onClose,
   onSaved,
@@ -371,10 +372,10 @@ function UserDialog({
       closeDisabled={busy}
       footer={
         <>
-          <Button disabled={busy} onClick={onClose}>
-            取消
+          <Button actionId="action.Accounts.009" disabled={busy} onClick={onClose}>
+            <UiText>{"取消"}</UiText>
           </Button>
-          <Button
+          <Button actionId="action.Accounts.010"
             kind={destructive ? "danger" : "primary"}
             loading={busy}
             disabled={
@@ -393,7 +394,7 @@ function UserDialog({
       {form && (
         <>
           <Field label="用户名" required>
-            <input
+            <UiElement as="input"
               aria-label="账号用户名"
               autoComplete="off"
               value={username}
@@ -402,7 +403,7 @@ function UserDialog({
             />
           </Field>
           <Field label="显示名称">
-            <input
+            <UiElement as="input"
               aria-label="账号显示名称"
               value={displayName}
               disabled={busy}
@@ -417,9 +418,9 @@ function UserDialog({
               disabled={busy}
             >
               {roles.map((value) => (
-                <option key={value} value={value}>
+                <UiElement as="option" key={value} value={value}>
                   {roleLabel(value)}
-                </option>
+                </UiElement>
               ))}
             </Select>
           </Field>
@@ -431,7 +432,7 @@ function UserDialog({
           required
           hint={action === "create" ? "15–128 个字符" : "15–128 个字符；重置后该账号已有会话全部失效"}
         >
-          <input
+          <UiElement as="input"
             aria-label="账号密码"
             type="password"
             autoComplete="new-password"
@@ -442,23 +443,23 @@ function UserDialog({
         </Field>
       )}
       {action === "delete" && (
-        <p className="account-action-description">
-          删除后该账号无法登录，已有会话立即失效；操作审计保留。系统不允许移除最后一个有效管理员。
-        </p>
+        <UiElement as="p" className="account-action-description">
+          <UiText>{"删除后该账号无法登录，已有会话立即失效；操作审计保留。系统不允许移除最后一个有效管理员。"}</UiText>
+        </UiElement>
       )}
       {action === "disable" && (
-        <p className="account-action-description">
-          禁用后该账号无法登录，已有会话立即失效。系统不允许禁用最后一个有效管理员。
-        </p>
+        <UiElement as="p" className="account-action-description">
+          <UiText>{"禁用后该账号无法登录，已有会话立即失效。系统不允许禁用最后一个有效管理员。"}</UiText>
+        </UiElement>
       )}
       {action === "enable" && (
-        <p className="account-action-description">
-          允许账号 <b>{user?.username}</b> 使用其当前角色重新登录。
-        </p>
+        <UiElement as="p" className="account-action-description">
+          <UiText>{"允许账号"}</UiText> <UiElement as="b">{user?.username}</UiElement> <UiText>{"使用其当前角色重新登录。"}</UiText>
+        </UiElement>
       )}
       {typed && (
         <Field label="输入用户名以确认" required>
-          <input
+          <UiElement as="input"
             aria-label="输入用户名以确认"
             autoComplete="off"
             value={confirmation}
@@ -471,3 +472,11 @@ function UserDialog({
     </Modal>
   );
 }
+
+export const PasswordDialog = withUiSlot("component.PasswordDialog", DefaultPasswordDialog);
+const AccountsPage = withUiSlot("component.AccountsPage", DefaultAccountsPage);
+export default AccountsPage;
+const UserDialog = withUiSlot("component.UserDialog", DefaultUserDialog);
+
+// Reference package implementation exports.
+export { DefaultPasswordDialog, DefaultAccountsPage, DefaultUserDialog };

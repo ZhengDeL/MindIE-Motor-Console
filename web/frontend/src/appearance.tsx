@@ -1,3 +1,4 @@
+import { withUiSlot } from "./uiPluginSdk";
 import { useEffect, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { THEME_STORAGE_KEY, MODE_STORAGE_KEY, DENSITY_STORAGE_KEY, MOTION_STORAGE_KEY, SIDEBAR_WIDTH_STORAGE_KEY } from "./browserStateKeys";
@@ -187,7 +188,7 @@ export function useAppearance() {
   };
 }
 
-export function AppearanceProvider({ children }: { children: ReactNode }) {
+function DefaultAppearanceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     initializeAppearance();
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -218,3 +219,8 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   }, []);
   return <>{children}</>;
 }
+
+export const AppearanceProvider = withUiSlot("ui.appearance", DefaultAppearanceProvider);
+
+// Reference package implementation exports.
+export { DefaultAppearanceProvider };

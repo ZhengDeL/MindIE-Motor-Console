@@ -1,0 +1,26 @@
+{
+  "name": "@mindie/console-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Explicit local plugin composition host and public SDK",
+  "engines": { "node": ">=22.0.0" },
+  "exports": {
+    ".": { "types": "./dist/sdk/index.d.ts", "import": "./dist/sdk/index.js" },
+    "./sdk": { "types": "./dist/sdk/index.d.ts", "import": "./dist/sdk/index.js" },
+    "./host": { "types": "./dist/host/index.d.ts", "import": "./dist/host/index.js" }
+  },
+  "bin": { "console-platform": "./dist/cli.js" },
+  "scripts": {
+    "build": "tsc && node scripts/copy-manifests.mjs",
+    "check": "tsc --noEmit",
+    "start": "node dist/cli.js start",
+    "validate": "node dist/cli.js validate",
+    "pin": "node dist/cli.js pin",
+    "recover": "node dist/cli.js recover"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "typescript": "5.8.3"
+  }
+}

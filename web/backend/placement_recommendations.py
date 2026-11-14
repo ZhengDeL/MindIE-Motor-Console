@@ -202,11 +202,11 @@ def recommend_placements(data: PlacementPlanInput, records: list[dict], *, upstr
     return report
 
 
-def create_placement_router(store, *, upstream_dir=None) -> APIRouter:
+def create_placement_router(store, *, upstream_dir=None, recommender=None) -> APIRouter:
     router = APIRouter(prefix="/api/resources", tags=["resources"])
 
     @router.post("/placement-plan")
     def placement_plan(data: PlacementPlanInput):
-        return recommend_placements(data, store.list("nodes"), upstream_dir=upstream_dir)
+        return (recommender or recommend_placements)(data, store.list("nodes"), upstream_dir=upstream_dir)
 
     return router

@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { ArrowRight, ExternalLink, ShieldCheck } from "./icons";
 import { roleLabel, when } from "./api";
 import type { AuthStatus, Meta, NodeInfo } from "./api";
@@ -12,8 +13,9 @@ import { readCount, type ReadState } from "./readState";
 import PluginSettings from "./PluginSettings";
 import { usePluginEnabled, type PluginCatalog } from "./consolePlugins";
 import PluginPackagesPanel from "./PluginPackages";
+import UiPluginPackages from "./UiPluginPackages";
 
-export default function SettingsPage({
+function DefaultSettingsPage({
   meta,
   nodes,
   nodesRead,
@@ -51,154 +53,162 @@ export default function SettingsPage({
     ?.filter((runtime) => runtime === "docker" || runtime === "kubernetes")
     .map((runtime) => (runtime === "docker" ? "Docker" : "Kubernetes"));
   return (
-    <div className="settings-grid">
+    <UiElement as="div" className="settings-grid">
       <AppearanceSettings />
       {(auth?.user?.role === "admin" || meta?.mode === "demo") && brandingEnabled && <BrandingSettings />}
       {(auth?.user?.role === "admin" || meta?.mode === "demo") && <PluginSettings catalog={pluginCatalog} error={pluginError} refreshing={pluginsRefreshing} onRefresh={onPluginRefresh} />}
       {(auth?.user?.role === "admin" || meta?.mode === "demo") && <PluginPackagesPanel key={auth?.user?.id ?? "demo"}
         identity={auth?.user?.id ?? "demo"} canManage={meta?.mode === "control" && auth?.user?.role === "admin"} onCatalogRefresh={onPluginRefresh} />}
+      {(auth?.user?.role === "admin" || meta?.mode === "demo") && <UiPluginPackages key={`ui:${auth?.user?.id ?? "demo"}`}
+        identity={auth?.user?.id ?? "demo"} canManage={meta?.mode === "control" && auth?.user?.role === "admin"} />}
       <InfrastructureSettings canAdminister={auth?.user?.role === "admin" || meta?.mode === "demo"} />
-      <section className="panel">
-        <div className="panel-head"><h2>数据刷新</h2></div>
-        <div className="settings-content">
-          <label className="field">
-            <span className="field-label">列表与概览自动刷新</span>
-            <select aria-label="列表与概览自动刷新" value={refreshInterval} onChange={(event) => setRefreshInterval(Number(event.target.value))}>
-              {REFRESH_OPTIONS.map(([interval, label]) => <option key={interval} value={interval}>{label}</option>)}
-            </select>
-          </label>
-          <p className="settings-context-note">每项查询完成后再等待所选间隔；隐藏页面时暂停，返回后更新。手动刷新会合并正在执行的同一查询，保留筛选、滚动和未保存内容。</p>
-          <p className="small-caption">仅当前浏览器生效。日志跟随和任务进度使用各自的间隔；会话有效性独立检查。</p>
-        </div>
-      </section>
-      <section className="panel">
-        <div className="panel-head">
-          <h2>当前会话</h2>
-        </div>
-        <div className="settings-content">
-          <dl className="description-list">
+      <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="panel-head"><UiElement as="h2"><UiText>{"数据刷新"}</UiText></UiElement></UiElement>
+        <UiElement as="div" className="settings-content">
+          <UiElement as="label" className="field">
+            <UiElement as="span" className="field-label"><UiText>{"列表与概览自动刷新"}</UiText></UiElement>
+            <UiElement as="select" aria-label="列表与概览自动刷新" value={refreshInterval} onChange={(event) => setRefreshInterval(Number(event.target.value))}>
+              {REFRESH_OPTIONS.map(([interval, label]) => <UiElement as="option" key={interval} value={interval}>{label}</UiElement>)}
+            </UiElement>
+          </UiElement>
+          <UiElement as="p" className="settings-context-note"><UiText>{"每项查询完成后再等待所选间隔；隐藏页面时暂停，返回后更新。手动刷新会合并正在执行的同一查询，保留筛选、滚动和未保存内容。"}</UiText></UiElement>
+          <UiElement as="p" className="small-caption"><UiText>{"仅当前浏览器生效。日志跟随和任务进度使用各自的间隔；会话有效性独立检查。"}</UiText></UiElement>
+        </UiElement>
+      </UiRegion>
+      <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="panel-head">
+          <UiElement as="h2"><UiText>{"当前会话"}</UiText></UiElement>
+        </UiElement>
+        <UiElement as="div" className="settings-content">
+          <UiElement as="dl" className="description-list">
             {meta?.mode && (
               <>
-                <dt>运行环境</dt>
-                <dd>
+                <UiElement as="dt"><UiText>{"运行环境"}</UiText></UiElement>
+                <UiElement as="dd">
                   {meta.mode === "demo"
                     ? "演示环境 · 操作均为模拟"
                     : "控制台管理环境"}
-                </dd>
+                </UiElement>
               </>
             )}
             {username ? (
               <>
-                <dt>登录账号</dt>
-                <dd>{username}</dd>
+                <UiElement as="dt"><UiText>{"登录账号"}</UiText></UiElement>
+                <UiElement as="dd">{username}</UiElement>
               </>
             ) : (
               meta?.mode === "demo" && (
                 <>
-                  <dt>访问方式</dt>
-                  <dd>免登录演示会话</dd>
+                  <UiElement as="dt"><UiText>{"访问方式"}</UiText></UiElement>
+                  <UiElement as="dd"><UiText>{"免登录演示会话"}</UiText></UiElement>
                 </>
               )
             )}
             {displayName && displayName !== username && (
               <>
-                <dt>显示名称</dt>
-                <dd>{displayName}</dd>
+                <UiElement as="dt"><UiText>{"显示名称"}</UiText></UiElement>
+                <UiElement as="dd">{displayName}</UiElement>
               </>
             )}
             {user && (
               <>
-                <dt>角色</dt>
-                <dd>{roleLabel(user.role)}</dd>
+                <UiElement as="dt"><UiText>{"角色"}</UiText></UiElement>
+                <UiElement as="dd">{roleLabel(user.role)}</UiElement>
               </>
             )}
             {expires && (
               <>
-                <dt>会话到期</dt>
-                <dd>{when(expires)}</dd>
+                <UiElement as="dt"><UiText>{"会话到期"}</UiText></UiElement>
+                <UiElement as="dd">{when(expires)}</UiElement>
               </>
             )}
-          </dl>
-          <div className="settings-actions">
+          </UiElement>
+          <UiElement as="div" className="settings-actions">
             {user && user.auth_source !== "oidc" && (
-              <Button onClick={onPassword}>修改个人密码</Button>
+              <Button actionId="action.SettingsPage.001" onClick={onPassword}><UiText>{"修改个人密码"}</UiText></Button>
             )}
             {onAccounts && (
-              <Button onClick={onAccounts}>
-                账号管理
+              <Button actionId="action.SettingsPage.002" onClick={onAccounts}>
+                <UiText>{"账号管理"}</UiText>
                 <ArrowRight size={14} />
               </Button>
             )}
-          </div>
-        </div>
-      </section>
-      {onNodes && <section className="panel">
-        <div className="panel-head">
-          <h2>执行连接</h2>
-        </div>
-        <div className="settings-content">
-          <dl className="description-list">
-            <dt>已登记 Agent</dt>
-            <dd role="status">{readCount(nodesRead, nodes.length, "个")}</dd>
+          </UiElement>
+        </UiElement>
+      </UiRegion>
+      {onNodes && <UiRegion name="layout.panel" as="section" className="panel">
+        <UiElement as="div" className="panel-head">
+          <UiElement as="h2"><UiText>{"执行连接"}</UiText></UiElement>
+        </UiElement>
+        <UiElement as="div" className="settings-content">
+          <UiElement as="dl" className="description-list">
+            <UiElement as="dt"><UiText>{"已登记 Agent"}</UiText></UiElement>
+            <UiElement as="dd" role="status">{readCount(nodesRead, nodes.length, "个")}</UiElement>
             {!!runtimes?.length && (
               <>
-                <dt>支持的部署方式</dt>
-                <dd>{runtimes.join(" / ")}</dd>
+                <UiElement as="dt"><UiText>{"支持的部署方式"}</UiText></UiElement>
+                <UiElement as="dd">{runtimes.join(" / ")}</UiElement>
               </>
             )}
-          </dl>
-          <p className="settings-context-note">
-            Agent 负责管理连接与执行任务。集群节点和硬件资源可在节点管理中查看。
-          </p>
-          <Button onClick={onNodes}>
-            查看节点
+          </UiElement>
+          <UiElement as="p" className="settings-context-note">
+            <UiText>{"Agent 负责管理连接与执行任务。集群节点和硬件资源可在节点管理中查看。"}</UiText>
+          </UiElement>
+          <Button actionId="action.SettingsPage.003" onClick={onNodes}>
+            <UiText>{"查看节点"}</UiText>
             <ArrowRight size={14} />
           </Button>
-        </div>
-      </section>}
-      <section className="panel version-panel">
-        <div className="panel-head">
-          <h2>平台与引擎</h2>
+        </UiElement>
+      </UiRegion>}
+      <UiRegion name="layout.panel" as="section" className="panel version-panel">
+        <UiElement as="div" className="panel-head">
+          <UiElement as="h2"><UiText>{"平台与引擎"}</UiText></UiElement>
           <ShieldCheck size={17} />
-        </div>
-        <div className="settings-content">
-          <dl className="description-list">
+        </UiElement>
+        <UiElement as="div" className="settings-content">
+          <UiElement as="dl" className="description-list">
             {version && (
               <>
-                <dt>平台版本</dt>
-                <dd>{version}</dd>
+                <UiElement as="dt"><UiText>{"平台版本"}</UiText></UiElement>
+                <UiElement as="dd">{version}</UiElement>
               </>
             )}
             {meta?.capabilities && (
               <>
-                <dt>官方能力目录</dt>
-                <dd>{meta.capabilities.length} 项</dd>
+                <UiElement as="dt"><UiText>{"官方能力目录"}</UiText></UiElement>
+                <UiElement as="dd">{meta.capabilities.length} <UiText>{"项"}</UiText></UiElement>
               </>
             )}
-          </dl>
-          <details className="settings-technical-detail">
-            <summary>适配信息</summary>
+          </UiElement>
+          <UiElement as="details" className="settings-technical-detail">
+            <UiElement as="summary"><UiText>{"适配信息"}</UiText></UiElement>
             {commit && (
-              <dl className="description-list">
-                <dt>引擎源码版本</dt>
-                <dd>
-                  <code className="break-word">{commit}</code>
+              <UiElement as="dl" className="description-list">
+                <UiElement as="dt"><UiText>{"引擎源码版本"}</UiText></UiElement>
+                <UiElement as="dd">
+                  <UiElement as="code" className="break-word">{commit}</UiElement>
                   <Copy value={commit} label="复制引擎源码版本" />
-                </dd>
-              </dl>
+                </UiElement>
+              </UiElement>
             )}
-            {docsUrl && <a
+            {docsUrl && <UiElement as="a"
               className="text-link"
               href={docsUrl}
               target="_blank"
               rel="noreferrer"
             >
-              使用文档
+              <UiText>{"使用文档"}</UiText>
               <ExternalLink size={13} />
-            </a>}
-          </details>
-        </div>
-      </section>
-    </div>
+            </UiElement>}
+          </UiElement>
+        </UiElement>
+      </UiRegion>
+    </UiElement>
   );
 }
+
+const SettingsPage = withUiSlot("component.SettingsPage", DefaultSettingsPage);
+export default SettingsPage;
+
+// Reference package implementation exports.
+export { DefaultSettingsPage };

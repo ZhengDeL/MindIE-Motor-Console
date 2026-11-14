@@ -1,0 +1,836 @@
+{
+  "services.menu.open": {
+    "description": "services / menu / open",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.menu.close": {
+    "description": "services / menu / close",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.edit": {
+    "description": "services / edit",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.export": {
+    "description": "services / export",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.template.create": {
+    "description": "services / template / create",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.restart": {
+    "description": "重启当前服务",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.delete": {
+    "description": "删除服务配置记录",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.open": {
+    "description": "services / open",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.manage": {
+    "description": "services / manage",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.deploy": {
+    "description": "打开部署/重建预检与确认",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.stop": {
+    "description": "停止当前服务的受管资源",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.create": {
+    "description": "打开创建推理服务工作流",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "console.reconnect": {
+    "description": "console / reconnect",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.home": {
+    "description": "navigation / home",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.mobile.close": {
+    "description": "navigation / mobile / close",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.page": {
+    "description": "navigation / page",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.plugin": {
+    "description": "navigation / plugin",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.help": {
+    "description": "navigation / help",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.sidebar.toggle": {
+    "description": "navigation / sidebar / toggle",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.mobile.open": {
+    "description": "navigation / mobile / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.back": {
+    "description": "services / back",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "console.activity": {
+    "description": "console / activity",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "auth.session.open": {
+    "description": "auth / session / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "auth.password.open": {
+    "description": "auth / password / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "auth.logout": {
+    "description": "撤销当前登录会话",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.settings": {
+    "description": "navigation / settings",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "navigation.search": {
+    "description": "navigation / search",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.job.open": {
+    "description": "services / job / open",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "navigation.audit": {
+    "description": "navigation / audit",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.catalog.refresh": {
+    "description": "plugins / catalog / refresh",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.refresh": {
+    "description": "nodes / refresh",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.refresh": {
+    "description": "services / refresh",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.deploy.cancel": {
+    "description": "services / deploy / cancel",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.deploy.confirm": {
+    "description": "提交已审阅的部署计划",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "notifications.dismiss": {
+    "description": "notifications / dismiss",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "logs.refresh": {
+    "description": "logs / refresh",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "logs.export": {
+    "description": "logs / export",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.menu.open": {
+    "description": "nodes / menu / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.summary.open": {
+    "description": "nodes / summary / open",
+    "context": [
+      "principal",
+      "page",
+      "node",
+      "canAdminister"
+    ]
+  },
+  "nodes.cluster.open": {
+    "description": "nodes / cluster / open",
+    "context": [
+      "principal",
+      "page",
+      "node",
+      "canAdminister"
+    ]
+  },
+  "nodes.probe": {
+    "description": "探测所选节点连接",
+    "context": [
+      "principal",
+      "page",
+      "node",
+      "canAdminister"
+    ]
+  },
+  "nodes.remove": {
+    "description": "移除所选节点连接",
+    "context": [
+      "principal",
+      "page",
+      "node",
+      "canAdminister"
+    ]
+  },
+  "nodes.sort": {
+    "description": "nodes / sort",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "agents.rollout.history": {
+    "description": "agents / rollout / history",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "agents.rollout.open": {
+    "description": "agents / rollout / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.connect.open": {
+    "description": "nodes / connect / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.details.open": {
+    "description": "nodes / details / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.resources.open": {
+    "description": "nodes / resources / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.page.previous": {
+    "description": "nodes / page / previous",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.page.next": {
+    "description": "nodes / page / next",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.dialog.dismiss": {
+    "description": "nodes / dialog / dismiss",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.connect.cancel": {
+    "description": "nodes / connect / cancel",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.connect": {
+    "description": "保存节点连接配置",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "nodes.connect.submit": {
+    "description": "提交节点连接表单",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.undeploy": {
+    "description": "移除当前服务的受管部署",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.scale": {
+    "description": "预览并调整服务实例数",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.tab.select": {
+    "description": "services / tab / select",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "inference.open": {
+    "description": "inference / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.readiness.refresh": {
+    "description": "services / readiness / refresh",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.config.user": {
+    "description": "services / config / user",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.config.env": {
+    "description": "services / config / env",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.config.extra": {
+    "description": "services / config / extra",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.revisions.refresh": {
+    "description": "services / revisions / refresh",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "services.revisions.export": {
+    "description": "services / revisions / export",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "canOperate"
+    ]
+  },
+  "inference.submit": {
+    "description": "发送真实推理请求",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "inference.cancel-wait": {
+    "description": "取消浏览器等待并保留服务端结果未知语义",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "services.editor.close": {
+    "description": "services / editor / close",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.previous": {
+    "description": "services / editor / previous",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.next": {
+    "description": "services / editor / next",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.draft.save": {
+    "description": "保存服务草稿及任意原生配置字段",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.plan": {
+    "description": "保存草稿并读取真实部署预检",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.step": {
+    "description": "services / editor / step",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.runtime": {
+    "description": "services / editor / runtime",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.template-source": {
+    "description": "services / editor / template-source",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.editor.template": {
+    "description": "services / editor / template",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.template.save": {
+    "description": "services / template / save",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.config.import": {
+    "description": "services / config / import",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.layout.generate": {
+    "description": "services / layout / generate",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.layout.remove": {
+    "description": "services / layout / remove",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "services.layout.add": {
+    "description": "services / layout / add",
+    "context": [
+      "principal",
+      "page",
+      "service",
+      "runtime",
+      "step"
+    ]
+  },
+  "auth.password.visibility": {
+    "description": "auth / password / visibility",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "appearance.mode.toggle": {
+    "description": "appearance / mode / toggle",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "auth.submit-button": {
+    "description": "auth / submit-button",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.refresh": {
+    "description": "plugins / server / refresh",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.import.open": {
+    "description": "plugins / server / import / open",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.select.review": {
+    "description": "plugins / server / select / review",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.deselect.review": {
+    "description": "plugins / server / deselect / review",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.deselect.cancel": {
+    "description": "plugins / server / deselect / cancel",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.deselect": {
+    "description": "plugins / server / deselect",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.import.cancel": {
+    "description": "plugins / server / import / cancel",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.import": {
+    "description": "校验并导入服务端插件包",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.select.cancel": {
+    "description": "plugins / server / select / cancel",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "plugins.server.select": {
+    "description": "保存服务端插件版本选择",
+    "context": [
+      "principal",
+      "page",
+      "label"
+    ]
+  },
+  "auth.login": {
+    "context": [
+      "principal",
+      "page"
+    ],
+    "description": "提交账号登录表单"
+  },
+  "auth.setup": {
+    "context": [
+      "principal",
+      "page"
+    ],
+    "description": "提交首次管理员设置表单"
+  },
+  "plugins.ui.import": {
+    "context": [
+      "principal",
+      "page"
+    ],
+    "description": "校验并导入离线 UI 制品"
+  },
+  "plugins.ui.select": {
+    "context": [
+      "principal",
+      "page"
+    ],
+    "description": "按预期修订保存下次启动 UI 槽位选择"
+  }
+}

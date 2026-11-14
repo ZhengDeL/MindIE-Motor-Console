@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "contracts": [
+    { "id": "console.http.handler", "version": "1.0.0", "cardinality": "one" },
+    { "id": "console.http.transport", "version": "1.0.0", "cardinality": "one" }
+  ],
+  "packages": [
+    { "id": "reference.http-node", "version": "1.0.0", "root": "../dist/plugins/http-node", "sha256": "PIN" },
+    { "id": "reference.python-bridge", "version": "1.0.0", "root": "../dist/plugins/python-bridge", "sha256": "PIN" }
+  ],
+  "selected": ["reference.http-node", "reference.python-bridge"],
+  "bindings": {
+    "console.http.handler": "reference.python-bridge",
+    "console.http.transport": "reference.http-node"
+  },
+  "settings": {
+    "reference.http-node": { "host": "127.0.0.1", "port": 19080, "requestTimeoutMs": 120000 },
+    "reference.python-bridge": { "upstream": "http://127.0.0.1:19081", "maxRequestBytes": 16777216 }
+  }
+}

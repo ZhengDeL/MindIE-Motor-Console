@@ -1,5 +1,6 @@
+import { UiElement, withUiSlot, UiButton, UiText, UiRegion, UiHostProvider } from "./uiPluginSdk";
 import { lazy, useCallback, useEffect, useRef, useState } from "react";
-import { Bell, Home, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Bell, Home, PanelLeftClose, PanelLeftOpen } from "./icons";
 import DeferredPanel from "./DeferredPanel";
 import { DATA_CHANGED_EVENT, SESSION_EXPIRED_EVENT } from "./brand";
 import { LEGACY_SESSION_TOKEN_STORAGE_KEY, NAVIGATION_COLLAPSED_STORAGE_KEY } from "./browserStateKeys";
@@ -122,19 +123,19 @@ const ServiceEditor = lazy(() => import("./ServiceEditor"));
 const ServiceDetail = lazy(() => import("./ServiceDetail"));
 
 type Page = ConsolePage;
-function Brand({ compact = false }: { compact?: boolean }) {
+function DefaultBrand({ compact = false }: { compact?: boolean }) {
   return <PlatformBrand compact={compact} />;
 }
-function RuntimeTag({ value }: { value: string }) {
+function DefaultRuntimeTag({ value }: { value: string }) {
   return (
-    <span className={`runtime-tag ${value === "kubernetes" ? "k8s" : ""}`}>
+    <UiElement as="span" className={`runtime-tag ${value === "kubernetes" ? "k8s" : ""}`}>
       {value === "kubernetes" ? <Layers3 size={12} /> : <Box size={12} />}
       {value === "kubernetes" ? "Kubernetes" : "Docker"}
-    </span>
+    </UiElement>
   );
 }
 
-function ServiceMenu({
+function DefaultServiceMenu({
   service,
   canOperate,
   onEdit,
@@ -200,7 +201,7 @@ function ServiceMenu({
   };
   return (
     <>
-      <button
+      <UiButton actionContext={{service, canOperate}} actionId="services.menu.open"
         ref={anchor}
         className="icon-btn"
         aria-label={`${service.name} 更多操作`}
@@ -222,23 +223,23 @@ function ServiceMenu({
         }}
       >
         <MoreHorizontal size={17} />
-      </button>
+      </UiButton>
       {open &&
         createPortal(
           <>
-            <button
+            <UiButton actionContext={{service, canOperate}} actionId="services.menu.close"
               className="menu-dismiss"
               aria-label="关闭更多操作"
               onClick={() => setOpen(false)}
             />
-            <div
+            <UiElement as="div"
               ref={menu}
               className="floating-actions"
               role="menu"
               aria-label={`${service.name} 服务操作`}
               style={position}
             >
-              <button
+              <UiButton actionContext={{service, canOperate}} actionId="services.edit"
                 role="menuitem"
                 onClick={() => choose(onEdit)}
                 disabled={
@@ -246,25 +247,25 @@ function ServiceMenu({
                 }
               >
                 <Settings2 size={13} />
-                编辑配置
-              </button>
-              <button
+                <UiText>{"编辑配置"}</UiText>
+              </UiButton>
+              <UiButton actionContext={{service, canOperate}} actionId="services.export"
                 role="menuitem"
                 disabled={!canOperate}
                 onClick={() => choose(onExport)}
               >
                 <Download size={13} />
-                导出配置
-              </button>
-              {templatesEnabled && <button
+                <UiText>{"导出配置"}</UiText>
+              </UiButton>
+              {templatesEnabled && <UiButton actionContext={{service, canOperate}} actionId="services.template.create"
                 role="menuitem"
                 disabled={!canOperate || service.config_redacted}
                 onClick={() => choose(() => onAction("template"))}
               >
                 <FileJson size={13} />
-                保存为模板
-              </button>}
-              <button
+                <UiText>{"保存为模板"}</UiText>
+              </UiButton>}
+              <UiButton actionContext={{service, canOperate}} actionId="services.restart"
                 role="menuitem"
                 disabled={
                   !canOperate || !runtimeAccess.enabled ||
@@ -282,9 +283,9 @@ function ServiceMenu({
                 onClick={() => choose(() => onAction("restart"))}
               >
                 <RefreshCw size={13} />
-                重启服务
-              </button>
-              <button
+                <UiText>{"重启服务"}</UiText>
+              </UiButton>
+              <UiButton actionContext={{service, canOperate}} actionId="services.delete"
                 role="menuitem"
                 className="danger-text"
                 disabled={
@@ -293,16 +294,16 @@ function ServiceMenu({
                 onClick={() => choose(() => onAction("delete"))}
               >
                 <Trash2 size={13} />
-                删除服务
-              </button>
-            </div>
+                <UiText>{"删除服务"}</UiText>
+              </UiButton>
+            </UiElement>
           </>,
           document.body,
         )}
     </>
   );
 }
-export default function App() {
+function DefaultApp() {
   const branding = useBranding();
   useEffect(() => { applyDocumentBranding(branding); }, [branding]);
   const [page, setPage] = useState<Page>(() => {
@@ -897,18 +898,18 @@ export default function App() {
       title: `${text} ${service.name}？`,
       description: (
         <>
-          <p>
+          <UiElement as="p">
             {continueStop
               ? "按已保存停机基线继续核对/停止受管工作负载。提交前将再次检查该服务的排队与运行任务。"
               : action === "delete"
               ? "将删除控制台中的服务记录及受控部署资源，模型权重不会被删除。"
               : "操作将影响该服务正在运行的实例和请求。"}
-          </p>
-          <div className="confirm-resource">
+          </UiElement>
+          <UiElement as="div" className="confirm-resource">
             <Box size={17} />
-            <b>{service.name}</b>
+            <UiElement as="b">{service.name}</UiElement>
             <RuntimeTag value={service.runtime} />
-          </div>
+          </UiElement>
         </>
       ),
       text,
@@ -1007,87 +1008,87 @@ export default function App() {
   );
   useEffect(() => setServiceListPage((current) => Math.min(current, Math.max(1, Math.ceil(filteredServices.length / servicePageSize)))), [filteredServices.length, servicePageSize]);
   const table = (items: Service[]) => (
-    <div className="table-wrap">
-      <table className="service-table" aria-label="推理服务列表">
-        <thead>
-          <tr>
-            <th scope="col">服务名称</th>
-            <th scope="col">状态</th>
-            <th scope="col">快捷操作</th>
-            <th scope="col">模型</th>
-            <th scope="col">运行环境</th>
-            <th scope="col">实例布局</th>
-            <th scope="col">部署节点</th>
-            <th scope="col">NPU 逻辑设备</th>
-          </tr>
-        </thead>
-        <tbody>
+    <UiElement as="div" className="table-wrap">
+      <UiElement as="table" className="service-table" aria-label="推理服务列表">
+        <UiElement as="thead">
+          <UiElement as="tr">
+            <UiElement as="th" scope="col"><UiText>{"服务名称"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"状态"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"快捷操作"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"模型"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"运行环境"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"实例布局"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"部署节点"}</UiText></UiElement>
+            <UiElement as="th" scope="col"><UiText>{"NPU 逻辑设备"}</UiText></UiElement>
+          </UiElement>
+        </UiElement>
+        <UiElement as="tbody">
           {items.map((s) => (
-            <tr key={s.id}>
-              <td>
-                <button className="text-link service-name" title={s.name}
+            <UiElement as="tr" key={s.id}>
+              <UiElement as="td">
+                <UiButton actionContext={{service: s, canOperate}} actionId="services.open" className="text-link service-name" title={s.name}
                   onClick={() => openService(s)}>
                   {s.name}
-                </button>
-              </td>
-              <td><Badge status={s.status} /></td>
-              <td>
-                <div className="row-actions service-quick-actions">
-                  <button type="button" title={`管理 ${s.name}`} aria-label={`管理 ${s.name}`}
+                </UiButton>
+              </UiElement>
+              <UiElement as="td"><Badge status={s.status} /></UiElement>
+              <UiElement as="td">
+                <UiElement as="div" className="row-actions service-quick-actions">
+                  <UiButton actionContext={{service: s, canOperate}} actionId="services.manage" type="button" title={`管理 ${s.name}`} aria-label={`管理 ${s.name}`}
                     onClick={() => openService(s)}>
                     <Settings2 size={15} />
-                  </button>
+                  </UiButton>
                   {["draft", "stopped", "error", "failed"].includes(s.status) ? (
-                    <button type="button" title={`${s.needs_rebuild ? "重建" : "部署"} ${s.name}`}
+                    <UiButton actionContext={{service: s, canOperate}} actionId="services.deploy" type="button" title={`${s.needs_rebuild ? "重建" : "部署"} ${s.name}`}
                       aria-label={`${s.needs_rebuild ? "重建" : "部署"} ${s.name}`}
                       onClick={() => performAction(s, "deploy")} disabled={actionBusy || !canOperate || !runtimeEnabled(pluginCatalog, s.runtime)}>
                       <Play size={15} />
-                    </button>
+                    </UiButton>
                   ) : (
-                    <button type="button" title={`${s.status === "stopping" ? s.runtime === "kubernetes" ? "继续停止" : "停止中" : "停止"} ${s.name}`}
+                    <UiButton actionContext={{service: s, canOperate}} actionId="services.stop" type="button" title={`${s.status === "stopping" ? s.runtime === "kubernetes" ? "继续停止" : "停止中" : "停止"} ${s.name}`}
                       aria-label={`${s.status === "stopping" ? s.runtime === "kubernetes" ? "继续停止" : "停止中" : "停止"} ${s.name}`}
                       aria-busy={s.runtime === "kubernetes" && s.status === "stopping" && !!stopCheckingId}
                       disabled={!canOperate || !runtimeEnabled(pluginCatalog, s.runtime) || (s.status === "stopping" ? s.runtime !== "kubernetes" || !!stopCheckingId || !!executionReadOnlyReason(s, nodes) : ["deploying", "restarting", "scaling", "removing"].includes(s.status))}
                       onClick={() => performAction(s, "stop")}>
                       <Square size={14} />
-                    </button>
+                    </UiButton>
                   )}
                   <ServiceMenu service={s} canOperate={canOperate}
                     onEdit={() => editService(s)} onAction={(action) => performAction(s, action)}
                     onExport={() => void api(`/services/${s.id}/export`)
                       .then((result) => { if (sessionCurrent()) download(result, `${s.name}.json`); })
                       .catch((error) => { if (sessionCurrent()) setError(error.message); })} />
-                </div>
-              </td>
-              <td>{knownText(s.model) && <span className="service-model" title={s.model}>{s.model}</span>}</td>
-              <td>
-                <div className="service-runtime-cell">
+                </UiElement>
+              </UiElement>
+              <UiElement as="td">{knownText(s.model) && <UiElement as="span" className="service-model" title={s.model}>{s.model}</UiElement>}</UiElement>
+              <UiElement as="td">
+                <UiElement as="div" className="service-runtime-cell">
                   <RuntimeTag value={s.runtime} />
-                  {!runtimeEnabled(pluginCatalog, s.runtime) && <span className="small-caption" title={runtimeReadOnlyReason(pluginCatalog, s.runtime)}>运行时未启用 · 只读</span>}
-                  {knownText(s.engine) && <span className="service-engine" title={s.engine}>{s.engine}</span>}
-                </div>
-              </td>
-              <td>
+                  {!runtimeEnabled(pluginCatalog, s.runtime) && <UiElement as="span" className="small-caption" title={runtimeReadOnlyReason(pluginCatalog, s.runtime)}><UiText>{"运行时未启用 · 只读"}</UiText></UiElement>}
+                  {knownText(s.engine) && <UiElement as="span" className="service-engine" title={s.engine}>{s.engine}</UiElement>}
+                </UiElement>
+              </UiElement>
+              <UiElement as="td">
                 {isResourceInteger(s.replicas?.union) && s.replicas.union > 0 ? (
-                  <span className="layout-label">{s.replicas.union} 混部实例</span>
+                  <UiElement as="span" className="layout-label">{s.replicas.union} <UiText>{"混部实例"}</UiText></UiElement>
                 ) : isResourceInteger(s.replicas?.prefill) && isResourceInteger(s.replicas?.decode) ? (
-                  <span className="layout-label">{s.replicas.prefill} P<span className="layout-separator">/</span>{s.replicas.decode} D</span>
-                ) : <button className="text-link" onClick={() => openService(s)}>查看配置</button>}
-              </td>
-              <td>
-                <span className="small-node-list" title={s.node_names?.join("、")}>
-                  {s.node_names?.slice(0, 2).join("、") || <button className="text-link" onClick={() => openService(s)}>查看部署配置</button>}
-                </span>
-                {s.node_names?.length > 2 && <span className="tag small">+{s.node_names.length - 2}</span>}
-              </td>
-              <td>
-                {isResourceInteger(s.device_count) && <><span className="npu-value">{s.device_count}</span><span className="muted-text"> 个逻辑设备</span></>}
-              </td>
-            </tr>
+                  <UiElement as="span" className="layout-label">{s.replicas.prefill} <UiText>{"P"}</UiText><UiElement as="span" className="layout-separator"><UiText>{"/"}</UiText></UiElement>{s.replicas.decode} <UiText>{"D"}</UiText></UiElement>
+                ) : <UiButton actionContext={{service: s, canOperate}} actionId="services.open" className="text-link" onClick={() => openService(s)}><UiText>{"查看配置"}</UiText></UiButton>}
+              </UiElement>
+              <UiElement as="td">
+                <UiElement as="span" className="small-node-list" title={s.node_names?.join("、")}>
+                  {s.node_names?.slice(0, 2).join("、") || <UiButton actionContext={{service: s, canOperate}} actionId="services.open" className="text-link" onClick={() => openService(s)}><UiText>{"查看部署配置"}</UiText></UiButton>}
+                </UiElement>
+                {s.node_names?.length > 2 && <UiElement as="span" className="tag small"><UiText>{"+"}</UiText>{s.node_names.length - 2}</UiElement>}
+              </UiElement>
+              <UiElement as="td">
+                {isResourceInteger(s.device_count) && <><UiElement as="span" className="npu-value">{s.device_count}</UiElement><UiElement as="span" className="muted-text"> <UiText>{"个逻辑设备"}</UiText></UiElement></>}
+              </UiElement>
+            </UiElement>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </UiElement>
+      </UiElement>
+    </UiElement>
   );
   const pageViews: ConsolePageViews = {
     overview: () => (<DeferredPanel label="集群概览"><OverviewPage
@@ -1099,46 +1100,46 @@ export default function App() {
                     demo={meta?.mode === "demo"} canOperate={canCreateServices} canAdminister={canAdminister}
                     onNavigate={navigate} onCreateService={() => setEditor("new")} onOpenService={openService} /></DeferredPanel>),
     services: () => ((
-                    <section className="panel service-list-panel" aria-labelledby="service-list-title">
-                      <div className="service-list-header">
-                        <div className="service-list-heading">
-                          <span className="service-list-symbol" aria-hidden="true"><Box size={18} /></span>
-                          <h2 id="service-list-title">服务列表</h2>
-                          <span className="service-list-count" title="全部服务数量">{services.length}</span>
-                        </div>
-                        <div className="service-list-tools">
+                    <UiRegion name="layout.panel" as="section" className="panel service-list-panel" aria-labelledby="service-list-title">
+                      <UiElement as="div" className="service-list-header">
+                        <UiElement as="div" className="service-list-heading">
+                          <UiElement as="span" className="service-list-symbol" aria-hidden="true"><Box size={18} /></UiElement>
+                          <UiElement as="h2" id="service-list-title"><UiText>{"服务列表"}</UiText></UiElement>
+                          <UiElement as="span" className="service-list-count" title="全部服务数量">{services.length}</UiElement>
+                        </UiElement>
+                        <UiElement as="div" className="service-list-tools">
                           <SearchInput value={search} onChange={setSearch} placeholder="搜索服务、模型或节点" ariaLabel="搜索服务、模型、节点或引擎" />
                           <Select value={runtimeFilter} onChange={setRuntimeFilter} ariaLabel="筛选运行环境">
-                            <option value="all">全部运行环境</option>
-                            <option value="docker">Docker</option>
-                            <option value="kubernetes">Kubernetes</option>
+                            <UiElement as="option" value="all"><UiText>{"全部运行环境"}</UiText></UiElement>
+                            <UiElement as="option" value="docker"><UiText>{"Docker"}</UiText></UiElement>
+                            <UiElement as="option" value="kubernetes"><UiText>{"Kubernetes"}</UiText></UiElement>
                           </Select>
                           <Select value={filter} onChange={setFilter} ariaLabel="筛选服务状态">
-                            <option value="all">全部状态</option>
+                            <UiElement as="option" value="all"><UiText>{"全部状态"}</UiText></UiElement>
                             {["running", "draft", "starting", "deploying", "stopped", "partial", "error"].map((s) => (
-                              <option key={s} value={s}>{statusName(s)}</option>
+                              <UiElement as="option" key={s} value={s}>{statusName(s)}</UiElement>
                             ))}
                           </Select>
-                          <Button kind="primary" disabled={!canCreateServices} onClick={() => setEditor("new")}>
-                            <Plus size={15} />创建推理服务
+                          <Button actionId="services.create" kind="primary" disabled={!canCreateServices} onClick={() => setEditor("new")}>
+                            <Plus size={15} /><UiText>{"创建推理服务"}</UiText>
                           </Button>
-                        </div>
-                      </div>
+                        </UiElement>
+                      </UiElement>
                       {filteredServices.length ? table(filteredServices.slice((serviceListPage - 1) * servicePageSize, serviceListPage * servicePageSize)) : (
                         <Empty title={services.length ? "未找到匹配的服务" : "暂无推理服务"}
                           description={services.length ? "试试其他搜索关键词或筛选条件。" : "点击上方“创建推理服务”，从模板或已有配置开始。"} />
                       )}
-                      <div className="table-footer service-list-footer">
-                        <span>共 {filteredServices.length} 条记录</span>
-                        <div className="service-pagination">
-                          <label htmlFor="service-page-size">每页显示</label>
-                          <select id="service-page-size" value={servicePageSize} onChange={(event) => { setServicePageSize(Number(event.target.value)); setServiceListPage(1); }}>
-                            {[10, 25, 50, 100].map(count => <option key={count} value={count}>{count}</option>)}
-                          </select>
+                      <UiElement as="div" className="table-footer service-list-footer">
+                        <UiElement as="span"><UiText>{"共"}</UiText> {filteredServices.length} <UiText>{"条记录"}</UiText></UiElement>
+                        <UiElement as="div" className="service-pagination">
+                          <UiElement as="label" htmlFor="service-page-size"><UiText>{"每页显示"}</UiText></UiElement>
+                          <UiElement as="select" id="service-page-size" value={servicePageSize} onChange={(event) => { setServicePageSize(Number(event.target.value)); setServiceListPage(1); }}>
+                            {[10, 25, 50, 100].map(count => <UiElement as="option" key={count} value={count}>{count}</UiElement>)}
+                          </UiElement>
                           {filteredServices.length > servicePageSize && <Pagination showSizeLabel={false} page={serviceListPage} totalPages={Math.ceil(filteredServices.length / servicePageSize)} onChange={setServiceListPage} />}
-                        </div>
-                      </div>
-                    </section>
+                        </UiElement>
+                      </UiElement>
+                    </UiRegion>
                   )),
     nodes: () => ((
                     <NodesPage
@@ -1157,9 +1158,9 @@ export default function App() {
                         setConfirm({
                           title: `移除节点 ${n.name}？`,
                           description: (
-                            <p>
-                              从控制台移除节点连接。若有服务仍引用该节点，操作会被阻止。
-                            </p>
+                            <UiElement as="p">
+                              <UiText>{"从控制台移除节点连接。若有服务仍引用该节点，操作会被阻止。"}</UiText>
+                            </UiElement>
                           ),
                           text: "移除节点",
                           action: async () => {
@@ -1205,12 +1206,12 @@ export default function App() {
     audit: () => ((canAdminister ? (
                       <SystemLogs audit />
                     ) : (
-                      <InfoBox>操作审计仅限系统管理员查看。</InfoBox>
+                      <InfoBox><UiText>{"操作审计仅限系统管理员查看。"}</UiText></InfoBox>
                     ))),
     systemlogs: () => ((isAdmin ? (
                       <SystemLogs />
                     ) : (
-                      <InfoBox>系统日志仅限系统管理员查看。</InfoBox>
+                      <InfoBox><UiText>{"系统日志仅限系统管理员查看。"}</UiText></InfoBox>
                     ))),
     accounts: () => ((isAdmin ? (
                       <DeferredPanel label="账号管理"><AccountsPage
@@ -1218,12 +1219,12 @@ export default function App() {
                         onSessionChanged={() => refresh(true)}
                       /></DeferredPanel>
                     ) : (
-                      <InfoBox>当前会话没有账号管理权限。</InfoBox>
+                      <InfoBox><UiText>{"当前会话没有账号管理权限。"}</UiText></InfoBox>
                     ))),
     maintenance: () => ((isAdmin ? (
                       <DeferredPanel label="系统维护"><SystemMaintenance /></DeferredPanel>
                     ) : (
-                      <InfoBox>系统维护仅限系统管理员操作。</InfoBox>
+                      <InfoBox><UiText>{"系统维护仅限系统管理员操作。"}</UiText></InfoBox>
                     ))),
     settings: () => ((
                     <SettingsPage
@@ -1248,31 +1249,35 @@ export default function App() {
   const firstReadFailed = !!currentResource && !loadedResources[currentResource] && !!resourceErrors.current[currentResource];
   const pageLoading = initialLoading || (!!currentResource && !loadedResources[currentResource] && !firstReadFailed);
   if (connectionError)
-    return <main className="console-connection-state">
+    return <UiElement as="main" className="console-connection-state">
       <Brand />
-      <section className="console-connection-card" aria-labelledby="console-connection-title">
+      <UiRegion name="layout.panel" as="section" className="console-connection-card" aria-labelledby="console-connection-title">
         <AlertCircle size={30} aria-hidden="true" />
-        <h1 id="console-connection-title">后端连接需要检查</h1>
-        <p role="alert">{connectionError}</p>
-        <Button kind="primary" loading={refreshing} onClick={() => void refresh()}>重新连接</Button>
-      </section>
-    </main>;
+        <UiElement as="h1" id="console-connection-title"><UiText>{"后端连接需要检查"}</UiText></UiElement>
+        <UiElement as="p" role="alert">{connectionError}</UiElement>
+        <Button actionId="console.reconnect" kind="primary" loading={refreshing} onClick={() => void refresh()}><UiText>{"重新连接"}</UiText></Button>
+      </UiRegion>
+    </UiElement>;
   if (auth && !auth.authenticated)
     return <LoginPage status={auth} onAuthenticated={() => refresh()} />;
   return (
+    <UiHostProvider value={{ api, post, download, auth, meta, services, nodes, page,
+      navigate: next => { if (!isConsolePage(next)) throw Error(`Unknown console page: ${next}`); navigate(next); },
+      notify, workflows: { createService: () => { if (canCreateServices) setEditor("new"); },
+        editService, openService, serviceAction: performAction } }}>
     <PluginContext.Provider value={pluginCatalog}>
-    <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`} data-page={externalPage ? "plugin" : page}>
-      <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); mainRef.current?.focus(); }}>跳到主要内容</a>
-      <aside ref={sidebarRef} className={`sidebar ${mobileNav ? "open" : ""}`} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav || undefined} aria-label={mobileNav ? "主导航" : undefined}>
-        <button className="brand-home" aria-label={pageEnabled(pluginCatalog, "overview") ? "返回集群概览" : "打开系统设置"} onClick={() => navigate(pageEnabled(pluginCatalog, "overview") ? "overview" : "settings")}><Brand compact={sidebarCollapsed} /></button>
-        <button type="button" className="icon-btn mobile-navigation-close" aria-label="关闭导航" onClick={() => setMobileNav(false)}><X size={19} /></button>
-        <nav id="primary-navigation" aria-label="主导航">
+    <UiElement as="div" className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`} data-page={externalPage ? "plugin" : page}>
+      <UiElement as="a" className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); mainRef.current?.focus(); }}><UiText>{"跳到主要内容"}</UiText></UiElement>
+      <UiRegion name="layout.sidebar" as="aside" ref={sidebarRef} className={`sidebar ${mobileNav ? "open" : ""}`} role={mobileNav ? "dialog" : undefined} aria-modal={mobileNav || undefined} aria-label={mobileNav ? "主导航" : undefined}>
+        <UiButton actionId="navigation.home" className="brand-home" aria-label={pageEnabled(pluginCatalog, "overview") ? "返回集群概览" : "打开系统设置"} onClick={() => navigate(pageEnabled(pluginCatalog, "overview") ? "overview" : "settings")}><Brand compact={sidebarCollapsed} /></UiButton>
+        <UiButton actionId="navigation.mobile.close" type="button" className="icon-btn mobile-navigation-close" aria-label="关闭导航" onClick={() => setMobileNav(false)}><X size={19} /></UiButton>
+        <UiElement as="nav" id="primary-navigation" aria-label="主导航">
           {navigation.map((g) => (
-            <div className="nav-group" key={g.label}>
-              {g.label !== "服务管理" && <span className="nav-group-label">{g.label}</span>}
+            <UiElement as="div" className="nav-group" key={g.label}>
+              {g.label !== "服务管理" && <UiElement as="span" className="nav-group-label">{g.label}</UiElement>}
               {g.items
                 .map((item) => (
-                  <button
+                  <UiButton actionId="navigation.page"
                     key={item.id}
                     className={`nav-item ${!externalPage && page === item.id ? "active" : ""}`}
                     data-nav={item.id}
@@ -1281,76 +1286,76 @@ export default function App() {
                     aria-current={!externalPage && page === item.id ? "page" : undefined}
                     onClick={() => navigate(item.id as Page)}
                   >
-                    <span className="nav-symbol" aria-hidden="true"><item.icon size={20} /></span>
-                    <span className="nav-label">{item.label}</span>
+                    <UiElement as="span" className="nav-symbol" aria-hidden="true"><item.icon size={20} /></UiElement>
+                    <UiElement as="span" className="nav-label">{item.label}</UiElement>
                     {item.id === "services" && services.length > 0 && (
-                      <em>{services.length}</em>
+                      <UiElement as="em">{services.length}</UiElement>
                     )}
-                  </button>
+                  </UiButton>
                 ))}
-              {g.label === "运维与治理" && grafanaHref && <a className="nav-item nav-integration-link" href={grafanaHref}
+              {g.label === "运维与治理" && grafanaHref && <UiElement as="a" className="nav-item nav-integration-link" href={grafanaHref}
                 target="_blank" rel="noopener noreferrer" data-integration="grafana"
                 aria-label="Grafana 监控（新窗口打开）" title="Grafana 监控（新窗口打开）" onClick={() => setMobileNav(false)}>
-                <span className="nav-symbol" aria-hidden="true"><Activity size={20} /></span>
-                <span className="nav-label">Grafana 监控</span><ArrowUpRight size={13} className="nav-external-mark" aria-hidden="true" />
-              </a>}
-            </div>
+                <UiElement as="span" className="nav-symbol" aria-hidden="true"><Activity size={20} /></UiElement>
+                <UiElement as="span" className="nav-label"><UiText>{"Grafana 监控"}</UiText></UiElement><ArrowUpRight size={13} className="nav-external-mark" aria-hidden="true" />
+              </UiElement>}
+            </UiElement>
           ))}
-          {!!externalNavigation.length && <div className="nav-group"><span className="nav-group-label">社区插件</span>
-            {externalNavigation.map((item) => <button key={pluginPageHash(item)} className={`nav-item ${externalPage === pluginPageHash(item) ? "active" : ""}`}
+          {!!externalNavigation.length && <UiElement as="div" className="nav-group"><UiElement as="span" className="nav-group-label"><UiText>{"社区插件"}</UiText></UiElement>
+            {externalNavigation.map((item) => <UiButton actionId="navigation.plugin" key={pluginPageHash(item)} className={`nav-item ${externalPage === pluginPageHash(item) ? "active" : ""}`}
               data-plugin-page={pluginPageHash(item)} aria-label={item.title} title={sidebarCollapsed ? item.title : undefined}
               aria-current={externalPage === pluginPageHash(item) ? "page" : undefined} onClick={() => navigatePlugin(pluginPageHash(item))}>
-              <span className="nav-symbol" aria-hidden="true"><Box size={20} /></span><span className="nav-label">{item.title}</span></button>)}
-          </div>}
-        </nav>
-        <div className="sidebar-bottom">
-          <button aria-label="版本与帮助" onClick={() => navigate("settings")}>
+              <UiElement as="span" className="nav-symbol" aria-hidden="true"><Box size={20} /></UiElement><UiElement as="span" className="nav-label">{item.title}</UiElement></UiButton>)}
+          </UiElement>}
+        </UiElement>
+        <UiElement as="div" className="sidebar-bottom">
+          <UiButton actionId="navigation.help" aria-label="版本与帮助" onClick={() => navigate("settings")}>
             <CircleHelp size={15} />
-            <span>版本与帮助</span>
+            <UiElement as="span"><UiText>{"版本与帮助"}</UiText></UiElement>
             <ArrowUpRight size={13} />
-          </button>
-          <div className="sidebar-version">
-            <span className="sidebar-brand-name" title={branding.name}>{branding.name}</span>{" "}
-            {meta?.version && <span>{`v${meta.version}`}</span>}
-          </div>
-        </div>
-      </aside>
+          </UiButton>
+          <UiElement as="div" className="sidebar-version">
+            <UiElement as="span" className="sidebar-brand-name" title={branding.name}>{branding.name}</UiElement>{" "}
+            {meta?.version && <UiElement as="span">{`v${meta.version}`}</UiElement>}
+          </UiElement>
+        </UiElement>
+      </UiRegion>
       {mobileNav && (
-        <button
+        <UiButton actionId="navigation.mobile.close"
           className="mobile-backdrop"
           tabIndex={-1}
           aria-label="关闭导航遮罩"
           onClick={() => setMobileNav(false)}
         />
       )}
-      <div key={sessionRevision} className="workspace-main" inert={mobileNav || undefined}>
-        <header className="topbar">
-          <div className="topbar-left">
-            <button type="button" className="icon-btn navigation-toggle" aria-label={sidebarCollapsed ? "展开导航" : "收起导航"} aria-controls="primary-navigation" aria-expanded={!sidebarCollapsed}
+      <UiRegion name="layout.workspace" key={sessionRevision} className="workspace-main" inert={mobileNav || undefined}>
+        <UiRegion name="layout.topbar" as="header" className="topbar">
+          <UiElement as="div" className="topbar-left">
+            <UiButton actionId="navigation.sidebar.toggle" type="button" className="icon-btn navigation-toggle" aria-label={sidebarCollapsed ? "展开导航" : "收起导航"} aria-controls="primary-navigation" aria-expanded={!sidebarCollapsed}
               onClick={() => setSidebarCollapsed((value) => {
                 try { localStorage.setItem(NAVIGATION_COLLAPSED_STORAGE_KEY, String(!value)); } catch { /* Browser preference remains optional. */ }
                 return !value;
-              })}>{sidebarCollapsed ? <PanelLeftOpen size={24} /> : <PanelLeftClose size={24} />}</button>
-            <button
+              })}>{sidebarCollapsed ? <PanelLeftOpen size={24} /> : <PanelLeftClose size={24} />}</UiButton>
+            <UiButton actionId="navigation.mobile.open"
               ref={mobileAnchor}
               className="icon-btn mobile-menu"
               onClick={() => setMobileNav(true)}
               aria-label="打开导航"
             >
               <Menu size={20} />
-            </button>
-            <span className="topbar-divider" aria-hidden="true" />
-            <nav className="breadcrumb" aria-label="面包屑"><ol>
-              <li><button className="breadcrumb-home" type="button" aria-label="返回集群概览" onClick={() => navigate("overview")}><Home size={16} /></button></li>
-              <li><ChevronRight size={12} aria-hidden="true" />{detail ? <button type="button" onClick={() => setDetailId(null)}>{currentTitle}</button> : <span aria-current="page">{currentTitle}</span>}</li>
-              {detail && <li><ChevronRight size={12} aria-hidden="true" /><span aria-current="page">{detail.name}</span></li>}
-            </ol></nav>
-          </div>
-          <div className="topbar-right">
-            {meta?.mode === "demo" && <span className="demo-label">演示数据 · 模拟操作</span>}
-            <button ref={activityAnchor} type="button" className="header-icon" aria-label="查看控制台活动" title="控制台活动" aria-expanded={headerPanel === "activity"} aria-controls="session-popover" onClick={() => setHeaderPanel(headerPanel === "activity" ? "" : "activity")}><Bell size={18} /></button>
-            {docsUrl && <a className="header-icon" href={docsUrl} target="_blank" rel="noreferrer" aria-label="使用文档（新窗口打开）" title="使用文档"><CircleHelp size={18} /></a>}
-            <button
+            </UiButton>
+            <UiElement as="span" className="topbar-divider" aria-hidden="true" />
+            <UiElement as="nav" className="breadcrumb" aria-label="面包屑"><UiElement as="ol">
+              <UiElement as="li"><UiButton actionId="navigation.home" className="breadcrumb-home" type="button" aria-label="返回集群概览" onClick={() => navigate("overview")}><Home size={16} /></UiButton></UiElement>
+              <UiElement as="li"><ChevronRight size={12} aria-hidden="true" />{detail ? <UiButton actionId="services.back" type="button" onClick={() => setDetailId(null)}>{currentTitle}</UiButton> : <UiElement as="span" aria-current="page">{currentTitle}</UiElement>}</UiElement>
+              {detail && <UiElement as="li"><ChevronRight size={12} aria-hidden="true" /><UiElement as="span" aria-current="page">{detail.name}</UiElement></UiElement>}
+            </UiElement></UiElement>
+          </UiElement>
+          <UiElement as="div" className="topbar-right">
+            {meta?.mode === "demo" && <UiElement as="span" className="demo-label"><UiText>{"演示数据 · 模拟操作"}</UiText></UiElement>}
+            <UiButton actionId="console.activity" ref={activityAnchor} type="button" className="header-icon" aria-label="查看控制台活动" title="控制台活动" aria-expanded={headerPanel === "activity"} aria-controls="session-popover" onClick={() => setHeaderPanel(headerPanel === "activity" ? "" : "activity")}><Bell size={18} /></UiButton>
+            {docsUrl && <UiElement as="a" className="header-icon" href={docsUrl} target="_blank" rel="noreferrer" aria-label="使用文档（新窗口打开）" title="使用文档"><CircleHelp size={18} /></UiElement>}
+            <UiButton actionId="auth.session.open"
               ref={userAnchor}
               className="user-menu"
               aria-label="查看当前账号与会话"
@@ -1360,50 +1365,50 @@ export default function App() {
                 setHeaderPanel(headerPanel === "user" ? "" : "user")
               }
             >
-              <span className="avatar">
+              <UiElement as="span" className="avatar">
                 <UserRound size={16} />
-              </span>
-              <span>
+              </UiElement>
+              <UiElement as="span">
                 {auth?.user?.display_name ||
                   auth?.user?.username ||
                   (meta?.mode === "demo" ? "演示会话" : "会话")}
-              </span>
+              </UiElement>
               <ChevronDown size={12} />
-            </button>
-          </div>
+            </UiButton>
+          </UiElement>
           {["user", "activity"].includes(headerPanel) && (
-            <div ref={userPopover} id="session-popover" className="header-popover" role="region" aria-label={headerPanel === "user" ? "当前会话" : "控制台活动"}>
+            <UiElement as="div" ref={userPopover} id="session-popover" className="header-popover" role="region" aria-label={headerPanel === "user" ? "当前会话" : "控制台活动"}>
               {headerPanel === "user" ? <>
-                {auth?.user && <p className="session-identity">{auth.user.username} · {roleLabel(auth.user.role)}</p>}
-                {meta?.mode === "demo" && <p>演示模式，无需登录</p>}
-                {auth?.user && auth.user.auth_source !== "oidc" && <button className="session-menu-link" onClick={() => { setPasswordOpen(true); setHeaderPanel(""); }}>修改个人密码</button>}
-                {auth?.user && <button className="session-menu-link" disabled={logoutBusy} onClick={() => void logout()}><LogOut size={14} />{logoutBusy ? "正在退出…" : "退出登录"}</button>}
-                <div className="session-menu-separator" />
-                <button className="session-menu-link" onClick={() => navigate("settings")}><Settings2 size={14} />界面外观与设置</button>
-                <button className="session-menu-link" onClick={() => { setHeaderPanel(""); setCommandOpen(true); }} aria-keyshortcuts="Control+K Meta+K"><Search size={14} />搜索资源或跳转页面<kbd>Ctrl K</kbd></button>
+                {auth?.user && <UiElement as="p" className="session-identity">{auth.user.username} <UiText>{"·"}</UiText> {roleLabel(auth.user.role)}</UiElement>}
+                {meta?.mode === "demo" && <UiElement as="p"><UiText>{"演示模式，无需登录"}</UiText></UiElement>}
+                {auth?.user && auth.user.auth_source !== "oidc" && <UiButton actionId="auth.password.open" className="session-menu-link" onClick={() => { setPasswordOpen(true); setHeaderPanel(""); }}><UiText>{"修改个人密码"}</UiText></UiButton>}
+                {auth?.user && <UiButton actionId="auth.logout" className="session-menu-link" disabled={logoutBusy} onClick={() => void logout()}><LogOut size={14} />{logoutBusy ? "正在退出…" : "退出登录"}</UiButton>}
+                <UiElement as="div" className="session-menu-separator" />
+                <UiButton actionId="navigation.settings" className="session-menu-link" onClick={() => navigate("settings")}><Settings2 size={14} /><UiText>{"界面外观与设置"}</UiText></UiButton>
+                <UiButton actionId="navigation.search" className="session-menu-link" onClick={() => { setHeaderPanel(""); setCommandOpen(true); }} aria-keyshortcuts="Control+K Meta+K"><Search size={14} /><UiText>{"搜索资源或跳转页面"}</UiText><UiElement as="kbd"><UiText>{"Ctrl K"}</UiText></UiElement></UiButton>
               </> : <>
-                <h3>控制台活动</h3>
-                <p className={`shell-sync-status ${syncError ? "sync-error" : ""}`} role="status">{syncError ? `同步异常：${syncError}` : refreshing ? "正在同步控制台数据" : lastSyncedAt ? `最近同步 ${new Date(lastSyncedAt).toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}` : "尚未完成数据同步"}</p>
-                {job ? <button className="session-menu-link" onClick={() => { setJobOpen(true); setHeaderPanel(""); }}><Clock3 size={14} />查看当前部署任务</button> : <p>本次会话没有正在跟踪的部署任务。</p>}
-                {canAdminister && pageEnabled(pluginCatalog, "audit") && <button className="session-menu-link" onClick={() => navigate("audit")}>查看操作审计<ArrowRight size={14} /></button>}
+                <UiElement as="h3"><UiText>{"控制台活动"}</UiText></UiElement>
+                <UiElement as="p" className={`shell-sync-status ${syncError ? "sync-error" : ""}`} role="status">{syncError ? `同步异常：${syncError}` : refreshing ? "正在同步控制台数据" : lastSyncedAt ? `最近同步 ${new Date(lastSyncedAt).toLocaleTimeString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false })}` : "尚未完成数据同步"}</UiElement>
+                {job ? <UiButton actionId="services.job.open" className="session-menu-link" onClick={() => { setJobOpen(true); setHeaderPanel(""); }}><Clock3 size={14} /><UiText>{"查看当前部署任务"}</UiText></UiButton> : <UiElement as="p"><UiText>{"本次会话没有正在跟踪的部署任务。"}</UiText></UiElement>}
+                {canAdminister && pageEnabled(pluginCatalog, "audit") && <UiButton actionId="navigation.audit" className="session-menu-link" onClick={() => navigate("audit")}><UiText>{"查看操作审计"}</UiText><ArrowRight size={14} /></UiButton>}
               </>}
-            </div>
+            </UiElement>
           )}
-        </header>
-        <main ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>
+        </UiRegion>
+        <UiElement as="main" ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>
           <DeferredPanel key={`${sessionRevision}:${externalPage ?? page}:${detail?.id ?? ""}`} label={currentTitle}>
           {externalPage ? externalContribution && queryIdentity ? <CommunityPluginPage key={`${queryIdentity}:${pluginCatalog?.digest}:${externalPage}`} contribution={externalContribution} identity={queryIdentity} /> :
-            <section className="panel"><Empty title={!pluginCatalog ? "正在确认插件页面" : "插件页面不可用"}
+            <UiRegion name="layout.panel" as="section" className="panel"><Empty title={!pluginCatalog ? "正在确认插件页面" : "插件页面不可用"}
               description={pluginError || "该页面尚未加载、已被停用或当前账号没有访问权限。请在系统设置中核对实际插件清单。"}
-              action={<><Button onClick={() => navigate("settings")}>打开系统设置</Button><Button loading={pluginQuery.refreshing} onClick={() => void pluginQuery.refresh()}>重新读取清单</Button></>} /></section> : <>
-          <div className="workspace-scene" key={detail?.id ?? page}>
+              action={<><Button actionId="navigation.settings" onClick={() => navigate("settings")}><UiText>{"打开系统设置"}</UiText></Button><Button actionId="plugins.catalog.refresh" loading={pluginQuery.refreshing} onClick={() => void pluginQuery.refresh()}><UiText>{"重新读取清单"}</UiText></Button></>} /></UiRegion> : <>
+          <UiElement as="div" className="workspace-scene" key={detail?.id ?? page}>
           {!pageEnabled(pluginCatalog, page) && (
-            <section className="panel"><Empty title={pluginCatalog ? "此功能插件未启用" : pluginError ? "无法读取插件清单" : "正在确认可用功能"}
+            <UiRegion name="layout.panel" as="section" className="panel"><Empty title={pluginCatalog ? "此功能插件未启用" : pluginError ? "无法读取插件清单" : "正在确认可用功能"}
               description={pluginCatalog ? `“${titles[page]}”未在当前启动配置中启用，可在系统设置中查看已安装插件。` : pluginError || "读取服务端插件清单后显示可用页面。"}
-              action={<><Button onClick={() => navigate("settings")}>打开系统设置</Button>{!pluginCatalog && <Button loading={pluginQuery.refreshing} onClick={() => void pluginQuery.refresh()}>重新读取</Button>}</>} /></section>
+              action={<><Button actionId="navigation.settings" onClick={() => navigate("settings")}><UiText>{"打开系统设置"}</UiText></Button>{!pluginCatalog && <Button actionId="plugins.catalog.refresh" loading={pluginQuery.refreshing} onClick={() => void pluginQuery.refresh()}><UiText>{"重新读取"}</UiText></Button>}</>} /></UiRegion>
           )}
           {detail && page === "services" ? (
-            <div hidden={!pageEnabled(pluginCatalog, page)}>
+            <UiElement as="div" hidden={!pageEnabled(pluginCatalog, page)}>
               {error && <ErrorBox message={error} />}
               <ServiceDetail
                 service={detail}
@@ -1415,39 +1420,39 @@ export default function App() {
                 canOperate={canOperate}
                 stopChecking={!!stopCheckingId}
               />
-            </div>
+            </UiElement>
           ) : pageEnabled(pluginCatalog, page) ? (
             <>
               {page !== "gateways" && page !== "overview" && (
-              <div className="page-heading">
-                <div>
-                  <h1>
+              <UiElement as="div" className="page-heading">
+                <UiElement as="div">
+                  <UiElement as="h1">
                     {titles[page]}
                     {page === "features" && (
-                      <span className="title-count">
+                      <UiElement as="span" className="title-count">
                         {meta?.capabilities?.length}
-                      </span>
+                      </UiElement>
                     )}
-                  </h1>
-                </div>
-                <div className="heading-actions">
-                  {page === "nodes" && <button type="button" className="page-reload" aria-label="刷新节点列表" title="刷新节点列表" disabled={nodesQuery.refreshing} onClick={() => { npuResources.refresh(); void nodesQuery.refresh(); }}><RefreshCw size={18} className={nodesQuery.refreshing ? "spin" : undefined} /></button>}
-                  {page === "services" && <button type="button" className="page-reload" aria-label="刷新服务列表" title="刷新服务列表" disabled={servicesQuery.refreshing} onClick={() => void servicesQuery.refresh()}><RefreshCw size={18} className={servicesQuery.refreshing ? "spin" : undefined} /></button>}
-                </div>
-              </div>
+                  </UiElement>
+                </UiElement>
+                <UiElement as="div" className="heading-actions">
+                  {page === "nodes" && <UiButton actionId="nodes.refresh" type="button" className="page-reload" aria-label="刷新节点列表" title="刷新节点列表" disabled={nodesQuery.refreshing} onClick={() => { npuResources.refresh(); void nodesQuery.refresh(); }}><RefreshCw size={18} className={nodesQuery.refreshing ? "spin" : undefined} /></UiButton>}
+                  {page === "services" && <UiButton actionId="services.refresh" type="button" className="page-reload" aria-label="刷新服务列表" title="刷新服务列表" disabled={servicesQuery.refreshing} onClick={() => void servicesQuery.refresh()}><RefreshCw size={18} className={servicesQuery.refreshing ? "spin" : undefined} /></UiButton>}
+                </UiElement>
+              </UiElement>
               )}
               {meta?.mode === "demo" && page === "overview" && (
-                <div className="demo-banner">
-                  <span>
+                <UiElement as="div" className="demo-banner">
+                  <UiElement as="span">
                     <AlertCircle size={15} />
-                    <b>演示工作空间</b>
-                    <span>示例服务与模拟指标；操作不会发送到真实节点。</span>
-                  </span>
-                  <button onClick={() => navigate("settings")}>
-                    了解真实环境接入
+                    <UiElement as="b"><UiText>{"演示工作空间"}</UiText></UiElement>
+                    <UiElement as="span"><UiText>{"示例服务与模拟指标；操作不会发送到真实节点。"}</UiText></UiElement>
+                  </UiElement>
+                  <UiButton actionId="navigation.settings" onClick={() => navigate("settings")}>
+                    <UiText>{"了解真实环境接入"}</UiText>
                     <ArrowRight size={13} />
-                  </button>
-                </div>
+                  </UiButton>
+                </UiElement>
               )}
               {(error || syncError) && <ErrorBox message={error || syncError} />}
               {pageLoading ? (
@@ -1461,11 +1466,11 @@ export default function App() {
               )}
             </>
           ) : null}
-          </div>
+          </UiElement>
           </>}
           </DeferredPanel>
-        </main>
-      </div>
+        </UiElement>
+      </UiRegion>
       {editor && canOperate && (
         <DeferredPanel label="推理服务配置" onClose={() => setEditor(null)}>
         <ServiceEditor
@@ -1589,8 +1594,8 @@ export default function App() {
           closeDisabled={actionBusy}
           footer={
             <>
-              <Button disabled={actionBusy} onClick={() => setPlanDialog(null)}>返回</Button>
-              <Button
+              <Button actionId="services.deploy.cancel" disabled={actionBusy} onClick={() => setPlanDialog(null)}><UiText>{"返回"}</UiText></Button>
+              <Button actionId="services.deploy.confirm"
                 kind="primary"
                 disabled={
                   !runtimeEnabled(pluginCatalog, planDialog.service.runtime) ||
@@ -1639,32 +1644,32 @@ export default function App() {
           }
         >
           {planError && <ErrorBox message={planError} />}
-          <div className="plan-heading">
+          <UiElement as="div" className="plan-heading">
             <ShieldCheck size={27} />
-            <div>
-              <h3>
+            <UiElement as="div">
+              <UiElement as="h3">
                 {planDialog.plan.valid
                   ? "预检通过，可以部署"
                   : "请先处理预检未通过项"}
-              </h3>
-              <p>
+              </UiElement>
+              <UiElement as="p">
                 {planDialog.service.needs_rebuild
                   ? "按当前配置重建本服务已停止的受管容器，保留模型权重。"
                   : "实际检查结果与当前配置执行计划"}
-              </p>
-            </div>
-          </div>
-          <div className="check-list">
+              </UiElement>
+            </UiElement>
+          </UiElement>
+          <UiElement as="div" className="check-list">
             {planDialog.plan.checks.map((c, i) => (
-              <div key={i}>
+              <UiElement as="div" key={i}>
                 <Badge status={c.status} />
-                <div>
-                  <b>{c.name}</b>
-                  <p>{c.detail}</p>
-                </div>
-              </div>
+                <UiElement as="div">
+                  <UiElement as="b">{c.name}</UiElement>
+                  <UiElement as="p">{c.detail}</UiElement>
+                </UiElement>
+              </UiElement>
             ))}
-          </div>
+          </UiElement>
           {planDialog.plan.warnings?.length > 0 && (
             <InfoBox>{planDialog.plan.warnings.join("；")}</InfoBox>
           )}
@@ -1676,12 +1681,12 @@ export default function App() {
             approved={planExtraApproved}
             onApprovalChange={setPlanExtraApproved}
           />
-          <details className="command-preview">
-            <summary>执行计划 · {planDialog.plan.commands.length} 条</summary>
+          <UiElement as="details" className="command-preview">
+            <UiElement as="summary"><UiText>{"执行计划 ·"}</UiText> {planDialog.plan.commands.length} <UiText>{"条"}</UiText></UiElement>
             {planDialog.plan.commands.map((c, i) => (
-              <pre key={i}>{c.command}</pre>
+              <UiElement as="pre" key={i}>{c.command}</UiElement>
             ))}
-          </details>
+          </UiElement>
         </Modal>
       )}
       {jobOpen && job && pluginEnabled(pluginCatalog, "services") && (
@@ -1698,7 +1703,7 @@ export default function App() {
         />
       )}
       {toast && (
-        <div className={`toast ${toastTone}`} role="status">
+        <UiElement as="div" className={`toast ${toastTone}`} role="status">
           {toastTone === "error" ? (
             <AlertCircle size={17} />
           ) : toastTone === "warning" ? (
@@ -1706,18 +1711,19 @@ export default function App() {
           ) : (
             <CheckCircle2 size={17} />
           )}
-          <span>{toast}</span>
-          <button onClick={() => setToast("")} aria-label="关闭提示">
+          <UiElement as="span">{toast}</UiElement>
+          <UiButton actionId="notifications.dismiss" onClick={() => setToast("")} aria-label="关闭提示">
             <X size={14} />
-          </button>
-        </div>
+          </UiButton>
+        </UiElement>
       )}
-    </div>
+    </UiElement>
     </PluginContext.Provider>
+    </UiHostProvider>
   );
 }
 
-function LogsPage({ services, nodes, servicesRead }: { services: Service[]; nodes: NodeInfo[]; servicesRead: ReadState }) {
+function DefaultLogsPage({ services, nodes, servicesRead }: { services: Service[]; nodes: NodeInfo[]; servicesRead: ReadState }) {
   const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
   const [logs, setLogs] = useState<Log[]>([]);
   const [error, setError] = useState("");
@@ -1745,20 +1751,20 @@ function LogsPage({ services, nodes, servicesRead }: { services: Service[]; node
   useEffect(() => { setLogs([]); setError(""); setPartial(false); }, [serviceId, unsubmitted, nodeId, role]);
   const filteredLogs = runtimeAccess.enabled ? logs.filter((line) => matchesLog(line, query)) : [];
   return (
-    <section className="panel log-panel">
+    <UiRegion name="layout.panel" as="section" className="panel log-panel">
       {runtimeAccess.enabled && error && <ErrorBox message={error} />}
       {selectedService && !runtimeAccess.enabled && <InfoBox>{runtimeAccess.reason}</InfoBox>}
-      <div className="table-toolbar">
+      <UiElement as="div" className="table-toolbar">
         <Select
           value={serviceId}
           onChange={setServiceId}
           ariaLabel="选择日志服务"
         >
-          <option value="">选择推理服务</option>
+          <UiElement as="option" value=""><UiText>{"选择推理服务"}</UiText></UiElement>
           {services.map((s) => (
-            <option key={s.id} value={s.id}>
+            <UiElement as="option" key={s.id} value={s.id}>
               {s.name}
-            </option>
+            </UiElement>
           ))}
         </Select>
         <RuntimeLogFilters service={services.find((service) => service.id === serviceId)} nodes={nodes} nodeId={nodeId} role={role} onChange={(nextNode, nextRole) => setFilters({ serviceId, nodeId: nextNode, role: nextRole })} />
@@ -1767,41 +1773,41 @@ function LogsPage({ services, nodes, servicesRead }: { services: Service[]; node
           onChange={setQuery}
           placeholder="搜索当前日志窗口"
         />
-        <label className="checkbox-label">
-          <input
+        <UiElement as="label" className="checkbox-label">
+          <UiElement as="input"
             type="checkbox"
             checked={auto}
             disabled={unsubmitted}
             onChange={(e) => setAuto(e.target.checked)}
           />
-          自动刷新
-        </label>
-        <Button
+          <UiText>{"自动刷新"}</UiText>
+        </UiElement>
+        <Button actionId="logs.refresh"
           onClick={() => void load()}
           loading={loading}
           disabled={!runtimeAccess.enabled || !serviceId || unsubmitted}
         >
           <RefreshCw size={14} />
-          刷新
+          <UiText>{"刷新"}</UiText>
         </Button>
-        <Button
+        <Button actionId="logs.export"
           onClick={() => download(logs, "mindie-motor-console-runtime-logs.json")}
           disabled={!runtimeAccess.enabled || !hasSuccess || !logs.length || unsubmitted}
         >
           <Download size={14} />
-          导出
+          <UiText>{"导出"}</UiText>
         </Button>
-      </div>
-      {runtimeAccess.enabled && hasSuccess && partial && <InfoBox>部分日志来源未完整返回，当前窗口可能缺少记录；请按执行节点、角色筛选后重试，并查看 Agent 诊断。</InfoBox>}
-      <div className="log-view tall">
+      </UiElement>
+      {runtimeAccess.enabled && hasSuccess && partial && <InfoBox><UiText>{"部分日志来源未完整返回，当前窗口可能缺少记录；请按执行节点、角色筛选后重试，并查看 Agent 诊断。"}</UiText></InfoBox>}
+      <UiElement as="div" className="log-view tall">
         {hasSuccess && filteredLogs.length ? (
           filteredLogs.map((l, i) => (
               <RuntimeLogLine key={i} line={l} />
             ))
         ) : (
-          <div className="log-empty">
+          <UiElement as="div" className="log-empty">
             <TerminalSquare size={36} />
-            <h3>
+            <UiElement as="h3">
               {selectedService && !runtimeAccess.enabled ? "运行时未启用，已暂停日志读取" : !servicesRead.loaded ? readNotice(servicesRead) : serviceId && !unsubmitted && !hasSuccess ? error ? "日志读取失败，请重试" : "正在读取日志…" : logs.length
                 ? "没有匹配的日志"
                 : unsubmitted
@@ -1809,8 +1815,8 @@ function LogsPage({ services, nodes, servicesRead }: { services: Service[]; node
                 : serviceId
                   ? "尚无运行日志"
                   : "选择一个服务查看日志"}
-            </h3>
-            <span>
+            </UiElement>
+            <UiElement as="span">
               {logs.length
                 ? "调整筛选条件或清空搜索后查看。"
                 : unsubmitted
@@ -1818,17 +1824,27 @@ function LogsPage({ services, nodes, servicesRead }: { services: Service[]; node
                 : loading
                   ? "正在获取日志…"
                   : "执行节点与角色在服务端筛选后读取近期尾窗；关键词只搜索当前返回窗口"}
-            </span>
-          </div>
+            </UiElement>
+          </UiElement>
         )}
-      </div>
-      <div className="log-footer">
-        <span
+      </UiElement>
+      <UiElement as="div" className="log-footer">
+        <UiElement as="span"
           className={`status-dot ${runtimeAccess.enabled && auto && !unsubmitted ? "green" : "muted"}`}
         />
         {!runtimeAccess.enabled && selectedService ? "运行时未启用" : unsubmitted ? "尚未提交部署" : auto ? "每 4 秒刷新" : "按需刷新"}
-        <span>{runtimeAccess.enabled && serviceId && !unsubmitted ? readCount({ loaded: hasSuccess, refreshing: loading, error }, logs.length, "行已返回 · 近期窗口上限 500 行，非完整归档") : selectedService && !runtimeAccess.enabled ? "已暂停读取，不展示旧日志数量" : servicesRead.loaded ? "选择已部署服务后读取日志" : readNotice(servicesRead)}</span>
-      </div>
-    </section>
+        <UiElement as="span">{runtimeAccess.enabled && serviceId && !unsubmitted ? readCount({ loaded: hasSuccess, refreshing: loading, error }, logs.length, "行已返回 · 近期窗口上限 500 行，非完整归档") : selectedService && !runtimeAccess.enabled ? "已暂停读取，不展示旧日志数量" : servicesRead.loaded ? "选择已部署服务后读取日志" : readNotice(servicesRead)}</UiElement>
+      </UiElement>
+    </UiRegion>
   );
 }
+
+const Brand = withUiSlot("component.Brand", DefaultBrand);
+const RuntimeTag = withUiSlot("component.RuntimeTag", DefaultRuntimeTag);
+const ServiceMenu = withUiSlot("component.ServiceMenu", DefaultServiceMenu);
+const App = withUiSlot("ui.shell", DefaultApp);
+export default App;
+const LogsPage = withUiSlot("component.LogsPage", DefaultLogsPage);
+
+// Reference package implementation exports.
+export { DefaultBrand, DefaultRuntimeTag, DefaultServiceMenu, DefaultApp, DefaultLogsPage };

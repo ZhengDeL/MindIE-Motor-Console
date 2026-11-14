@@ -1,133 +1,111 @@
 # 架构与维护边界
 
-MindIE-Motor Console 为原生 Motor 提供可选的部署与运维控制台。系统采用单实例控制面、节点执行 Agent、独立存储适配器和受信任插件宿主；模型的实例管理与请求调度仍由原生 Motor 负责。前端为 React/TypeScript/Vite，后端为 FastAPI/Python。
+MindIE-Motor Console 为原生 Motor 提供可选的部署与运维控制台。0.12.0 候选采用小型宿主、显式提供者绑定和默认参考插件；Node 入口、Python 业务/Agent 与浏览器 UI 各有公开 SDK。具体实现可以替换，原生 Motor 的模型管理和请求调度保持独立。
 
 ## 部署与数据流
 
 ```mermaid
-flowchart LR
-  subgraph 管理网络
-    U[浏览器] -->|HTTPS| W[Web 静态入口]
-    W -->|业务 API| C[Control 单写控制面]
-    C -->|Repository / Unit of Work| S[(SQLite 或 PostgreSQL)]
-    C -->|受信 HTTPS 协议| A[Docker Agent]
-    C -->|受信 HTTPS 协议| K[Kubernetes Agent]
-    A -->|固定 helper 与 Docker SDK| D[原生 Motor 容器]
-    K -->|原生清单 / UID 保护| R[Kubernetes 资源与原生 Operator]
-    K -. 控制台内推理调试 .-> M[Motor Coordinator]
-    E[Docker 宿主观测源] -->|单宿主有界只读采样| A
-    KE[K8s Agent 对应宿主观测源] -->|可选，单宿主采样| K
-    E -->|Exporter 指标，不含文件快照| P[Prometheus 历史指标]
-    CE[K8s 既有逐节点 Exporter] -->|逐 Pod 或 Endpoint 抓取| P
-    P --> G[Grafana 独立登录]
-  end
-  D --> M
-  R --> M
-  B[外部推理客户端] -->|直接或经已有网关| M
-  M --> I[原生 P/D/Encode 引擎]
+flowchart TB
+  B["浏览器<br/>所选 UI 外壳 / 页面 / 组件插件"] -->|HTTPS| W[Web 静态入口]
+  W -->|同源 API| H[Node 插件宿主]
+  H --> HP["所选 HTTP transport / handler<br/>默认 Python bridge"]
+  HP -->|原始 HTTP 字节与流| C["Python 请求宿主<br/>所选业务 / 身份 / 策略 / 审计提供者"]
+  C -->|Repository / Unit of Work| S[(所选存储提供者)]
+  C -->|受信 HTTPS| A[Docker Agent 与所选运行时]
+  C -->|受信 HTTPS| K[Kubernetes Agent 与所选运行时]
+  A -->|最终准入与持久回执| D[宿主 Docker Engine]
+  K -->|清单与 UID 归属检查| KA[Kubernetes API / 原生 Operator]
+  D --> M[原生 Motor 模型服务]
+  KA --> M
+  I[外部推理客户端] -->|直接或经已有网关| M
 ```
 
-实线表示管理、采样或正常业务通路；虚线是控制台内 Kubernetes 推理调试的例外。外部业务推理通常直接访问 Coordinator/已有网关，不经过 Control、数据库或执行 Agent。图中的 Docker 与 Kubernetes 是可选执行后端，不表示同一 NPU 可以被两者同时自由分配。
+使用 [compose.plugins.yaml](compose.plugins.yaml) 时 Node 和 Python worker 是私有服务，Web 为独立入口。原有 [compose.modular.yaml](compose.modular.yaml) 可直接访问 Python 请求宿主，使用相同 Python/UI 提供者机制。数据库仍要求单控制写者；添加 Node 入口或更换数据库不自动获得高可用。
 
-Kubernetes 节点容量通过执行 Agent 查询 API；全集群 CPU、内存和 NPU 硬件指标由既有 Prometheus 逐实例抓取 Exporter，再由 Grafana 展示。Agent 的宿主快照仅属于其对应宿主，当前没有全 worker 的 Exporter 自动发现或 PromQL 汇聚接口。两种运行环境的独立采集图、Operator/普通 Prometheus 示例和标签合同见 [Kubernetes 监控接入](docs/KUBERNETES_MONITORING.md)。
+外部业务推理不经过 Node 宿主、Control、数据库或 Agent。控制台内推理调试是独立管理功能，K8s 路径可经过执行 Agent。Docker 与 K8s 是执行后端，不表示同一 NPU 能交给两者同时自由分配。
 
-| 组件 | 职责与代码入口 |
-| --- | --- |
-| Web | 静态应用，展示配置、资源、任务和观测；不直接连接数据库或 Docker socket。入口见 [frontend/src](frontend/src) |
-| Control | 认证、修订、计划、任务协调、审计与维护；不挂载 Docker socket。装配见 [app.py](backend/app.py) 的 `_assemble_app` |
-| 存储 | Repository / Unit of Work 与 [Store](backend/store.py)；内置 SQLite/PostgreSQL，配置和恢复见 [STORAGE.md](STORAGE.md) |
-| Docker Agent | 最终资源准入、容器归属校验、设备账本与持久操作回执；复用 [motor_adapter.py](backend/motor_adapter.py) |
-| Kubernetes Agent | 独立 kubeconfig、原生清单生成、命名空间/资源 UID 所有权；见 [kubernetes_runtime.py](backend/kubernetes_runtime.py) |
-| 原生 Motor | Controller/NodeManager 管理实例，Coordinator 调度请求，引擎执行推理；平台保留原始配置与算法 |
-
-SQLite 使用本地持久磁盘和内核单写租约；PostgreSQL 通过专用会话持有 advisory lock。两者都要求单控制写者，不能使用多 Uvicorn worker；更换数据库不会自动获得控制面高可用。任务会持久化，但启动前结果未明的任务不会自动重放，必须先核对实际资源和执行记录。
-
-## 模块与插件边界
-
-本节描述当前实现。内置工厂、模块开关和社区增量扩展尚不等于所有默认提供者可替换；实际缺口见[扩展面核对](PLUGIN_EXTENSION_POINTS.md#可扩展与可替换的现状)。完整 UI 与业务提供者均可替换的目标另见[可替换插件架构设计](docs/REPLACEABLE_PLUGIN_ARCHITECTURE.md)，不得把目标图当成当前实现图。
+## 契约与提供者装配
 
 ```mermaid
 flowchart TB
-  BOOT[启动配置与已选择社区包声明] --> HOST[静态清单与依赖图校验]
-  HOST --> ST[Store 与选定数据库适配器]
-  ST --> CORE["固定宿主边界<br/>身份 · RBAC · 审计<br/>资源归属与最终准入"]
-  CORE --> CTX[PluginContext]
-  CTX --> BI["固定选择的内置工厂<br/>品牌 · 节点 · 部分服务<br/>网关 · 镜像 · 模板"]
-  CTX --> CC[CommunityContext 受限门面]
-  CC --> CO["受信社区工厂<br/>已选择的精确摘要"]
-  BI -->|输出接口，默认业务尚未以此反向装配| IF[精确版本接口表]
-  CO -->|provide / consume| IF
-  CORE --> FIX["宿主固定桥接或内联<br/>运行时 · Grafana<br/>服务主流程及部分系统路由"]
-  BI --> LIFE[ExitStack 同步清理]
-  CO --> LIFE
-  HOST --> UI["页面与路由声明<br/>前端能力展示"]
+  FILE[独立启动配置与精确制品选择] --> CHECK["静态校验<br/>来源摘要 / 版本 / 依赖 / 绑定"]
+  CHECK --> HOST["最小宿主机制<br/>生命周期 / 强制检查 / 诊断"]
+  HOST --> PORTS[版本化契约绑定表]
+  PORTS --> EARLY[存储 / 密钥 / 身份 / 会话 / 策略 / 审计]
+  PORTS --> BIZ[节点 / 服务 / 模板 / 镜像 / 网关 / 维护 API]
+  PORTS --> RUN[原生适配 / Docker / Kubernetes / 资源 / 观测]
+  PORTS --> UI["UI 外壳 / 页面 / 组件<br/>动作 / 图标 / 主题 / 语言"]
+  EARLY --> LIFE[已登记资源逆序清理]
+  BIZ --> LIFE
+  RUN --> LIFE
+  UI --> LIFE
 ```
 
-存储是早期 bootstrap 依赖，不是一个能由社区工厂在启动末尾替换的普通服务。存储配置保持独立适配契约；插件宿主在业务装配阶段提供依赖、路由归属、接口和清理能力，不能接管宿主认证、审计或准入端点。隐藏某页面不会关闭对应安全机制。
+默认与第三方通过同一合同和生命周期装配。调用方依赖契约，配置选择具体提供者；重复 ID、错误版本、循环/缺失依赖、无效产物或路由越界均明确失败。关闭默认实现后可以绑定不同 ID 的实现，不靠冒用内置 ID 或静默回退。
 
-静态清单在开库前校验，业务工厂在宿主服务准备后装配。图中内置工厂与固定桥接是不同实现层次；工厂输出接口不代表默认业务已通过接口表选择第三方替代实现。
+| 边界 | 入口与合同 |
+| --- | --- |
+| Node | [platform](../platform/README.md)：本地 ESM 制品、完整树摘要、必需/可选/多提供者、启动/清理、代次与离线恢复。 |
+| Python | [Provider SDK](backend/provider_host/README.md)、[类型](backend/provider_host/sdk.py)、[可执行目录](backend/provider_host/catalogue.py)：启动前选择、对象/可调用/HTTP 模块合同、精确路由归属。 |
+| UI | [浏览器 SDK](frontend/sdk/README.md)：完整 UI 及细粒度扩展点、独立制品、摘要验证、同一 React 单例和生命周期。 |
+| 增量社区包 | [原 SDK](PLUGIN_DEVELOPMENT.md)：受保护命名空间的附加 API、声明式页面和后台服务；保留独立版本及包格式。 |
 
-内置 [PluginContext](backend/plugin_host/context.py) 注入宿主明确允许的服务；社区 [CommunityContext](backend/plugin_host/community.py) 只公开 SDK 服务门面。`provide/consume` 使用精确接口版本，插件只能消费自身或直接声明依赖的接口。清单拒绝重复 ID、缺失/循环/停用依赖、路由冲突和停用当前数据库驱动，启动后封存，不静默补依赖或降级接口版本。普通社区工厂由 `community.mount` 在应用后期装配。
+根 ASGI 装配与强制调用授权/审计属于宿主机制。身份源、会话、策略、审计输出和业务处理器本身可替换；正常公开 SDK 路径始终经过这些检查。Node 任意 HTTP handler 与进程内 Python/浏览器代码均属于明确受信实现，不构成恶意代码沙箱；更换整个 HTTP 应用也必须单独验收其认证、授权与业务约束。
 
-可导入社区包的宿主应通过 `/api/plugin-sdk` 声明 `community-import-v1`；没有该标识时，应按该制品实际支持的内置装配方式管理，不能只凭平台版本号推断导入能力。
+存储在业务工厂之前选择。SQLite 使用本地持久磁盘和单写租约，PostgreSQL 使用专用会话 advisory lock；参考实现均不支持多 Uvicorn worker。其他存储提供者须实现完整 Repository/UoW、条件写、审计一致性和恢复合同，不能只暴露数据库连接。
 
-插件是受信代码，和宿主共享进程权限，不是代码沙箱。当前只有启动装配，没有在线插件市场、远程前端脚本、动态服务重绑定或运行中热卸载。工厂与清理均为同步合同；资源使用 `on_shutdown()` 注册到 `ExitStack`，装配失败和正常退出都尝试清理，不能保证撤销插件已经造成的外部副作用。开发入口见 [插件管理](PLUGINS.md)、[开发指南](PLUGIN_DEVELOPMENT.md) 和 [宿主 SDK](backend/plugin_host/README.md)。
-
-## 导入、选择、启动与回退
+## 导入、选择、运行与回退
 
 ```mermaid
 sequenceDiagram
-  participant A as 控制面管理员
-  participant API as 插件包管理 API
-  participant PS as 私有包库与选择文件
-  participant H as 下次启动的宿主
-  participant F as 受信插件工厂
-  A->>API: 导入离线 .qhplugin
-  API->>PS: 校验归档、manifest、摘要并暂存
-  API-->>A: 返回摘要，未加载或执行插件入口
-  A->>API: 明确信任并选择摘要 + expected_revision
-  API->>PS: 版本/依赖检查与 CAS 保存选择
-  API-->>A: 下次启动生效
-  A->>H: 重启 Control
-  H->>PS: 读取选择并复核包身份
-  H->>H: 依赖拓扑与宿主合同校验
-  H->>F: 同步装配与版本化接口注册
-  alt 工厂装配失败
-    H->>H: ExitStack 尝试清理已注册资源
-    H-->>A: 启动失败，保留错误与选择记录
-  else 装配完成
-    H-->>A: 当前运行清单和可用页面
+  participant A as 管理员
+  participant P as 私有制品与选择存储
+  participant H as 对应宿主下次启动
+  participant F as 所选提供者
+  A->>P: 导入并检查来源、许可、版本与摘要
+  P-->>A: 已暂存，尚未执行或激活
+  A->>P: 显式信任，审查完整候选图并 CAS 保存
+  P-->>A: 下次启动生效，保留原选择备份
+  A->>H: 维护窗口重启管理进程
+  H->>P: 读取精确选择与复核制品
+  H->>F: 按依赖装配，登记资源
+  alt 工厂或合同失败
+    H->>H: 逆序尝试清理已登记资源
+    H-->>A: 明确失败；不悄悄加载默认实现
+  else 装配成功
+    H-->>A: 运行图、状态与精确代次
   end
-  opt 代码回退
-    A->>PS: 明确选择旧摘要并重启
-    Note over A,PS: 启动受阻可离线 reset-selection，先写私有备份
-    Note over PS,F: 代码回退不自动回滚插件自有数据迁移
-  end
+  Note over A,H: 回退代码、选择、数据库及插件自有数据分别处理
 ```
 
-管理端点为 `/api/plugin-packages` 的 `import/select/deselect`，发现契约为 `/api/plugin-sdk`，实际路由见 [community.py](backend/plugin_host/community.py)。包检查和启动加载分别见 [packages/archive.py](backend/plugin_host/packages/archive.py)、[manifest.py](backend/plugin_host/packages/manifest.py)、[loader.py](backend/plugin_host/packages/loader.py)；选择修订和 CAS 见 [store.py](backend/plugin_host/packages/store.py)。离线恢复命令及私有备份要求见 [包管理说明](backend/plugin_host/packages/README.md)。演示模式和 Agent 不加载上传的控制面代码。
+Node 目录导入、Python `.mcprovider`、浏览器 `.mcui` 与原增量 `.qhplugin` 分开维护合同。导入不运行入口或安装钩子，显式选择不热换当前进程。步骤与命令见 [提供者部署](docs/PROVIDER_PLUGINS.md)。Node 清理共享总截止时间；Python 工厂/清理是同步合同，作者须使用有界、可关闭的资源，不能承诺任意阻塞扩展都能在用户态强制撤销。
 
-## 设计原则
+UI 启动图和已选静态资产允许登录前只读获取；管理库存、导入和选择受权限保护，写入还校验 CSRF。入口在浏览器按摘要校验，资源来自固定同源制品，不从任意远程 URL 拉取代码。完全未选择默认 UI 时，不加载默认 App、外观和业务样式。
 
-- **明确职责。** Web、Control、数据库、执行 Agent、原生 Motor 与外部观测各自维护合同。控制台是可选管理组件，不改变模型的原生运行和请求调度逻辑。
-- **显式装配。** 插件按声明的 ID、版本、依赖、路由和接口装配；缺失或不兼容时拒绝启动，不悄悄启用模块、替换数据库或降级接口。
-- **受信扩展。** 导入、信任选择与执行分开；仅明确选择的源码包在下次启动加载。稳定身份、RBAC、审计、归属与部署准入保留为宿主合同。
-- **有界生命周期。** 工厂与清理使用同步合同，资源登记到统一 `ExitStack`。失败时尝试清理已登记资源；外部副作用和插件数据迁移由插件提供独立恢复方案。
-- **可追溯兼容。** 包摘要、宿主 API、依赖版本、Motor profile、镜像和运行环境分别记录。能保存配置、导入包或打开页面，不等于目标业务通过验证。
-- **保守演进。** 当前插件只在启动时装配，没有热卸载、远程前端脚本和动态服务重绑定。领域事件、异步隔离提供者等新合同需要单独设计和验证，不隐含在现有 SDK 中。
+浏览器、Node 入口与 Python 提供者各自固定运行代次。已知旧代次的写请求在副作用前拒绝，不自动重试；草稿保留并提示刷新。前后端构建身份不一致时拒绝混用。
 
-## 原生适配与观测
+## 观测流向
 
-`mindie-motor/upstream` 固定于 `37d615f232a36b8dba8630ffc3a01a20d289c65e`；此身份与推理镜像标签、Motor Python 包版本及平台版本分别记录。适配器复用固定 deployer/helper，保留任意原始 JSON 字段，不把平台元数据写入原生配置。不支持的角色或运行时明确拒绝。
+```mermaid
+flowchart LR
+  A[对应单宿主 Agent] -->|有界读取| E[Node Exporter / NPU 观测源]
+  C[Control] -->|库存快照| A
+  P[既有 Prometheus] -->|逐节点抓取| KE[K8s 现有 Exporter Pods]
+  P -->|仅 Exporter 指标端点| E
+  G[Grafana] -->|历史查询| P
+  KA[K8s 执行 Agent] -->|节点与资源份额| API[Kubernetes API]
+```
 
-Docker Agent 使用 SDK 执行原生 helper 生成的容器规格；Kubernetes Agent 使用 dry-run 后的原生清单及 UID/resourceVersion 保护的 create/replace 路径。当前 Kubernetes 路径尚未适配成原生云原生 Job，也不能套用 Docker 设备账本与操作回执语义。执行链与不同层次的调度见 [原生集成](docs/NATIVE_INTEGRATION.md)。固定源码、入口可达和真实业务验收分别说明，见 [能力矩阵](docs/NATIVE_CAPABILITY_MATRIX.md) 与 [升级审查](docs/MOTOR_UPGRADE.md)。
+CPU/内存/OS 来自 Node Exporter，不另读宿主 `/proc` 补成同义指标。硬件观测、资源声明与分配账本分开；过期、离线和未知不当作零或空闲。NPU 文件快照供 Agent 读取，不是 Prometheus 抓取端点。
 
-Docker 设备声明、持久资源分配与硬件观测分层管理。未知、过期、离线数据不当作 0 或空闲，不参与当前有效汇总。部署与重启均需后端最终准入。布局建议仅供资源审查，不证明跨硬件或跨网络全局最优。
+默认 K8s 路径查询 API 的节点及 capacity/allocatable，不自动汇总全集群 Exporter/PromQL。执行 Agent 的宿主指标仅属于对应宿主，全 worker 指标由既有 Prometheus/Grafana 维护；见 [Kubernetes 采集图和接入示例](docs/KUBERNETES_MONITORING.md)。替换观测提供者也必须保留节点身份、单位、时效和未知语义。
 
-宿主 CPU/内存/OS 来自 Node Exporter；Agent 受控读取和上报，不另读宿主 `/proc` 建立同义指标。NPU 来源与采样时间独立保留。Prometheus/Grafana 提供历史监控；平台快照和按需指标不替代历史系统。配置 CCAE、Grafana 或已有网关不等同于安装外部软件或完成业务验收。
+## 原生 Motor 与恢复
 
-## 身份与恢复
+`mindie-motor/upstream` 保持 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。源码身份、推理镜像、Motor Python 包版本、插件合同和平台版本分别记录。参考适配器复用固定 deployer/helper，保留任意原生 JSON，不把平台元数据写入模型配置；Node 转发保持原始字节。
 
-本地角色为 admin/operator/viewer，后端校验权限，敏感凭据不读回。可选 OIDC；IdP MFA、SCIM、完整 SAML 和单点登出不由此应用实现。Agent HTTPS、token、产品身份及操作协议分别校验；mTLS 需实际入口验证客户端证书。Docker socket 是高权限边界，只向受信管理网络开放 Agent。
+Docker 运行时负责最终准入、资源账本、容器归属与回执。K8s 参考运行时负责原生清单与 UID/resourceVersion 检查；当前不是原生云原生 Job 执行器，也不套用 Docker 设备账本语义。不支持的运行时操作明确拒绝，见 [原生集成](docs/NATIVE_INTEGRATION.md)与[能力矩阵](docs/NATIVE_CAPABILITY_MATRIX.md)。
 
-单实例维护依赖一致性备份、独立解密密钥、发布制品校验及回滚。Control 恢复包不包含 Agent 账本、模型权重、驱动、镜像和集群状态；社区插件包、选择配置及插件自有数据也须按合同单独备份。Agent 更新应保留独立数据目录和模型容器；结果未明的操作先核对再重试。恢复后必须验证外部资源和真实业务，不能只验证登录页面。
+持久任务、Agent 操作回执、独立提供者身份及未决副作用分别保存。存在未知操作或受管资源时，不能盲目更换关键存储/运行时或认领已有容器。UI/API 的普通变更与关键执行器变更分别判断，不因换图标而停止模型。备份、旧制品、独立密钥及插件自有状态均需保留；控制面恢复包不包含权重、驱动、镜像、Exporter 或完整集群状态。
+
+当前支持启动时装配与明确回退，不提供任意插件在线热卸载、插件市场、恶意代码沙箱、自动跨数据库迁移或自动高可用。结构校验、本地替换测试、浏览器验收、Linux 容器及真实模型/集群验收是不同证据。

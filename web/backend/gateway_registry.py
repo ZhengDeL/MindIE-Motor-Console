@@ -321,7 +321,7 @@ class GatewayRegistry:
             value = {"id": uid("gw_"), "name": data.name, "base_url": data.base_url, "service_ids": data.service_ids,
                      "revision": 1, "created_at": timestamp, "updated_at": timestamp,
                      "_api_key": self.secrets.encrypt(data.api_key or "")}
-            self.store._put(db, "gateways", value)
+            db.resources.put("gateways", value)
             self.store.audit("创建网关连接", value["id"], "success", "已保存已有网关连接；未部署网关进程", connection=db)
         return self.view(value)
 
@@ -345,7 +345,7 @@ class GatewayRegistry:
                     raise HTTPException(422, "网关名称和地址不能包含凭据")
             value = {"id": identifier, "name": data.name, "base_url": data.base_url, "service_ids": data.service_ids,
                      "revision": previous["revision"] + 1, "created_at": previous["created_at"], "updated_at": now(), "_api_key": encoded}
-            self.store._put(db, "gateways", value)
+            db.resources.put("gateways", value)
             self.store.audit("更新网关连接", identifier, "success", "已保存新修订，先前检查结果已失效", connection=db)
         return self.view(value)
 
@@ -474,7 +474,7 @@ class GatewayRegistry:
             if current_fingerprints != fingerprints:
                 raise HTTPException(409, "检查期间绑定服务配置已变化，旧检查结果未保存")
             value.update(revision=revision + 1, updated_at=now(), last_check=check, _service_fingerprints=fingerprints)
-            self.store._put(db, "gateways", value)
+            db.resources.put("gateways", value)
             self.store.audit("检查网关连接", identifier, check["status"], "已执行只读模型发现，未发送推理请求",
                              metadata={"model_count": check["model_count"], "binding_count": len(bindings), "reason": check["reason"]}, connection=db)
         return self.view(value)

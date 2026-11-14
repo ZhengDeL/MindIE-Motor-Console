@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { UiSlot } from "./uiPluginSdk";
 import type { ReactNode } from "react";
 import type { ConsolePage } from "./consoleNavigation";
 import { parsePluginNavigation, type PluginNavigation } from "./communityPlugins";
@@ -71,5 +72,5 @@ export function pageEnabled(catalog: PluginCatalog | null, page: ConsolePage): b
 export type ConsolePageViews = Readonly<Record<ConsolePage, () => ReactNode>>;
 export function renderPageContribution(page: ConsolePage, catalog: PluginCatalog | null,
   views: ConsolePageViews): ReactNode {
-  return pageEnabled(catalog, page) ? views[page]() : null;
+  return pageEnabled(catalog, page) ? <UiSlot name={`page.${page}`} page={page} catalog={catalog}>{views[page]()}</UiSlot> : null;
 }

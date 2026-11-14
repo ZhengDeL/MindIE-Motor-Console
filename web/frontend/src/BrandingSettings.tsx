@@ -1,7 +1,8 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { Button, Confirm, ErrorBox, Field, InfoBox } from "./ui";
-import { ImagePlus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { ImagePlus, RefreshCw, RotateCcw, Trash2 } from "./icons";
 import { usePollingQuery } from "./usePollingQuery";
 import { useUnsavedChanges } from "./unsavedChanges";
 import { beginBrandingReload, captureBrandingReadGeneration, DEFAULT_BRANDING, parseBranding, publishBranding, useBranding } from "./brandingState";
@@ -13,7 +14,7 @@ import "./branding.css";
 type Draft = { name: string; subtitle: string; iconData: string | null | undefined };
 const from = (value: PlatformBranding): Draft => ({ name: value.name, subtitle: value.subtitle, iconData: undefined });
 
-export default function BrandingSettings() {
+function DefaultBrandingSettings() {
   const active = useBranding();
   const [remote, setRemote] = useState<PlatformBranding | null>(null), highest = useRef<PlatformBranding | null>(null);
   const [draft, setDraft] = useState<Draft>(() => from(active)), baseline = useRef<number | null>(null);
@@ -96,32 +97,38 @@ export default function BrandingSettings() {
     } finally { flight.current = false; if (mounted.current) setBusy(false); }
   };
   const previewIcon = draft.iconData === undefined ? remote?.icon_url ?? active.icon_url : draft.iconData;
-  return <section className="panel platform-branding-settings" aria-labelledby="platform-branding-title">
-    <div className="panel-head"><h2 id="platform-branding-title">平台品牌</h2><Button disabled={busy || uploading || reloading} loading={reloading} onClick={() => edited || uncertain ? setReloadOpen(true) : reload()}><RefreshCw size={14} />重新载入</Button></div>
-    <div className="settings-content">
-      <p className="settings-context-note">由管理员统一管理，对所有用户与登录页面生效。编辑时只更新下方预览，保存后发布。</p>
+  return <UiRegion name="layout.panel" as="section" className="panel platform-branding-settings" aria-labelledby="platform-branding-title">
+    <UiElement as="div" className="panel-head"><UiElement as="h2" id="platform-branding-title"><UiText>{"平台品牌"}</UiText></UiElement><Button actionId="action.BrandingSettings.001" disabled={busy || uploading || reloading} loading={reloading} onClick={() => edited || uncertain ? setReloadOpen(true) : reload()}><RefreshCw size={14} /><UiText>{"重新载入"}</UiText></Button></UiElement>
+    <UiElement as="div" className="settings-content">
+      <UiElement as="p" className="settings-context-note"><UiText>{"由管理员统一管理，对所有用户与登录页面生效。编辑时只更新下方预览，保存后发布。"}</UiText></UiElement>
       {readError && <ErrorBox message={readError} />}{error && <ErrorBox message={error} />}{feedback && <InfoBox>{feedback}</InfoBox>}
-      {!supported && <InfoBox>当前后端尚未提供品牌配置接口；升级后可在此统一管理名称与图标。</InfoBox>}
-      <fieldset className="branding-fields" disabled={!remote || !supported || busy || reloading}>
-        <Field label="平台名称" required hint="1–40 个字符，用于登录页、侧栏和浏览器标题。"><input value={draft.name} maxLength={80} onChange={(event) => change({ name: Array.from(event.target.value).slice(0, 40).join("") })} /></Field>
-        <Field label="平台副标题" hint="最多 80 个字符；留空时隐藏副标题。"><input value={draft.subtitle} maxLength={160} onChange={(event) => change({ subtitle: Array.from(event.target.value).slice(0, 80).join("") })} /></Field>
-        <div className="field"><span className="field-label">平台图标</span>
-          <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" aria-label="平台图标文件" hidden onChange={(event) => void upload(event.target.files?.[0])} />
-          <div className="branding-icon-actions"><Button disabled={uploading} loading={uploading} onClick={() => input.current?.click()}><ImagePlus size={15} />上传图标</Button>
-            <Button disabled={!previewIcon || uploading} onClick={() => { uploadSequence.current++; change({ iconData: null }); }}><Trash2 size={14} />移除图标</Button></div>
-          <small>支持 PNG、JPEG、静态 WebP，最大 2 MiB、4096 × 4096 像素。图像会等比处理为 256 × 256 的 PNG，保留透明背景。</small>
-        </div>
-      </fieldset>
-      <div className="branding-preview" aria-label="平台品牌预览"><span className="small-caption">显示预览</span>
-        <BrandIdentity name={draft.name.trim() || "平台名称"} subtitle={draft.subtitle.trim()} iconUrl={previewIcon} variant="preview" /></div>
-      <div className="settings-actions branding-save-actions">
-        <Button kind="primary" loading={busy} disabled={!remote || !supported || !edited || uploading || reloading || uncertain} onClick={() => void save()}>保存平台品牌</Button>
-        <Button disabled={!remote || !edited || busy || uploading || reloading} onClick={() => remote && resetDraft(highest.current ?? remote)}>取消更改</Button>
-        <Button disabled={!remote || busy || uploading || reloading} onClick={() => { uploadSequence.current++; change({ name: DEFAULT_BRANDING.name, subtitle: DEFAULT_BRANDING.subtitle, iconData: null }); }}><RotateCcw size={14} />恢复默认品牌</Button>
-      </div>
-      {edited && <p className="small-caption">有未保存更改；恢复默认品牌也需要点击“保存平台品牌”才会生效。</p>}
-      {uncertain && <p className="small-caption" role="status">请先重新载入确认服务器结果，再继续保存。</p>}
-    </div>
+      {!supported && <InfoBox><UiText>{"当前后端尚未提供品牌配置接口；升级后可在此统一管理名称与图标。"}</UiText></InfoBox>}
+      <UiElement as="fieldset" className="branding-fields" disabled={!remote || !supported || busy || reloading}>
+        <Field label="平台名称" required hint="1–40 个字符，用于登录页、侧栏和浏览器标题。"><UiElement as="input" value={draft.name} maxLength={80} onChange={(event) => change({ name: Array.from(event.target.value).slice(0, 40).join("") })} /></Field>
+        <Field label="平台副标题" hint="最多 80 个字符；留空时隐藏副标题。"><UiElement as="input" value={draft.subtitle} maxLength={160} onChange={(event) => change({ subtitle: Array.from(event.target.value).slice(0, 80).join("") })} /></Field>
+        <UiElement as="div" className="field"><UiElement as="span" className="field-label"><UiText>{"平台图标"}</UiText></UiElement>
+          <UiElement as="input" ref={input} type="file" accept="image/png,image/jpeg,image/webp" aria-label="平台图标文件" hidden onChange={(event) => void upload(event.target.files?.[0])} />
+          <UiElement as="div" className="branding-icon-actions"><Button actionId="action.BrandingSettings.002" disabled={uploading} loading={uploading} onClick={() => input.current?.click()}><ImagePlus size={15} /><UiText>{"上传图标"}</UiText></Button>
+            <Button actionId="action.BrandingSettings.003" disabled={!previewIcon || uploading} onClick={() => { uploadSequence.current++; change({ iconData: null }); }}><Trash2 size={14} /><UiText>{"移除图标"}</UiText></Button></UiElement>
+          <UiElement as="small"><UiText>{"支持 PNG、JPEG、静态 WebP，最大 2 MiB、4096 × 4096 像素。图像会等比处理为 256 × 256 的 PNG，保留透明背景。"}</UiText></UiElement>
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="branding-preview" aria-label="平台品牌预览"><UiElement as="span" className="small-caption"><UiText>{"显示预览"}</UiText></UiElement>
+        <BrandIdentity name={draft.name.trim() || "平台名称"} subtitle={draft.subtitle.trim()} iconUrl={previewIcon} variant="preview" /></UiElement>
+      <UiElement as="div" className="settings-actions branding-save-actions">
+        <Button actionId="action.BrandingSettings.004" kind="primary" loading={busy} disabled={!remote || !supported || !edited || uploading || reloading || uncertain} onClick={() => void save()}><UiText>{"保存平台品牌"}</UiText></Button>
+        <Button actionId="action.BrandingSettings.005" disabled={!remote || !edited || busy || uploading || reloading} onClick={() => remote && resetDraft(highest.current ?? remote)}><UiText>{"取消更改"}</UiText></Button>
+        <Button actionId="action.BrandingSettings.006" disabled={!remote || busy || uploading || reloading} onClick={() => { uploadSequence.current++; change({ name: DEFAULT_BRANDING.name, subtitle: DEFAULT_BRANDING.subtitle, iconData: null }); }}><RotateCcw size={14} /><UiText>{"恢复默认品牌"}</UiText></Button>
+      </UiElement>
+      {edited && <UiElement as="p" className="small-caption"><UiText>{"有未保存更改；恢复默认品牌也需要点击“保存平台品牌”才会生效。"}</UiText></UiElement>}
+      {uncertain && <UiElement as="p" className="small-caption" role="status"><UiText>{"请先重新载入确认服务器结果，再继续保存。"}</UiText></UiElement>}
+    </UiElement>
     {reloadOpen && <Confirm title="重新载入平台品牌？" description="将读取服务器上的最新配置，并放弃本地未保存的编辑。" confirmText="重新载入" onClose={() => setReloadOpen(false)} onConfirm={() => { setReloadOpen(false); reload(); }} />}
-  </section>;
+  </UiRegion>;
 }
+
+const BrandingSettings = withUiSlot("component.BrandingSettings", DefaultBrandingSettings);
+export default BrandingSettings;
+
+// Reference package implementation exports.
+export { DefaultBrandingSettings };

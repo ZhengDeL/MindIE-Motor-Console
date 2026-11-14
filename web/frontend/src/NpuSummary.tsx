@@ -1,3 +1,4 @@
+import { UiElement, UiRegion, withUiSlot, UiText } from "./uiPluginSdk";
 import { Cpu } from "./icons";
 import { when } from "./api";
 import type { NodeInfo } from "./api";
@@ -23,7 +24,7 @@ import {
 import "./npu-resources.css";
 import { serverNow } from "./serverClock";
 
-export function DockerNpuValue({
+function DefaultDockerNpuValue({
   nodes,
   demo = false,
   now,
@@ -36,27 +37,27 @@ export function DockerNpuValue({
   const docker = summarizeDockerNpu(nodes, { now: now ?? clock, demo });
   if (docker.total === null)
     return (
-      <span className="resource-state-note">
+      <UiElement as="span" className="resource-state-note">
         {docker.agentCount ? "设备清单待采集" : "接入 Docker 节点后展示"}
-      </span>
+      </UiElement>
     );
   return (
-    <span className="docker-npu-value">
-      <strong>{docker.total}</strong>
-      <small>已识别设备</small>
+    <UiElement as="span" className="docker-npu-value">
+      <UiElement as="strong">{docker.total}</UiElement>
+      <UiElement as="small"><UiText>{"已识别设备"}</UiText></UiElement>
       {docker.partial && (
-        <span className="npu-collection-state">
-          覆盖 {docker.knownAgentCount} / {docker.agentCount} 个 Docker Agent
-        </span>
+        <UiElement as="span" className="npu-collection-state">
+          <UiText>{"覆盖"}</UiText> {docker.knownAgentCount} <UiText>{"/"}</UiText> {docker.agentCount} <UiText>{"个 Docker Agent"}</UiText>
+        </UiElement>
       )}
       {docker.duplicateAgentCount > 0 && (
-        <span className="npu-collection-state">已按宿主去重</span>
+        <UiElement as="span" className="npu-collection-state"><UiText>{"已按宿主去重"}</UiText></UiElement>
       )}
-    </span>
+    </UiElement>
   );
 }
 
-export function KubernetesNpuContent({
+function DefaultKubernetesNpuContent({
   summary,
   demo = false,
   compact = false,
@@ -69,7 +70,7 @@ export function KubernetesNpuContent({
 }) {
   if (demo)
     return (
-      <span className="resource-state-note">演示模式，不连接真实集群</span>
+      <UiElement as="span" className="resource-state-note"><UiText>{"演示模式，不连接真实集群"}</UiText></UiElement>
     );
   const groups = summary.groups.filter(
     (group) => group.capacity !== null || group.allocatable !== null,
@@ -86,100 +87,100 @@ export function KubernetesNpuContent({
             : "当前节点清单未包含 NPU 资源字段";
   if (compact)
     return (
-      <div className="kubernetes-npu-content npu-compact-content">
+      <UiElement as="div" className="kubernetes-npu-content npu-compact-content">
         {groups.length ? groups.map((group) => (
-          <div className="npu-compact-group" key={group.key}>
-            <span className="npu-compact-name" title={group.key}>{resourceTypeName(group.key)}</span>
-            <span className="npu-compact-quantity">
-              {group.allocatable !== null && <span><small>调度上限</small><b>{group.allocatable}</b></span>}
-              {group.capacity !== null && <span><small>容量</small><b>{group.capacity}</b></span>}
-              <small>份额</small>
-            </span>
-            {group.conflictCount > 0 && <span className="warning-text">{group.conflictCount} 项上报需核对</span>}
-          </div>
-        )) : <span className={`resource-state-note ${["error", "stale"].includes(summary.status) ? "warning-text" : ""}`} role="status">{label}</span>}
-        {!!groups.length && <span className="npu-compact-meta">
-          {summary.nodeCount} 个节点 · 按 UID 去重
-          {summary.collectedAt && <time dateTime={summary.collectedAt} title={when(summary.collectedAt)}>{observationAge(summary.collectedAt, now)}</time>}
-        </span>}
-        {summary.status === "partial" && <span className="warning-text" title={summary.issues.join("\n")}>
+          <UiElement as="div" className="npu-compact-group" key={group.key}>
+            <UiElement as="span" className="npu-compact-name" title={group.key}>{resourceTypeName(group.key)}</UiElement>
+            <UiElement as="span" className="npu-compact-quantity">
+              {group.allocatable !== null && <UiElement as="span"><UiElement as="small"><UiText>{"调度上限"}</UiText></UiElement><UiElement as="b">{group.allocatable}</UiElement></UiElement>}
+              {group.capacity !== null && <UiElement as="span"><UiElement as="small"><UiText>{"容量"}</UiText></UiElement><UiElement as="b">{group.capacity}</UiElement></UiElement>}
+              <UiElement as="small"><UiText>{"份额"}</UiText></UiElement>
+            </UiElement>
+            {group.conflictCount > 0 && <UiElement as="span" className="warning-text">{group.conflictCount} <UiText>{"项上报需核对"}</UiText></UiElement>}
+          </UiElement>
+        )) : <UiElement as="span" className={`resource-state-note ${["error", "stale"].includes(summary.status) ? "warning-text" : ""}`} role="status">{label}</UiElement>}
+        {!!groups.length && <UiElement as="span" className="npu-compact-meta">
+          {summary.nodeCount} <UiText>{"个节点 · 按 UID 去重"}</UiText>
+          {summary.collectedAt && <UiElement as="time" dateTime={summary.collectedAt} title={when(summary.collectedAt)}>{observationAge(summary.collectedAt, now)}</UiElement>}
+        </UiElement>}
+        {summary.status === "partial" && <UiElement as="span" className="warning-text" title={summary.issues.join("\n")}>
           {summary.readyAgentCount < summary.agentCount ? `覆盖 ${summary.readyAgentCount} / ${summary.agentCount} 个集群 Agent` : "部分资源字段已采集"}
-        </span>}
-      </div>
+        </UiElement>}
+      </UiElement>
     );
   return (
-    <div className="kubernetes-npu-content">
+    <UiElement as="div" className="kubernetes-npu-content">
       {groups.length ? (
-        <div className="npu-resource-groups">
+        <UiElement as="div" className="npu-resource-groups">
           {groups.map((group) => (
-            <div className="npu-resource-group" key={group.key}>
-              <div className="npu-resource-name">
-                <span title={group.key}>{resourceTypeName(group.key)}</span>
-                <small>{group.nodeCount} 个节点</small>
-              </div>
-              <div className="npu-resource-quantity">
+            <UiElement as="div" className="npu-resource-group" key={group.key}>
+              <UiElement as="div" className="npu-resource-name">
+                <UiElement as="span" title={group.key}>{resourceTypeName(group.key)}</UiElement>
+                <UiElement as="small">{group.nodeCount} <UiText>{"个节点"}</UiText></UiElement>
+              </UiElement>
+              <UiElement as="div" className="npu-resource-quantity">
                 {group.allocatable !== null && (
-                  <span>
-                    <small>调度上限</small>
-                    <strong>{group.allocatable}</strong>
-                  </span>
+                  <UiElement as="span">
+                    <UiElement as="small"><UiText>{"调度上限"}</UiText></UiElement>
+                    <UiElement as="strong">{group.allocatable}</UiElement>
+                  </UiElement>
                 )}
                 {group.capacity !== null && (
-                  <span>
-                    <small>节点容量</small>
-                    <strong>{group.capacity}</strong>
-                  </span>
+                  <UiElement as="span">
+                    <UiElement as="small"><UiText>{"节点容量"}</UiText></UiElement>
+                    <UiElement as="strong">{group.capacity}</UiElement>
+                  </UiElement>
                 )}
-                <small>份额</small>
-              </div>
+                <UiElement as="small"><UiText>{"份额"}</UiText></UiElement>
+              </UiElement>
               {group.conflictCount > 0 && (
-                <span className="npu-collection-state warning-text">
-                  {group.conflictCount} 项上报需核对
-                </span>
+                <UiElement as="span" className="npu-collection-state warning-text">
+                  {group.conflictCount} <UiText>{"项上报需核对"}</UiText>
+                </UiElement>
               )}
-            </div>
+            </UiElement>
           ))}
-        </div>
+        </UiElement>
       ) : (
-        <span
+        <UiElement as="span"
           className={`resource-state-note ${["error", "stale"].includes(summary.status) ? "warning-text" : ""}`}
           role="status"
         >
           {label}
-        </span>
+        </UiElement>
       )}
       {!!groups.length && (
-        <div className="npu-collection-meta">
-          <span>{summary.nodeCount} 个已采集节点 · 按 UID 去重</span>
+        <UiElement as="div" className="npu-collection-meta">
+          <UiElement as="span">{summary.nodeCount} <UiText>{"个已采集节点 · 按 UID 去重"}</UiText></UiElement>
           {summary.collectedAt && (
-            <time dateTime={summary.collectedAt}>
-              采于 {when(summary.collectedAt)}
-            </time>
+            <UiElement as="time" dateTime={summary.collectedAt}>
+              <UiText>{"采于"}</UiText> {when(summary.collectedAt)}
+            </UiElement>
           )}
           {summary.status === "partial" && (
-            <span className="warning-text">
+            <UiElement as="span" className="warning-text">
               {summary.readyAgentCount < summary.agentCount
                 ? `覆盖 ${summary.readyAgentCount} / ${summary.agentCount} 个集群 Agent`
                 : "部分资源字段已采集"}
-            </span>
+            </UiElement>
           )}
-        </div>
+        </UiElement>
       )}
       {!!summary.issues.length && (
-        <details className="npu-collection-issues">
-          <summary>采集诊断</summary>
-          <ul>
+        <UiElement as="details" className="npu-collection-issues">
+          <UiElement as="summary"><UiText>{"采集诊断"}</UiText></UiElement>
+          <UiElement as="ul">
             {summary.issues.map((issue) => (
-              <li key={issue}>{issue}</li>
+              <UiElement as="li" key={issue}>{issue}</UiElement>
             ))}
-          </ul>
-        </details>
+          </UiElement>
+        </UiElement>
       )}
-    </div>
+    </UiElement>
   );
 }
 
-export function NpuResourceCard({
+function DefaultNpuResourceCard({
   nodes,
   summary,
   demo = false,
@@ -189,27 +190,27 @@ export function NpuResourceCard({
   demo?: boolean;
 }) {
   return (
-    <section className="stat-card npu-resource-card" aria-label="NPU 资源">
-      <div className="stat-label">
-        <span>NPU 资源</span>
-        <div className="stat-card-icon color-2">
+    <UiRegion name="layout.panel" as="section" className="stat-card npu-resource-card" aria-label="NPU 资源">
+      <UiElement as="div" className="stat-label">
+        <UiElement as="span"><UiText>{"NPU 资源"}</UiText></UiElement>
+        <UiElement as="div" className="stat-card-icon color-2">
           <Cpu size={19} />
-        </div>
-      </div>
-      <div className="npu-runtime-summary npu-docker-summary">
-        <span className="npu-runtime-label">Docker 设备清单</span>
+        </UiElement>
+      </UiElement>
+      <UiElement as="div" className="npu-runtime-summary npu-docker-summary">
+        <UiElement as="span" className="npu-runtime-label"><UiText>{"Docker 设备清单"}</UiText></UiElement>
         <DockerNpuValue nodes={nodes} demo={demo} />
-      </div>
-      <div className="npu-runtime-summary">
-        <span className="npu-runtime-label">Kubernetes 资源份额</span>
+      </UiElement>
+      <UiElement as="div" className="npu-runtime-summary">
+        <UiElement as="span" className="npu-runtime-label"><UiText>{"Kubernetes 资源份额"}</UiText></UiElement>
         <KubernetesNpuContent summary={summary} demo={demo} />
-      </div>
-      <p className="npu-scope-note">设备清单、调度上限与实时空闲量分别判断。</p>
-    </section>
+      </UiElement>
+      <UiElement as="p" className="npu-scope-note"><UiText>{"设备清单、调度上限与实时空闲量分别判断。"}</UiText></UiElement>
+    </UiRegion>
   );
 }
 
-export function AgentNpuResources({
+function DefaultAgentNpuResources({
   node,
   source,
   demo,
@@ -231,45 +232,45 @@ export function AgentNpuResources({
       : [];
   const notice = resourceNotice(node, now, demo);
   return (
-    <div className="agent-npu-resources">
+    <UiElement as="div" className="agent-npu-resources">
       {(declaration || models.length > 0) && (
-        <div className="node-resource-tile node-device-tile">
-          <span className="npu-runtime-label">
+        <UiElement as="div" className="node-resource-tile node-device-tile">
+          <UiElement as="span" className="npu-runtime-label">
             {declaration ? "NPU 声明 / 总量" : "NPU 设备型号"}
-          </span>
+          </UiElement>
           {models.length > 0 && (
-            <ul className="agent-npu-models" aria-label="NPU 型号">
+            <UiElement as="ul" className="agent-npu-models" aria-label="NPU 型号">
               {models.map((model) => (
-                <li key={model.name}>
-                  <span>{model.name}</span>
+                <UiElement as="li" key={model.name}>
+                  <UiElement as="span">{model.name}</UiElement>
                   {models.length > 1 && (
-                    <small>已识别 {model.count} 个设备</small>
+                    <UiElement as="small"><UiText>{"已识别"}</UiText> {model.count} <UiText>{"个设备"}</UiText></UiElement>
                   )}
-                </li>
+                </UiElement>
               ))}
-            </ul>
+            </UiElement>
           )}
           {declaration && (
-            <div className="agent-docker-quantity">
-              <strong>{declaration.used}</strong>
-              <span>/</span>
-              <strong>{declaration.total}</strong>
-              <span>设备</span>
-            </div>
+            <UiElement as="div" className="agent-docker-quantity">
+              <UiElement as="strong">{declaration.used}</UiElement>
+              <UiElement as="span"><UiText>{"/"}</UiText></UiElement>
+              <UiElement as="strong">{declaration.total}</UiElement>
+              <UiElement as="span"><UiText>{"设备"}</UiText></UiElement>
+            </UiElement>
           )}
           {declaration && observation.collectedAt && (
-            <time
+            <UiElement as="time"
               className="npu-collection-state"
               dateTime={observation.collectedAt}
             >
-              采于 {observationAge(observation.collectedAt, now)}
-            </time>
+              <UiText>{"采于"}</UiText> {observationAge(observation.collectedAt, now)}
+            </UiElement>
           )}
-        </div>
+        </UiElement>
       )}
       {hasKubernetes && (
-        <div className="node-resource-tile node-kubernetes-tile">
-          <span className="npu-runtime-label">Kubernetes 资源份额</span>
+        <UiElement as="div" className="node-resource-tile node-kubernetes-tile">
+          <UiElement as="span" className="npu-runtime-label"><UiText>{"Kubernetes 资源份额"}</UiText></UiElement>
           <KubernetesNpuContent
             demo={demo}
             compact
@@ -287,23 +288,31 @@ export function AgentNpuResources({
               now,
             )}
           />
-        </div>
+        </UiElement>
       )}
       {!!devices.length && (
-        <div className="node-resource-tile node-hardware-tile">
-          <span className="npu-runtime-label">硬件采样</span>
-          <span className="agent-hardware-summary"><span className="resource-ready-dot" /><b>{devices.length}</b> 个设备</span>
+        <UiElement as="div" className="node-resource-tile node-hardware-tile">
+          <UiElement as="span" className="npu-runtime-label"><UiText>{"硬件采样"}</UiText></UiElement>
+          <UiElement as="span" className="agent-hardware-summary"><UiElement as="span" className="resource-ready-dot" /><UiElement as="b">{devices.length}</UiElement> <UiText>{"个设备"}</UiText></UiElement>
           {node.npu_telemetry?.collected_at && (
-            <time>{observationAge(node.npu_telemetry.collected_at, now)}</time>
+            <UiElement as="time">{observationAge(node.npu_telemetry.collected_at, now)}</UiElement>
           )}
-        </div>
+        </UiElement>
       )}
       {!declaration && !hasKubernetes && !devices.length && !models.length && (
-        <div className={`node-resource-notice ${notice.tone}`} role="status">
-          <b>{notice.title}</b>
-          <span>{notice.detail}</span>
-        </div>
+        <UiElement as="div" className={`node-resource-notice ${notice.tone}`} role="status">
+          <UiElement as="b">{notice.title}</UiElement>
+          <UiElement as="span">{notice.detail}</UiElement>
+        </UiElement>
       )}
-    </div>
+    </UiElement>
   );
 }
+
+export const DockerNpuValue = withUiSlot("component.DockerNpuValue", DefaultDockerNpuValue);
+export const KubernetesNpuContent = withUiSlot("component.KubernetesNpuContent", DefaultKubernetesNpuContent);
+export const NpuResourceCard = withUiSlot("component.NpuResourceCard", DefaultNpuResourceCard);
+export const AgentNpuResources = withUiSlot("component.AgentNpuResources", DefaultAgentNpuResources);
+
+// Reference package implementation exports.
+export { DefaultDockerNpuValue, DefaultKubernetesNpuContent, DefaultNpuResourceCard, DefaultAgentNpuResources };

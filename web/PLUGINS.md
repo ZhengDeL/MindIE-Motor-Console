@@ -1,8 +1,8 @@
 # 插件管理与运行边界
 
-MindIE-Motor Console 通过内置插件组合业务能力，通过社区源码包扩展受保护 API、页面和后台服务。本文说明部署管理员如何选择插件及判断生效状态；插件作者使用[开发指南](PLUGIN_DEVELOPMENT.md)。
+MindIE-Motor Console 通过显式提供者组合业务与 UI。0.12.0 候选包含 Node 宿主、Python 业务/Agent 提供者和完整浏览器插件；默认参考实现与第三方按同一合同选择。本文说明状态与边界，实际安装和替换命令见[提供者部署](docs/PROVIDER_PLUGINS.md)。
 
-使用社区包前，在已登录会话读取 `/api/plugin-sdk`，确认目标安装报告 `community-import-v1`、`http-routes-v1` 和所需页面能力。平台版本、插件 API 与具体能力分别检查；发布版本与源码获取见[文档入口](docs/README.md)。
+在已登录会话读取 `/api/plugins` 的 `assembly` 查看实际绑定/状态，通过 `/api/plugin-sdk` 的 `provider_sdk` 查看公开合同。增量 `.qhplugin` 仍独立检查 `community-import-v1`、`http-routes-v1` 等能力；完整 UI 与 Python 提供者不使用这个旧包格式。平台版本、SDK、提供者及实际能力分别核对，见[文档入口](docs/README.md)。
 
 MindIE-Motor 负责原生推理与部署，平台负责管理连接和操作编排。插件不替换 Coordinator、Controller、NodeManager 或引擎算法，也不自动更换固定的原生源码基线。
 
@@ -10,13 +10,13 @@ MindIE-Motor 负责原生推理与部署，平台负责管理连接和操作编�
 
 | 层 | 实现与实际边界 |
 | --- | --- |
-| 宿主 | 登录、会话、权限、审计写入、资源所有权、资源准入、存储事务及恢复入口始终保留。 |
-| 插件 SDK | 不可变 Manifest、API 版本、依赖图、页面/API 归属、受信工厂、版本化接口提供/消费、退出清理。 |
-| 实际工厂 | 品牌、节点与 Agent 推送、模板、镜像、网关，以及服务的布局、入口和操作恢复路由已通过工厂装配。 |
-| 核心协调 | 服务主流程、部分系统及账号路由由宿主协调；注册表控制启用状态。注册条目不代表每个模块均可独立发行。 |
-| 前端 | 使用服务端插件清单选择菜单、命令面板、页面、轮询与嵌套入口。系统设置保留为恢复入口。 |
-| 数据库 | 沿用事务 Repository / UoW 驱动；SQLite、PostgreSQL 独立选择。显示可用驱动不代表已连接两个数据库。 |
-| 运行时 | 控制面在连接 Agent 前检查运行时插件；Agent 独立检查自身配置。Docker 停用时不创建 Docker 执行组件，宿主 Exporter 采集入口仍可用。 |
+| 宿主 | 固定启动、依赖/绑定、生命周期、请求强制检查与恢复机制；Python 根 ASGI 装配不是可覆盖业务入口。 |
+| Node SDK | 完整树摘要、必需/可选/多提供者、HTTP transport/handler 与 Python bridge、代次、离线选择和回退。 |
+| Python SDK | 启动前选择存储/密钥，独立身份/会话/策略/审计、业务 API、任务、观测与执行器；实际调用方消费选定产品。 |
+| 默认参考模块 | 原实现保留原生行为，作为所选工厂与 API 产品装配；关闭默认绑定后可使用不同 ID 的实现，无静默回退。 |
+| 前端 | 外壳、登录、页面、页签、组件、动作、图标、设计系统和语言均由显式槽位解析；支持独立制品。 |
+| 数据库 | SQLite/PostgreSQL 为参考驱动，也可选择完整 `storage.store` 提供者；迁移、事务及恢复需分别验收。 |
+| 运行时 | 控制面和 Agent 各自选择运行时；资源归属、准入、回执和未知结果合同仍有效，不能通过换插件自动认领资源。 |
 
 关闭插件不删除模型、数据库、工作目录或已部署资源。关闭运行时插件会暂停该控制面执行相应管理操作；重新启用后才能继续管理。关闭操作审计页面不会关闭审计写入，关闭账号管理页面不会关闭身份校验。CCAE 插件表示控制台配置入口，不能撤销已经写入原生模型配置的 Reporter 行为。
 
@@ -67,6 +67,8 @@ MOTOR_AGENT_DISABLED_PLUGINS=motor-docker,images
 插件前端要求 `/api/plugins` 返回 `schemaVersion: 1`。与不提供该接口的旧后端混用时，页面显示清单错误并保留设置和重试入口。API 与 Web 应按同一兼容组合交付；清单摘要只描述装配内容，不代表插件签名、外部连接健康或模型可用性。
 
 ## 扩展合同
+
+完整可替换模块使用 [Python Provider SDK](backend/provider_host/README.md)、[浏览器 SDK](frontend/sdk/README.md) 或 [Node SDK](../platform/README.md)。下面的 Context/provide/consume 描述只针对保留的增量社区 SDK，不能用它覆盖默认业务实现。
 
 宿主按完整依赖图装配选中的工厂。工厂通过 Context 获取允许的服务，以 `provide(name, version, value)` 发布接口，依赖插件使用 `consume()` 消费精确版本。工厂不得覆盖其他插件路由或宿主身份端点。后台线程、客户端及任务组件使用 `on_shutdown()` 注册清理；所有清单在启动后封存。
 

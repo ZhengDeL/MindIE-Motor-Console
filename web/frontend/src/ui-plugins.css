@@ -1,0 +1,4 @@
+.ui-slot-choice-list { max-height: 340px; overflow: auto; display: grid; gap: 8px; }
+.ui-slot-choice-list code { flex: 1; overflow-wrap: anywhere; }
+.ui-plugin-notifications { position: fixed; z-index: 9999; right: 16px; bottom: 80px; max-width: min(480px, calc(100vw - 32px)); }
+.ui-plugin-notifications .info-box { display: flex; align-items: center; gap: 12px; }

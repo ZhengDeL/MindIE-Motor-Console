@@ -1,3 +1,4 @@
+import { UiElement, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useId, useState } from "react";
 import type { InputHTMLAttributes } from "react";
 import {
@@ -14,7 +15,7 @@ import { Button, Field } from "./ui";
 import PlatformBrand from "./PlatformBrand";
 import "./login.css";
 
-function PasswordInput({
+function DefaultPasswordInput({
   label,
   value,
   onChange,
@@ -34,12 +35,12 @@ function PasswordInput({
   const id = useId();
   const [visible, setVisible] = useState(false);
   return (
-    <div className="field login-password-field">
-      <label className="field-label" htmlFor={id}>
+    <UiElement as="div" className="field login-password-field">
+      <UiElement as="label" className="field-label" htmlFor={id}>
         {label}
-      </label>
-      <div className="login-password-control">
-        <input
+      </UiElement>
+      <UiElement as="div" className="login-password-control">
+        <UiElement as="input"
           id={id}
           aria-label={label}
           aria-describedby={hint ? `${id}-hint` : undefined}
@@ -51,7 +52,7 @@ function PasswordInput({
           disabled={disabled}
           spellCheck={false}
         />
-        <button
+        <UiButton actionId="auth.password.visibility"
           className="login-reveal"
           type="button"
           aria-label={`${visible ? "隐藏" : "显示"}${secretName}`}
@@ -60,14 +61,14 @@ function PasswordInput({
           onClick={() => setVisible(!visible)}
         >
           {visible ? <Eye size={16} /> : <EyeOff size={16} />}
-        </button>
-      </div>
-      {hint && <small id={`${id}-hint`}>{hint}</small>}
-    </div>
+        </UiButton>
+      </UiElement>
+      {hint && <UiElement as="small" id={`${id}-hint`}>{hint}</UiElement>}
+    </UiElement>
   );
 }
 
-export default function LoginPage({
+function DefaultLoginPage({
   status,
   onAuthenticated,
 }: {
@@ -130,30 +131,30 @@ export default function LoginPage({
     }
   };
   return (
-    <div className="account-signin login-page">
-      <div className="login-header-actions">
-        <button type="button" className="login-mode-toggle"
+    <UiElement as="div" className="account-signin login-page">
+      <UiElement as="div" className="login-header-actions">
+        <UiButton actionId="appearance.mode.toggle" type="button" className="login-mode-toggle"
           aria-label={appearance.resolvedMode === "dark" ? "切换浅色模式" : "切换深色模式"}
           onClick={() => appearance.setAppearance({ mode: appearance.resolvedMode === "dark" ? "light" : "dark" })}>
           {appearance.resolvedMode === "dark" ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
-      </div>
-      <main className={`login-main${setup ? " login-main-setup" : ""}`}>
-        <div className="login-column">
-        <header className="login-header">
-          <div className="login-brand">
+        </UiButton>
+      </UiElement>
+      <UiElement as="main" className={`login-main${setup ? " login-main-setup" : ""}`}>
+        <UiElement as="div" className="login-column">
+        <UiElement as="header" className="login-header">
+          <UiElement as="div" className="login-brand">
             <PlatformBrand variant="login" />
-          </div>
-        </header>
-        <div className="login-heading">
-          <h1>{setup ? "初始化管理员" : "登录您的账号"}</h1>
-          <p className="login-description">
+          </UiElement>
+        </UiElement>
+        <UiElement as="div" className="login-heading">
+          <UiElement as="h1">{setup ? "初始化管理员" : "登录您的账号"}</UiElement>
+          <UiElement as="p" className="login-description">
             {setup
               ? "创建首个管理员账号，开始配置运行环境。"
               : "欢迎回来，请输入您的账号信息"}
-          </p>
-        </div>
-        <form
+          </UiElement>
+        </UiElement>
+        <UiElement as="form" data-action-id={status.setup_required ? "auth.setup" : "auth.login"}
           className="signin-card login-card"
           aria-label={setup ? "初始化管理员" : "登录控制台"}
           aria-busy={busy}
@@ -163,16 +164,16 @@ export default function LoginPage({
           }}
         >
           {!setup && status.sso?.enabled && status.sso.login_url && (
-            <div className="login-enterprise">
-              <a className="signin-sso login-sso" href={status.sso.login_url}>
+            <UiElement as="div" className="login-enterprise">
+              <UiElement as="a" className="signin-sso login-sso" href={status.sso.login_url}>
                 <ShieldCheck size={17} />
-                企业统一身份登录
-              </a>
-              <div className="login-divider"><span>或</span></div>
-            </div>
+                <UiText>{"企业统一身份登录"}</UiText>
+              </UiElement>
+              <UiElement as="div" className="login-divider"><UiElement as="span"><UiText>{"或"}</UiText></UiElement></UiElement>
+            </UiElement>
           )}
           <Field label="用户名">
-            <input
+            <UiElement as="input"
               aria-label="用户名"
               placeholder="请输入用户名"
               autoComplete="username"
@@ -186,7 +187,7 @@ export default function LoginPage({
           </Field>
           {setup && (
             <Field label="显示名称">
-              <input
+              <UiElement as="input"
                 aria-label="显示名称"
                 autoComplete="name"
                 value={displayName}
@@ -214,7 +215,7 @@ export default function LoginPage({
               secretName="初始化凭据"
             />
           )}
-          <Button
+          <Button actionId="auth.submit-button"
             type="submit"
             kind="primary"
             size="large"
@@ -222,7 +223,7 @@ export default function LoginPage({
             loading={busy}
             disabled={setup && (!username.trim() || !password || !bootstrapToken.trim())}
           >
-            <span role={busy ? "status" : undefined}>
+            <UiElement as="span" role={busy ? "status" : undefined}>
               {busy
                 ? setup
                   ? "正在创建管理员…"
@@ -230,17 +231,24 @@ export default function LoginPage({
                 : setup
                   ? "创建管理员并登录"
                   : "登录"}
-            </span>
+            </UiElement>
           </Button>
-          {error && <p className="login-error" role="alert">{error}</p>}
+          {error && <UiElement as="p" className="login-error" role="alert">{error}</UiElement>}
           {setup && (
-            <p className="login-setup-note">
-              系统没有默认账号或密码，初始化后请妥善保管管理员凭据。
-            </p>
+            <UiElement as="p" className="login-setup-note">
+              <UiText>{"系统没有默认账号或密码，初始化后请妥善保管管理员凭据。"}</UiText>
+            </UiElement>
           )}
-        </form>
-        </div>
-      </main>
-    </div>
+        </UiElement>
+        </UiElement>
+      </UiElement>
+    </UiElement>
   );
 }
+
+const PasswordInput = withUiSlot("component.PasswordInput", DefaultPasswordInput);
+const LoginPage = withUiSlot("page.login", DefaultLoginPage);
+export default LoginPage;
+
+// Reference package implementation exports.
+export { DefaultPasswordInput, DefaultLoginPage };
