@@ -49,6 +49,10 @@ docker build -f web/Dockerfile --target web \
 
 Dockerfile 前端构建基线为 Node22，API 基线为 Python3.12。目标 ARM64/AMD64 各自构建和验证，不能将本机可用推定为另一架构可用。安装使用审核过的 `image@sha256:...`；可变标签和全零摘要不能作为升级凭据。Agent 使用包含运行时适配的 API 制品，不使用纯 Web 镜像。
 
+构建环境可通过 `DEBIAN_MIRROR`、`PYPI_INDEX_URL` 选择受信依赖源，通过 `NODE_BUILD_IMAGE`、`PYTHON_BUILD_IMAGE`、`NGINX_BUILD_IMAGE` 固定经过核验的基础镜像。`KUBECTL_DOWNLOAD_BASE` 默认为 `https://dl.k8s.io/release`；离线构建可指向自己的制品缓存，目录必须包含 `<KUBECTL_VERSION>/bin/linux/<arm64或amd64>/kubectl` 和 `kubectl.sha256`。先在联网发布环境从官方获取并核对二进制与校验文件，经受信通道转运；仅从同一个未知镜像同时取得二者不能证明官方来源。构建仍执行下载和 SHA-256 校验，不跳过 Kubernetes 客户端安装。
+
+例如在 API 构建命令中追加 `--build-arg KUBECTL_DOWNLOAD_BASE=https://artifacts.example.test/kubernetes`。基础镜像、SQLite 源码、npm/Python 锁定依赖也需要分别准备；只缓存 kubectl 不等于完整构建可以离线。镜像源、完整构建参数和实际摘要应与交付记录一起保留，不关闭 TLS、软件源签名或依赖完整性检查。
+
 ## 3. 安全初始化
 
 先准备受信发布者的 Ed25519 公钥，以及只包含 Web `server.crt/server.key` 的私有证书目录。签名私钥留在受控发布环境，应用加密密钥和 bootstrap token 由准备器独立生成；它们不是同一种材料。

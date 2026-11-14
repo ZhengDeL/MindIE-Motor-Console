@@ -43,6 +43,7 @@ ARG DEBIAN_MIRROR=https://deb.debian.org
 ARG TARGETARCH
 ARG INSTALL_KUBECTL=true
 ARG KUBECTL_VERSION=v1.34.1
+ARG KUBECTL_DOWNLOAD_BASE=https://dl.k8s.io/release
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 LD_LIBRARY_PATH=/opt/sqlite/lib \
     MOTOR_MODE=control MOTOR_DATA_DIR=/var/lib/motor-console \
     MOTOR_UPSTREAM_DIR=/opt/motor/upstream MOTOR_STATIC_DIR=/app/frontend/dist \
@@ -55,8 +56,8 @@ COPY --from=sqlite-build /opt/sqlite/lib/ /opt/sqlite/lib/
 RUN python -c "import sqlite3; assert sqlite3.sqlite_version_info >= (3,51,3), sqlite3.sqlite_version"
 RUN if [ "$INSTALL_KUBECTL" = true ]; then \
       arch="${TARGETARCH:-$(dpkg --print-architecture)}"; \
-      curl -fL --retry 3 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl" -o /usr/local/bin/kubectl \
-      && curl -fL --retry 3 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl.sha256" -o /tmp/kubectl.sha256 \
+      curl -fL --retry 3 "${KUBECTL_DOWNLOAD_BASE}/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl" -o /usr/local/bin/kubectl \
+      && curl -fL --retry 3 "${KUBECTL_DOWNLOAD_BASE}/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl.sha256" -o /tmp/kubectl.sha256 \
       && echo "$(cat /tmp/kubectl.sha256)  /usr/local/bin/kubectl" | sha256sum --check \
       && chmod 0755 /usr/local/bin/kubectl && rm /tmp/kubectl.sha256; \
     fi
