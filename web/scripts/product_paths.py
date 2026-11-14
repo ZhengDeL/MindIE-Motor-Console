@@ -9,7 +9,7 @@ def require_product_path(value, purpose: str) -> Path:
     parts = [part.casefold() for part in path.parts]
     foreign = {"hx", "shhc", "hx-platform", "hx-platform-agents", "hx-model-platform"}
     if any(part in foreign for part in parts):
-        raise ValueError(purpose + " must not reuse the independent HX product directory")
+        raise ValueError(purpose + " must not reuse a directory reserved for another product")
     if not any(part in {"qinghuan", "motor-console"} or part.startswith(("motor-console-", "qinghuan-")) or part.endswith("-qh") for part in parts):
         raise ValueError(purpose + " must use a dedicated motor-console/qinghuan namespace or -qh installation directory")
     for candidate in (path, *path.parents):

@@ -245,7 +245,7 @@ class RelationalDatabase:
         with self.transaction() as connection:
             application, version, tables = self._identity(connection)
             if application not in (0, APPLICATION_ID):
-                raise SchemaVersionError('Database belongs to another application; implicit HX imports are refused')
+                raise SchemaVersionError('Database belongs to another application; implicit cross-product imports are refused')
             if version not in (0, 1, SCHEMA_VERSION):
                 raise SchemaVersionError('Database schema is incompatible; use a matching build or reviewed backup')
             if application == 0 and (version or tables):

@@ -36,14 +36,14 @@ command -v python3 >/dev/null || { echo 'Python 3.9+ is required.' >&2; exit 2; 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PYTHONPATH="$script_dir/.." python3 - "$workspace" "$data_dir" "$token_file" "$kubeconfig" <<'PY'
 import sys
-from scripts.product_paths import require_hx_path
+from scripts.product_paths import require_product_path
 from scripts.agent_rollout_remote import platform_agents
 for value in sys.argv[1:]:
     if value:
-        require_hx_path(value, "Development Agent path")
-data = require_hx_path(sys.argv[2], "Development Agent data")
+        require_product_path(value, "Development Agent path")
+data = require_product_path(sys.argv[2], "Development Agent data")
 if data.exists() and (not data.is_dir() or any(data.iterdir())):
-    raise SystemExit("Use an empty HX Agent data directory; nothing was replaced")
+    raise SystemExit("Use an empty Agent data directory; nothing was replaced")
 if platform_agents():
     raise SystemExit("An execution Agent already exists; nothing was replaced")
 PY

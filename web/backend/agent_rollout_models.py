@@ -24,7 +24,7 @@ def validate_install_root(value: str) -> str:
         raise ValueError("MOTOR_AGENT_ROLLOUT_ROOT must be an independent absolute installation directory")
     parts = value.split("/")
     if any(part.lower() in {"hx", "shhc"} or part.lower().startswith("hx-") or part.lower().endswith("-hx") for part in parts):
-        raise ValueError("Agent installation cannot reuse the independent HX product directory")
+        raise ValueError("Agent installation cannot reuse a directory reserved for another product")
     if value == "/opt/motor-console/agents":
         return value
     if (not re.fullmatch(r"/(?:var/lib|opt|srv|mnt/models)/[A-Za-z0-9_./-]{1,300}", value)

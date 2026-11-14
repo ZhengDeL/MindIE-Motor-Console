@@ -90,7 +90,7 @@ class DockerAgentState:
             version = db.execute("PRAGMA user_version").fetchone()[0]
             if identity != AGENT_APPLICATION_ID and (identity != 0 or version != 0
                     or db.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchone()):
-                raise AgentStateConflict("Agent journal belongs to another product; HX Agent requires an independent data directory")
+                raise AgentStateConflict("Agent journal belongs to another product; use an independent Agent data directory")
             db.execute("PRAGMA journal_mode=WAL")
             db.execute("PRAGMA synchronous=FULL")
             db.execute("BEGIN IMMEDIATE")
