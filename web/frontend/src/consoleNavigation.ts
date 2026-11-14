@@ -1,3 +1,5 @@
+import type { ConsolePage } from "@mindie-motor/ui-sdk";
+export type { ConsolePage } from "@mindie-motor/ui-sdk";
 import {
   NavAccounts, NavAudit, NavCapabilities, NavGateways, NavImages,
   NavMaintenance, NavNodes, NavOverview, NavRuntimeLogs, NavServices,
@@ -6,9 +8,7 @@ import {
 import type { ConsoleIcon } from "./icons";
 import { pageEnabled, type PluginCatalog } from "./consolePlugins";
 
-export type ConsolePage = "overview" | "services" | "templates" | "nodes" | "images"
-  | "gateways" | "logs" | "features" | "audit" | "systemlogs"
-  | "accounts" | "maintenance" | "settings";
+
 export type NavigationItem = {
   id: ConsolePage; label: string; description: string; icon: ConsoleIcon;
   access?: "admin" | "audit";

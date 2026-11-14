@@ -1,13 +1,9 @@
+import type { PlatformBranding } from "@mindie-motor/ui-sdk";
+export type { PlatformBranding } from "@mindie-motor/ui-sdk";
 import { useSyncExternalStore } from "react";
 import { PRODUCT_CATEGORY, PRODUCT_NAME } from "./brand";
 
-export type PlatformBranding = {
-  name: string;
-  subtitle: string;
-  icon_url: string | null;
-  revision: number;
-  updated_at?: string | null;
-};
+
 
 export const DEFAULT_BRANDING: PlatformBranding = Object.freeze({
   name: PRODUCT_NAME, subtitle: PRODUCT_CATEGORY, icon_url: null, revision: 0,

@@ -1,3 +1,4 @@
+import type { ServiceDetailProps } from '@mindie-motor/ui-sdk';
 import { UiElement, UiRegion, UiSlot, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePollingQuery } from "./usePollingQuery";
@@ -31,10 +32,8 @@ import { api, download, executionReadOnlyReason, isUnsubmittedDraft, roleName, w
 import type {
   InferenceResult,
   Log,
-  NodeInfo,
   Observations,
   Revision,
-  Service,
 } from "./api";
 import { Badge, Button, Copy, Empty, ErrorBox, InfoBox, Spinner } from "./ui";
 import NativeAigwModelsPanel from "./IntegrationModels";
@@ -59,16 +58,7 @@ function DefaultServiceDetail({
   notify,
   canOperate,
   stopChecking = false,
-}: {
-  service: Service;
-  nodes: NodeInfo[];
-  onBack: () => void;
-  onEdit: (s: Service) => void;
-  onAction: (s: Service, action: string) => void;
-  notify: (message: string) => void;
-  canOperate: boolean;
-  stopChecking?: boolean;
-}) {
+}: ServiceDetailProps) {
   const logsEnabled = usePluginEnabled("runtime-logs");
   const templatesEnabled = usePluginEnabled("templates");
   const gatewaysEnabled = usePluginEnabled("gateways");

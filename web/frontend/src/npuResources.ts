@@ -1,3 +1,5 @@
+import type { KubernetesInventory, AgentNpuInventory, KubernetesNpuSummary } from '@mindie-motor/ui-sdk';
+export type { KubernetesInventory, AgentNpuInventory, NpuResourceGroup, KubernetesNpuSummary } from '@mindie-motor/ui-sdk';
 import type { NodeInfo } from "./api";
 import type { ClusterNode } from "./ClusterNodes";
 import { serverNow } from "./serverClock";
@@ -15,38 +17,6 @@ export const NPU_RESOURCE_KEYS = [
   "huawei.com/Ascend910",
   "huawei.com/npu",
 ] as const;
-
-export type KubernetesInventory = {
-  items: ClusterNode[];
-  collected_at: string;
-  cluster_version: string;
-  expires_at?: string;
-};
-export type AgentNpuInventory = {
-  agentId: string;
-  agentName: string;
-  status: "loading" | "ready" | "error" | "offline";
-  inventory?: KubernetesInventory;
-  error?: string;
-  refreshing?: boolean;
-};
-export type NpuResourceGroup = {
-  key: string;
-  allocatable: string | null;
-  capacity: string | null;
-  nodeCount: number;
-  conflictCount: number;
-  partial: boolean;
-};
-export type KubernetesNpuSummary = {
-  groups: NpuResourceGroup[];
-  status: "none" | "loading" | "ready" | "partial" | "error" | "stale";
-  agentCount: number;
-  readyAgentCount: number;
-  nodeCount: number;
-  collectedAt: string | null;
-  issues: string[];
-};
 
 export function kubernetesInventoryFreshness(
   inventory: KubernetesInventory,

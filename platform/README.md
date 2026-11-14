@@ -7,6 +7,10 @@ The existing Python service remains the reference HTTP application. Its internal
 Use Node 22 or newer. The runtime has no third-party Node dependencies; TypeScript and Node types are locked development dependencies.
 
 ```sh
+cd packages/node-sdk
+npm ci --ignore-scripts
+npm run build
+cd ../..
 cd platform
 npm ci --ignore-scripts
 npm run check
@@ -22,10 +26,10 @@ Create the private directory first. `pin` refuses to overwrite its output, rebas
 
 ## Public package contract
 
-Import authoring types from `@mindie/console-platform/sdk`. A manifest has `schemaVersion`, unique `id`, exact `version`, supported `sdk` range, relative ESM `entry`, `provides`, and `requires`. The parser rejects unknown fields and unsupported range grammar. Version ranges support exact `1.2.3`/`=1.2.3`, `~1.2.3`, and `^1.2.3`, including caret's zero-major restrictions. Versions use numeric major.minor.patch without prerelease/build labels.
+The independent package lives in `packages/node-sdk`; build and pack it with `npm run build` and `npm pack --ignore-scripts`. Install the reviewed tarball in a separate developer project; no registry publication is assumed. The former platform SDK entry remains a compatibility re-export. Import authoring types from `@mindie-motor/host-sdk`. A manifest has `schemaVersion`, unique `id`, exact `version`, supported `sdk` range, relative ESM `entry`, `provides`, and `requires`. The parser rejects unknown fields and unsupported range grammar. Version ranges support exact `1.2.3`/`=1.2.3`, `~1.2.3`, and `^1.2.3`, including caret's zero-major restrictions. Versions use numeric major.minor.patch without prerelease/build labels.
 
 ```ts
-import type { Plugin } from '@mindie/console-platform/sdk';
+import type { Plugin } from '@mindie-motor/host-sdk';
 const plugin: Plugin = {
   activate(ctx) {
     const repository = ctx.consume('example.repository');
@@ -41,7 +45,13 @@ Augment SDK `ContractMap` to add type-safe interfaces for a package ecosystem. T
 
 Composition declares contract slots (`one`, `optional`, or `many`), imported package records (`id`, exact `version`, local `root`, tree `sha256`), `selected` package IDs, explicit `bindings`, and per-package `settings`. An imported unselected artifact is read and verified but its entrypoint is never executed. A selected package may declare several contracts; each slot binding determines which provider consumers receive. No implicit last-writer override occurs.
 
-Import a reviewed directory into a digest-named store without executing it:
+Inspect a reviewed directory without importing its entrypoint, then copy it into a digest-named store:
+
+```sh
+node dist/cli.js inspect --source /reviewed/my-provider
+```
+
+Import does not activate code:
 
 ```sh
 node dist/cli.js import --source /reviewed/my-provider --store /private/console/artifacts
@@ -76,14 +86,14 @@ The bridge accepts `upstream` (HTTP(S) origin without embedded credentials), `ma
     "executable": "/usr/local/bin/python3",
     "args": ["-m", "uvicorn", "backend.app:app", "--host", "127.0.0.1", "--port", "19081"],
     "cwd": "/opt/console/web",
-    "readyPath": "/healthz",
+    "readyPath": "/ready",
     "startupTimeoutMs": 20000,
     "shutdownTimeoutMs": 3000
   }
 }
 ```
 
-Executable/cwd must be absolute; argv is fixed strings, `shell:false`, loopback is mandatory, and no package install occurs. Child environment inherits the host process so credentials can stay outside composition. Readiness is HTTP 2xx, not NPU/Kubernetes acceptance. Use a dedicated unused port. Child lifecycle ownership covers the direct child; arbitrary descendant process trees are outside this reference contract. Unexpected owned-child exit fails the host generation closed. HTTPS uses Node's normal certificate validation; do not disable TLS verification in the host environment.
+Executable/cwd must be absolute; argv is fixed strings, `shell:false`, loopback is mandatory, and no package install occurs. Child environment inherits the host process so credentials can stay outside composition. `readyPath` defaults to `/ready`, the Console Python application's readiness route; set it explicitly for applications with another route. Readiness is HTTP 2xx, not NPU/Kubernetes acceptance. Use a dedicated unused port. Child lifecycle ownership covers the direct child; arbitrary descendant process trees are outside this reference contract. Unexpected owned-child exit fails the host generation closed. HTTPS uses Node's normal certificate validation; do not disable TLS verification in the host environment.
 
 ## Offline switch and recovery
 

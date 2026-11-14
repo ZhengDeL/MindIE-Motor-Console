@@ -77,6 +77,7 @@ Kubernetes 已有 Node/NPU Exporter 时，复用 Prometheus 逐节点抓取及 G
 
 - [完整文档导航](web/docs/README.md)：安装、操作、监控、维护、插件及版本说明。
 - [系统架构](web/ARCHITECTURE.md)：模块、管理链路、数据库和原生 Motor 的职责。
+- [插件框架与开发者入口](web/docs/PLUGIN_FRAMEWORK.md)：独立 SDK、脚手架、新业务契约和完整页面。
 - [插件扩展面](web/PLUGIN_EXTENSION_POINTS.md)：已实现的替换合同、SDK 与贡献入口。
 - [贡献指南](CONTRIBUTING.md)、[安全报告](SECURITY.md)、[许可及第三方来源](NOTICE.md)。
 

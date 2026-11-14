@@ -554,5 +554,170 @@
   ],
   "requires": [],
   "schemaVersion": 1,
-  "buildDigest": "79107e9fff85bd7d9fcd519cea20492c4e454a3069a3d223c5bc6252a196380e"
+  "contributes": {
+    "pages": [
+      {
+        "id": "console.ui.default.overview",
+        "slot": "page.overview",
+        "path": "overview",
+        "title": "集群概览",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "服务管理",
+        "order": 0
+      },
+      {
+        "id": "console.ui.default.services",
+        "slot": "page.services",
+        "path": "services",
+        "title": "推理服务",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "服务管理",
+        "order": 1
+      },
+      {
+        "id": "console.ui.default.gateways",
+        "slot": "page.gateways",
+        "path": "gateways",
+        "title": "网关接入",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "服务管理",
+        "order": 2
+      },
+      {
+        "id": "console.ui.default.templates",
+        "slot": "page.templates",
+        "path": "templates",
+        "title": "模板管理",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "服务管理",
+        "order": 3
+      },
+      {
+        "id": "console.ui.default.features",
+        "slot": "page.features",
+        "path": "features",
+        "title": "功能配置",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "服务管理",
+        "order": 4
+      },
+      {
+        "id": "console.ui.default.nodes",
+        "slot": "page.nodes",
+        "path": "nodes",
+        "title": "节点管理",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "资源管理",
+        "order": 5
+      },
+      {
+        "id": "console.ui.default.images",
+        "slot": "page.images",
+        "path": "images",
+        "title": "节点镜像",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "资源管理",
+        "order": 6
+      },
+      {
+        "id": "console.ui.default.logs",
+        "slot": "page.logs",
+        "path": "logs",
+        "title": "运行日志",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "运维与治理",
+        "order": 7
+      },
+      {
+        "id": "console.ui.default.systemlogs",
+        "slot": "page.systemlogs",
+        "path": "systemlogs",
+        "title": "系统日志",
+        "roles": [
+          "admin"
+        ],
+        "section": "运维与治理",
+        "order": 8
+      },
+      {
+        "id": "console.ui.default.audit",
+        "slot": "page.audit",
+        "path": "audit",
+        "title": "操作审计",
+        "roles": [
+          "admin"
+        ],
+        "section": "运维与治理",
+        "order": 9
+      },
+      {
+        "id": "console.ui.default.accounts",
+        "slot": "page.accounts",
+        "path": "accounts",
+        "title": "账号管理",
+        "roles": [
+          "admin"
+        ],
+        "section": "系统管理",
+        "order": 10
+      },
+      {
+        "id": "console.ui.default.maintenance",
+        "slot": "page.maintenance",
+        "path": "maintenance",
+        "title": "系统维护",
+        "roles": [
+          "admin"
+        ],
+        "section": "系统管理",
+        "order": 11
+      },
+      {
+        "id": "console.ui.default.settings",
+        "slot": "page.settings",
+        "path": "settings",
+        "title": "系统设置",
+        "roles": [
+          "admin",
+          "operator",
+          "viewer"
+        ],
+        "section": "系统管理",
+        "order": 12
+      }
+    ]
+  },
+  "buildDigest": "6d2a09fc738d95a000fa54a7da4e71abd3c4c123683ce3c4d96fb406f4a39a11"
 }

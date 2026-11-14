@@ -11,7 +11,27 @@ from uuid import uuid4
 from ..plugin_host.contracts import PluginConfigurationError
 
 CRITICAL = frozenset({"storage.store", "runtime.docker", "runtime.kubernetes", "motor.native", "resources.ledger"})
+WORKFLOW_CRITICAL = frozenset({"services.workflow", "tasks.coordinator"})
 _LOCK = threading.RLock()
+
+
+class ProviderGenerationMigrationRequired(PluginConfigurationError):
+    """An old receipt cannot prove the newly tracked workflow identities.
+
+    Reference names alone are not compatibility evidence: the old format did
+    not record these contracts, and deliberately omitted reference versions.
+    Keep the original receipt intact and reconcile on its recorded release.
+    """
+    code = "provider_receipt_migration_required"
+
+    def __init__(self, missing_contracts):
+        self.missing_contracts = tuple(sorted(missing_contracts))
+        super().__init__(self.code + ": recorded receipt predates critical service/task workflow identities ("
+            + ", ".join(self.missing_contracts) + "); reference names do not prove compatible code or versions. "
+            "Keep this receipt and restore the exact recorded release/assembly to reconcile pending operations, "
+            "owned resources and Agent effects. Upgrade only after that release checkpoints a confirmed idle state, "
+            "or use a separately reviewed migration with complete original identity evidence. "
+            "Do not delete/edit the receipt or clear ownership flags to bypass this guard.")
 
 
 def _selected(describe):
@@ -19,8 +39,8 @@ def _selected(describe):
     # change. Reference critical products are identified by their own relevant
     # source digest and exact contract version, independent of bundle version.
     return {item["contract"]: {key: value for key, value in item.items()
-                if key != "version" or not item["provider"].startswith("reference.")}
-            for item in describe["bindings"] if item["contract"] in CRITICAL}
+                if key != "version" or not isinstance(item["provider"], str) or not item["provider"].startswith("reference.")}
+            for item in describe["bindings"] if item["contract"] in CRITICAL or item.get("contract_definition", {}).get("critical") is True}
 
 
 def guard(directory: Path, describe: dict):
@@ -28,7 +48,7 @@ def guard(directory: Path, describe: dict):
     if not path.exists():
         # Upgrading an existing installation has no independent pending-operation
         # receipt. Do not switch its persistence/execution provider blindly.
-        changed = any(item["provider"] != "reference." + item["contract"] for item in describe["bindings"] if item["contract"] in CRITICAL)
+        changed = any(item["provider"] != "reference." + item["contract"] for item in describe["bindings"] if item["contract"] in CRITICAL or item.get("contract_definition", {}).get("critical") is True)
         if changed and directory.exists() and any(directory.iterdir()):
             raise PluginConfigurationError("Existing state has no provider generation receipt; first start the recorded providers and reconcile operations")
         return
@@ -38,12 +58,16 @@ def guard(directory: Path, describe: dict):
         if (not isinstance(previous, dict) or set(previous) != {"schemaVersion", "generation", "critical_bindings", "pending", "resources"}
                 or previous["schemaVersion"] != 1 or not isinstance(previous["generation"], str)
                 or not re.fullmatch(r"[a-f0-9]{64}", previous["generation"])
-                or not isinstance(previous["critical_bindings"], dict) or set(previous["critical_bindings"]) != CRITICAL
+                or not isinstance(previous["critical_bindings"], dict) or not CRITICAL <= set(previous["critical_bindings"])
                 or any(not isinstance(previous[key], list) or any(not isinstance(value, str) for value in previous[key]) for key in ("pending", "resources"))):
             raise PluginConfigurationError("Provider generation receipt has an invalid schema")
         effects = _agent_effects(directory)
-        if previous["critical_bindings"] != _selected(describe) and (previous["pending"] or previous.get("resources") or effects):
-            raise PluginConfigurationError("Cannot switch storage/runtime providers with pending operations or owned resources; reconcile using the recorded generation")
+        selected = _selected(describe)
+        if previous["critical_bindings"] != selected and (previous["pending"] or previous.get("resources") or effects):
+            missing_workflows = WORKFLOW_CRITICAL & (set(selected) - set(previous["critical_bindings"]))
+            if set(previous["critical_bindings"]) == CRITICAL and missing_workflows:
+                raise ProviderGenerationMigrationRequired(missing_workflows)
+            raise PluginConfigurationError("Cannot change critical provider implementations with pending operations or owned resources; reconcile using the recorded generation")
     except PluginConfigurationError:
         raise
     except (ValueError, KeyError, TypeError) as exc:

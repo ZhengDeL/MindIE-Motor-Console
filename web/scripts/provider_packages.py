@@ -26,6 +26,7 @@ from backend.plugin_host.packages.files import (atomic_write, ensure_directory, 
 from backend.plugin_host.packages.manifest import canonical_json, json_document
 from backend.provider_host import ProviderHost
 from backend.provider_host.catalogue import CONTRACTS
+from motor_console_sdk.validation import extension_contracts, extension_namespace, http_modules
 
 MAX_BYTES = 4 * 1024 * 1024
 _ID = re.compile(r"[a-z][a-z0-9_.-]{0,95}")
@@ -59,20 +60,59 @@ def inspect(raw: bytes):
     except (zipfile.BadZipFile, RuntimeError, EOFError, NotImplementedError) as error:
         raise ValueError("Invalid provider ZIP artifact") from error
     manifest = json_document(files["manifest.json"])
-    if (not isinstance(manifest, dict) or set(manifest) != {"schemaVersion", "sdkVersion", "id", "version", "contracts", "dependencies", "factory"}
-            or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] != 1
+    if (not isinstance(manifest, dict) or not {"schemaVersion", "sdkVersion", "id", "version", "contracts", "dependencies", "factory"} <= set(manifest)
+            or set(manifest) - {"schemaVersion", "sdkVersion", "id", "version", "contracts", "dependencies", "factory"}
+                - ({"contract_definitions", "http_modules", "contract_dependencies"} if manifest.get("schemaVersion") == 2 else set())
+            or type(manifest["schemaVersion"]) is not int or manifest["schemaVersion"] not in {1, 2}
             or type(manifest["sdkVersion"]) is not int or manifest["sdkVersion"] != 1
             or not isinstance(manifest["id"], str) or not _ID.fullmatch(manifest["id"])
             or manifest["id"].startswith("reference.") or not isinstance(manifest["version"], str) or not _VERSION.fullmatch(manifest["version"])
             or not isinstance(manifest["factory"], str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", manifest["factory"])):
         raise ValueError("Invalid provider manifest schema or identity")
+    definitions = extension_contracts(manifest.get("contract_definitions", []), CONTRACTS)
+    registry = {**CONTRACTS, **definitions}
     contracts, dependencies = manifest["contracts"], manifest["dependencies"]
-    if (not isinstance(contracts, dict) or not contracts or len(contracts) > len(CONTRACTS)
-            or any(name not in CONTRACTS or CONTRACTS[name].internal or type(version) is not int or version != CONTRACTS[name].version for name, version in contracts.items())
-            or not isinstance(dependencies, list) or len(dependencies) > len(CONTRACTS)
-            or any(not isinstance(name, str) or name not in CONTRACTS or CONTRACTS[name].internal for name in dependencies)
-            or len(set(dependencies)) != len(dependencies)):
-        raise ValueError("Unsupported provider contracts or dependencies")
+    if (not isinstance(contracts, dict) or not contracts or len(contracts) > 256
+            or any(name not in registry or registry[name].internal or type(version) is not int or version != registry[name].version
+                for name, version in contracts.items())):
+        raise ValueError("Unsupported provider contracts")
+    if isinstance(dependencies, dict) and manifest["schemaVersion"] == 2:
+        for name, version in dependencies.items():
+            if name in registry:
+                if registry[name].internal or type(version) is not int or version != registry[name].version:
+                    raise ValueError("Unsupported exact dependency version")
+            else:
+                extension_namespace(name)
+                if type(version) is not int or not 1 <= version <= 65535:
+                    raise ValueError("Invalid external dependency version")
+        names = list(dependencies)
+    elif isinstance(dependencies, list):
+        names = dependencies
+        for name in names:
+            if name not in registry or registry[name].internal:
+                raise ValueError("New independent dependencies require schema v2 exact version mapping")
+    else:
+        raise ValueError("Invalid provider dependencies")
+    if len(names) > 256 or len(set(names)) != len(names):
+        raise ValueError("Invalid provider dependency cardinality")
+    if "contract_dependencies" in manifest:
+        scoped = manifest["contract_dependencies"]
+        if names or not isinstance(scoped, dict) or set(scoped) != set(contracts):
+            raise ValueError("Per-contract dependencies require complete owners and empty global dependencies")
+        for requirements in scoped.values():
+            if not isinstance(requirements, dict) or len(requirements) > 256:
+                raise ValueError("Per-contract dependencies must use exact version mappings")
+            for name, version in requirements.items():
+                if name in registry:
+                    if registry[name].internal or type(version) is not int or version != registry[name].version:
+                        raise ValueError("Per-contract dependency version mismatch")
+                else:
+                    extension_namespace(name)
+                    if type(version) is not int or not 1 <= version <= 65535:
+                        raise ValueError("Invalid per-contract external dependency version")
+    modules = http_modules(manifest.get("http_modules", []), registry)
+    if any(module["contract"] not in contracts for module in modules):
+        raise ValueError("HTTP module contract must be provided by its artifact")
     if not files["README.md"].strip() or not files["LICENSE"].strip():
         raise ValueError("Provider requires nonempty README.md and LICENSE")
     compile(files["provider.py"].decode("utf-8"), "provider-artifact://provider.py", "exec", dont_inherit=True)
@@ -130,7 +170,13 @@ def install(artifact: Path, directory: Path, *, runtime_root: str | None = None)
         fragment = {"id": manifest["id"], "version": manifest["version"], "contracts": manifest["contracts"],
                     "dependencies": manifest["dependencies"], "module_file": runtime_module,
                     "sha256": hashlib.sha256(files["provider.py"]).hexdigest(), "factory": manifest["factory"], "trust_code": False}
-    return {"artifact_sha256": digest, "provider": fragment, "installed_not_selected": True, "executes_code": False}
+        if "contract_dependencies" in manifest:
+            fragment["contract_dependencies"] = manifest["contract_dependencies"]
+    return {"artifact_sha256": digest, "provider": fragment,
+            "contract_definitions": manifest.get("contract_definitions", []),
+            "http_modules": manifest.get("http_modules", []),
+            "assembly_schema_version": manifest["schemaVersion"],
+            "installed_not_selected": True, "executes_code": False}
 
 
 def validate(document):

@@ -2,6 +2,9 @@ ARG NODE_BUILD_IMAGE=node:22-bookworm-slim
 ARG NODE_RUNTIME_IMAGE=node:22-bookworm-slim
 FROM ${NODE_BUILD_IMAGE} AS build
 WORKDIR /opt/console-platform
+COPY packages/node-sdk/package.json packages/node-sdk/package-lock.json /opt/packages/node-sdk/
+RUN npm --prefix /opt/packages/node-sdk ci --ignore-scripts --no-audit --no-fund
+COPY packages/node-sdk/ /opt/packages/node-sdk/
 COPY platform/package.json platform/package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY platform/tsconfig.json ./
@@ -24,6 +27,8 @@ ENV NODE_ENV=production
 COPY --from=build --chown=node:node /opt/console-platform/package.json ./package.json
 COPY --from=build --chown=node:node /opt/console-platform/dist ./dist
 COPY --from=build --chown=node:node /opt/console-platform/composition.json ./composition.json
+COPY --from=build --chown=node:node /opt/packages/node-sdk/package.json /opt/packages/node-sdk/package.json
+COPY --from=build --chown=node:node /opt/packages/node-sdk/dist /opt/packages/node-sdk/dist
 USER node
 EXPOSE 8000
 CMD ["node", "dist/cli.js", "start", "--config", "/opt/console-platform/composition.json"]

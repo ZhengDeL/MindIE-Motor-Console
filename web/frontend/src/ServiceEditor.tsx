@@ -1,3 +1,4 @@
+import type { ServiceEditorProps } from '@mindie-motor/ui-sdk';
 import { UiElement, UiSlot, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { assertProductImport, isNativeMotorConfig } from "./productImports";
 import { useEffect, useRef, useState } from "react";
@@ -26,9 +27,9 @@ import {
   validateJsonNumbers,
 } from "./api";
 import type {
-  DeploymentApproval,
   Json,
-  NodeInfo,
+  MotorUserConfig,
+  MotorDeployConfig,
   Placement,
   Plan,
   Service,
@@ -42,7 +43,7 @@ import { usePluginEnabled, useRuntimeAccess } from "./consolePlugins";
 import type { SchedulingChoice } from "./ClusterNodes";
 import NativeAigwEditor, { applyNativeAigwField } from "./IntegrationAigw";
 import ImageContractPanel from "./IntegrationImages";
-import { readNotice, type ReadState } from "./readState";
+import { readNotice } from "./readState";
 import PlacementPlanDialog from "./PlacementPlanDialog";
 import { useUnsavedChanges } from "./unsavedChanges";
 import {
@@ -109,15 +110,7 @@ function DefaultServiceEditor({
   onClose,
   onSaved,
   onDeploy,
-}: {
-  nodes: NodeInfo[];
-  nodesRead: ReadState;
-  original?: Service;
-  initialTemplate?: Template;
-  onClose: () => void;
-  onSaved: () => void;
-  onDeploy: (service: Service, approval?: DeploymentApproval) => Promise<void>;
-}) {
+}: ServiceEditorProps) {
   const templatesEnabled = usePluginEnabled("templates");
   const imagesEnabled = usePluginEnabled("images");
   const gatewaysEnabled = usePluginEnabled("gateways");
@@ -226,7 +219,7 @@ function DefaultServiceEditor({
       );
     return values;
   };
-  const parsed = (): { user: Json; env: Json } => {
+  const parsed = (): { user: MotorUserConfig & { motor_deploy_config: MotorDeployConfig }; env: Json } => {
     const user = parseStrictJson(userText);
     const env = parseStrictJson(envText);
     if (
@@ -238,8 +231,8 @@ function DefaultServiceEditor({
       typeof env !== "object"
     )
       throw Error("服务配置与环境变量都必须是 JSON 对象");
-    if (!user.motor_deploy_config)
-      throw Error("服务配置缺少 motor_deploy_config");
+    if (!user.motor_deploy_config || typeof user.motor_deploy_config !== "object" || Array.isArray(user.motor_deploy_config))
+      throw Error("服务配置缺少有效的 motor_deploy_config 对象");
     return { user, env };
   };
   const pick = (t: Template) => {
@@ -281,7 +274,7 @@ function DefaultServiceEditor({
       setError((e as Error).message);
     }
   };
-  let currentConfig: Json = {};
+  let currentConfig: MotorUserConfig = {};
   try {
     const candidate = parseStrictJson(userText);
     if (candidate && typeof candidate === "object" && !Array.isArray(candidate))
@@ -302,7 +295,7 @@ function DefaultServiceEditor({
           Object.values(existing).some((value) => typeof value !== "string"))
       )
         throw Error("节点选择器必须为字符串键值对象，请先在服务配置中修正");
-      const selector = { ...existing };
+      const selector: Record<string, unknown> = { ...existing };
       if (hostname) selector["kubernetes.io/hostname"] = hostname;
       else delete selector["kubernetes.io/hostname"];
       user.motor_deploy_config[field] = selector;
@@ -360,7 +353,7 @@ function DefaultServiceEditor({
     : "separate";
   const supportsKv = (role: string) =>
     Boolean(
-      currentConfig[`motor_engine_${role}_config`]?.engine_config
+      currentConfig[`motor_engine_${role}_config` as "motor_engine_prefill_config"]?.engine_config
         ?.kv_transfer_config,
     );
   const supportsPorts = (role: string) =>

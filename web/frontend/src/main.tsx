@@ -1,3 +1,4 @@
+import type { UiPackageManifest } from "@mindie-motor/ui-sdk";
 import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import defaultManifest from "../public/ui-default-manifest.json";
@@ -6,7 +7,7 @@ import { configureUiGeneration } from "./api";
 import { PRODUCT_NAME } from "./brand";
 import "./ui-kernel.css";
 const DEFAULT_UI_SLOTS = defaultManifest.provides.map(contribution => contribution.slot);
-const compiledPackages = [{ manifest: defaultManifest, load: () => import("./defaultUiPlugin").then(module => module.defaultUiPlugin) }];
+const compiledPackages = [{ manifest: defaultManifest as UiPackageManifest, load: () => import("./defaultUiPlugin").then(module => module.defaultUiPlugin) }];
 document.title = PRODUCT_NAME;
 const root = createRoot(document.getElementById("root")!);
 const starting = <main className="ui-boot-status" role="status">正在校验 UI 插件装配…</main>;

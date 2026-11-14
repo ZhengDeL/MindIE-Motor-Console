@@ -15,13 +15,13 @@
 
 ## Python 公开合同
 
-当前目录包含 49 个公开合同，以及一个不开放替换的 ASGI 根装配机制。实际方法、输入、可选性和依赖以[可执行目录](backend/provider_host/catalogue.py)和[调用 SDK](backend/provider_host/sdk.py)为准；名称相同不等于已实现完整接口。
+当前目录包含 51 个公开合同，以及一个不开放替换的 ASGI 根装配机制。实际方法、输入、可选性和依赖以[可执行目录](backend/provider_host/catalogue.py)和[独立公共 SDK](../packages/python-sdk/README.md)为准；名称相同不等于已实现完整接口。
 
 | 领域 | 公开契约与调用边界 |
 | --- | --- |
 | 存储与秘密 | `storage.store`、`security.secrets`；在持久状态打开前选择，不限于 SQLite。数据库实现必须满足 Repository/UoW、条件写、审计原子性及备份恢复合同。 |
 | 身份与访问控制 | `security.identity`、`security.session`、`security.policy`、`security.agent`；身份、撤销会话、角色、CSRF 与 Agent 身份分别装配。 |
-| 审计、日志与任务 | `audit.sink`、`logs.*`、`tasks.scheduler`、`tasks.recovery`；关键写入受强制审计与授权检查，任务记录所用代次和执行绑定。 |
+| 审计、日志与任务 | `audit.sink`、`logs.*`、`services.workflow`、`tasks.coordinator`、`tasks.scheduler`、`tasks.recovery`；关键写入受强制审计与授权检查，任务记录所用代次和执行绑定。 |
 | 连接与观测 | `agent.connection`、`telemetry.*`；独立的 Agent 传输、宿主指标来源、节点/服务观测和指标查询。 |
 | 资源与执行 | `resources.*`、`motor.native`、`runtime.*`；库存、账本、最终准入、布局建议、原生版本画像及 Docker/K8s 执行器分别选择。 |
 | 业务与集成 | `templates.catalog`、`features.catalog`、`integration.grafana`、品牌和维护合同；网关及 Reporter 配置由相应 API、能力与原生适配提供。外部产品仍有独立安装和验收前提。 |
@@ -56,6 +56,10 @@
 - 离线检查与恢复不执行待恢复插件。损坏的选择 JSON 可按原始字节摘要恢复，并保留损坏文件；它不回滚业务数据库。
 
 自定义存储的迁移/备份、第三方安全提供者、真实 NPU 执行和外部系统均须各自验收。公开接口可替换不等于任意实现天然兼容，也不等于自动迁移、热卸载或多实例高可用。
+
+## 新增业务和页面
+
+Python schema v2 支持命名空间契约、逐产品依赖与独立 HTTP 贡献；UI 支持完整页面、导航、深链接和自定义服务。无需向根应用添加业务分支。三个独立 SDK、空目录脚手架、检查和打包步骤见[插件框架与开发者入口](docs/PLUGIN_FRAMEWORK.md)。
 
 ## 贡献新实现
 

@@ -12,8 +12,9 @@
   },
   "bin": { "console-platform": "./dist/cli.js" },
   "scripts": {
-    "build": "tsc && node scripts/copy-manifests.mjs",
-    "check": "tsc --noEmit",
+    "build:sdk": "npm --prefix ../packages/node-sdk run build",
+    "build": "npm run build:sdk && tsc && node scripts/copy-manifests.mjs",
+    "check": "npm run build:sdk && tsc --noEmit",
     "start": "node dist/cli.js start",
     "validate": "node dist/cli.js validate",
     "pin": "node dist/cli.js pin",

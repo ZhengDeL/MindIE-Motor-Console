@@ -1,45 +1,17 @@
+import type { UiComponentProps, UiPackageManifest, UiBootstrap, UiPlugin, UiBundledPlugin, UiHostServices, UiRuntime, UiI18n, UiElements, UiActions, UiButtonProps, UiResolver, UiSlotRef, UiSlotProps, UiRegionProps, UiRegionRenderProps, UiNotificationsProps, UiPageProps, MotorConsoleUiSdk } from '@mindie-motor/ui-sdk';
+import { definePlugin, defineSlot, provideSlot } from '@mindie-motor/ui-sdk';
+export * from '@mindie-motor/ui-sdk';
 /** Public browser SDK. Trusted packages share this React instance and these contracts. */
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { api, post, download, setCsrfToken, parseStrictJson, createMutationIntent, createOperationKey, freezeUiGeneration, UI_GENERATION_CHANGED_EVENT } from "./api";
 import { hasUnsavedChanges, useUnsavedChanges } from "./unsavedChanges";
-import type { AuthStatus, Meta, NodeInfo, Service } from "./api";
+import type { AuthStatus, Meta } from "./api";
 import actionDefinitions from "./uiActionDefinitions.json";
 
-export const UI_SDK_VERSION = "1.0.0";
+import { UI_SDK_VERSION } from "@mindie-motor/ui-sdk";
 export const UI_ACTIONS = Object.freeze(actionDefinitions);
-export type UiComponentProps<P = Record<string, unknown>> = P & {
-  /** Explicit default implementation for composition, supplied equally to every provider. */
-  Default: React.ComponentType<P>;
-};
-export type UiProvider = React.ComponentType<any> | Record<string, any>;
-export type UiPackageManifest = {
-  id: string; version: string; sdkVersion: string;
-  buildDigest?: string;
-  provides: { slot: string; version: string }[];
-  requires?: { slot: string; range: string; optional?: boolean }[];
-  entry?: { path: string; sha256: string };
-  assets?: { path: string; sha256: string }[];
-};
-export type UiBootstrap = { schemaVersion: 1; sdkVersion: string; generation: string;
-  hostGeneration?: string; providerGeneration?: string;
-  packages: UiPackageManifest[]; bindings: Record<string, string> };
-export type UiPlugin = {
-  id: string; version: string; providers: Record<string, UiProvider>;
-  buildDigest?: string;
-  activate?: (context: { generation: string; signal: AbortSignal; selectedSlots: readonly string[]; onStop: (stop: () => void | Promise<void>) => void;
-    consume: <T>(slot: string) => T; assetUrl: (member: string) => string;
-    loadAsset: (member: string) => Promise<Uint8Array> }) => void | Promise<void>;
-};
-export type UiBundledPlugin = { manifest: UiPackageManifest; load: () => Promise<UiPlugin> };
-export function definePlugin<T extends UiPlugin>(plugin: T): T { return plugin; }
-export type UiHostServices = {
-  api: typeof api; post: typeof post; download: typeof download;
-  auth: AuthStatus | null; meta: Meta | null; services: Service[]; nodes: NodeInfo[];
-  page: string; navigate: (page: string) => void; notify: (message: string) => void;
-  workflows: { createService?: () => void; editService?: (service: Service) => void;
-    openService?: (service: Service) => void; serviceAction?: (service: Service, action: string) => void };
-};
+
 const HostContext = React.createContext<UiHostServices>({ api, post, download, auth: null, meta: null,
   services: [], nodes: [], page: "", navigate: page => { window.location.hash = page; },
   notify: message => { window.dispatchEvent(new CustomEvent("motor-console:ui-notification", { detail: message })); }, workflows: {} });
@@ -49,7 +21,7 @@ export function notify(message: string) { window.dispatchEvent(new CustomEvent("
 export function UiNotificationOutlet() {
   const [messages, setMessages] = React.useState<{ id: number; text: string }[]>([]);
   const sequence = React.useRef(0);
-  const Provider = useUiContract<React.ComponentType<any>>("ui.notifications");
+  const Provider = useUiContract<React.ComponentType<UiNotificationsProps>>("ui.notifications");
   React.useEffect(() => {
     const received = (event: Event) => {
       const text = (event as CustomEvent).detail;
@@ -67,8 +39,6 @@ export async function readSession(signal?: AbortSignal) {
   return { meta, auth };
 }
 
-export type UiRuntime = { generation: string; bindings: Readonly<Record<string, string>>;
-  resolve: <T>(slot: string) => T; stop: () => Promise<void> };
 const RuntimeContext = React.createContext<UiRuntime | null>(null);
 export const UiRuntimeProvider = RuntimeContext.Provider;
 export function useUiRuntime(): UiRuntime {
@@ -76,14 +46,17 @@ export function useUiRuntime(): UiRuntime {
   if (!runtime) throw Error("UI plugin runtime is unavailable. Check the selected composition.");
   return runtime;
 }
-export function useUiContract<T>(slot: string): T { return useUiRuntime().resolve<T>(slot); }
-export type UiI18n = { locale: string; translate: (key: string, source: string, values?: Record<string, unknown>) => string };
+export const useUiContract: UiResolver = <T,>(slot: string | UiSlotRef<T>): T => {
+  const runtime = useUiRuntime();
+  return typeof slot === "string" ? runtime.resolve<T>(slot) : runtime.resolve(slot);
+};
+
 export function useTranslation() {
   const language = useUiContract<UiI18n>("ui.i18n");
   return (source: string, key = source, values?: Record<string, unknown>) => language.translate(key, source, values);
 }
 export function UiText({ children }: { children: string }) { return <>{useTranslation()(children)}</>; }
-export type UiElements = { render: (tag: keyof React.JSX.IntrinsicElements, props: Record<string, any>) => React.ReactNode };
+
 function translateChildren(children: React.ReactNode, translate: (source: string) => string): React.ReactNode {
   if (typeof children === "string") return translate(children);
   return Array.isArray(children) ? children.map(child => translateChildren(child, translate)) : children;
@@ -92,17 +65,17 @@ function translateChildren(children: React.ReactNode, translate: (source: string
 export function UiElement<T extends keyof React.JSX.IntrinsicElements>({ as, ...props }: { as: T } & React.JSX.IntrinsicElements[T]) {
   const elements = useUiContract<UiElements>("ui.element"), translate = useTranslation();
   const actions = useUiContract<UiActions>("ui.actions"), host = useHost();
-  const translated = { ...props } as Record<string, any>;
+  const translated = { ...props } as Record<string, unknown>;
   for (const key of ["title", "placeholder", "aria-label", "alt"])
     if (typeof translated[key] === "string") translated[key] = translate(translated[key]);
   if (translated.children !== undefined && as !== "textarea" && as !== "pre" && as !== "code")
-    translated.children = translateChildren(translated.children, translate);
+    translated.children = translateChildren(translated.children as React.ReactNode, translate);
   if (as === "form" && typeof translated.onSubmit === "function") {
-    const submit = translated.onSubmit;
+    const submit = translated.onSubmit as React.FormEventHandler<HTMLFormElement>;
     translated.onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
       let invoked = false;
       try {
-        const result = actions.invoke({ id: translated["data-action-id"] ?? "form.submit", event, disabled: false,
+        const result = actions.invoke({ id: typeof translated["data-action-id"] === "string" ? translated["data-action-id"] : "form.submit", event, disabled: false,
           context: { page: host.page, principal: { id: host.auth?.user?.id, role: host.auth?.user?.role } },
           execute: () => { if (invoked) throw Error("A form action can only be invoked once"); invoked = true; return submit(event); } });
         if (!invoked || result === false) event.preventDefault();
@@ -111,18 +84,17 @@ export function UiElement<T extends keyof React.JSX.IntrinsicElements>({ as, ...
       } catch (error) { event.preventDefault(); host.notify(String(error)); }
     };
   }
-  return elements.render(as, translated);
+  return elements.render(as, translated as React.JSX.IntrinsicElements[T]);
 }
-export function UiRegion({ name, as = "div", children, ...props }: {
-  name: string; as?: keyof React.JSX.IntrinsicElements; children?: React.ReactNode; [key: string]: any;
-}) {
-  const Renderer = useUiContract<React.ComponentType<any>>(name);
-  const Default = React.useMemo(() => function NativeRegion(nativeProps: any) { return React.createElement(as, nativeProps); }, [as]);
+export function UiRegion({ name, as = "div", children, ...props }: UiRegionProps) {
+  const Renderer = useUiContract<React.ComponentType<UiComponentProps<UiRegionRenderProps>>>(name);
+  const Default = React.useMemo(() => function NativeRegion({ as: _as, ...nativeProps }: UiRegionRenderProps) { return React.createElement(as, nativeProps); }, [as]);
   return <Renderer {...props} as={as} Default={Default}>{children}</Renderer>;
 }
-export function withUiSlot<P extends object>(slot: string, Default: React.ComponentType<P>): React.ComponentType<P> {
+export function withUiSlot<P extends object>(slot: string | UiSlotRef<React.ComponentType<UiComponentProps<P>>>, Default: React.ComponentType<P>): React.ComponentType<P> {
   function Selected(props: P) {
-    const Provider = useUiContract<React.ComponentType<UiComponentProps<P>>>(slot);
+    const runtime = useUiRuntime();
+    const Provider = typeof slot === "string" ? runtime.resolve<React.ComponentType<UiComponentProps<P>>>(slot) : runtime.resolve(slot);
     const translate = useTranslation();
     const translated = { ...props } as Record<string, unknown>;
     for (const key of ["label", "title", "description", "placeholder", "aria-label", "hint", "subtitle"])
@@ -133,26 +105,21 @@ export function withUiSlot<P extends object>(slot: string, Default: React.Compon
   return Selected;
 }
 const NativeContent = ({ children }: { children?: React.ReactNode }) => <>{children}</>;
-export function UiSlot({ name, children, Default = NativeContent, ...props }: { name: string; children?: React.ReactNode; Default?: React.ComponentType<any>; [key: string]: any }) {
-  const Provider = useUiContract<React.ComponentType<any>>(name);
-  return <Provider {...props} Default={Default}>{children}</Provider>;
+export function UiSlot<P extends object>({ name, children, Default = NativeContent as React.ComponentType<P>, ...props }: UiSlotProps<P> & { children?: React.ReactNode }) {
+  const Provider = useUiContract<React.ComponentType<UiComponentProps<P>>>(name);
+  return <Provider {...props as P} Default={Default}>{children}</Provider>;
 }
 
-export type UiActionInvocation = { id: string; event?: React.SyntheticEvent<HTMLElement>;
-  execute: () => unknown; disabled: boolean; context: Record<string, unknown> };
-export type UiActions = { invoke: (action: UiActionInvocation) => unknown;
-  register?: (id: string, handler: (action: UiActionInvocation) => unknown) => () => void };
 export function useAction(id: string) {
   const actions = useUiContract<UiActions>("ui.actions");
   return (execute: () => unknown, context: Record<string, unknown> = {}) =>
     actions.invoke({ id, execute, disabled: false, context });
 }
-export type UiButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  actionId?: string; actionContext?: Record<string, unknown> };
+
 /** All native buttons, including icon/menu/tab buttons, use the selected renderer and action policy. */
 export const UiButton = React.forwardRef<HTMLButtonElement, UiButtonProps>(function UiButton(
   { actionId, actionContext, onClick, ...props }, ref) {
-  const Renderer = useUiContract<React.ComponentType<any>>("ui.button");
+  const Renderer = useUiContract<React.ComponentType<UiButtonProps & React.RefAttributes<HTMLButtonElement>>>("ui.button");
   const actions = useUiContract<UiActions>("ui.actions");
   const translate = useTranslation();
   const host = useHost();
@@ -177,17 +144,46 @@ export const UiButton = React.forwardRef<HTMLButtonElement, UiButtonProps>(funct
   }} />;
 });
 
-const VERSION = /^([0-9]+)\.([0-9]+)\.([0-9]+)$/;
+const VERSION = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 const ID = /^[a-z][a-z0-9_.-]{0,95}$/;
 const SLOT = /^[a-zA-Z][a-zA-Z0-9_.-]{0,127}$/;
 const DIGEST = /^[a-f0-9]{64}$/;
 const MEMBER = /^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*(?:\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*)*$/;
 function compatible(actual: string, range: string): boolean {
-  if (!VERSION.test(actual)) return false;
+  if (actual.length > 64 || !VERSION.test(actual) || range.length > 65) return false;
   if (range === actual) return true;
   if (!["^", "~"].includes(range[0]) || !VERSION.test(range.slice(1))) return false;
-  const a = actual.split(".").map(Number), b = range.slice(1).split(".").map(Number);
-  return a[0] === b[0] && (range[0] !== "~" || a[1] === b[1]) && (a[1] > b[1] || a[1] === b[1] && a[2] >= b[2]);
+  const a = actual.split(".").map(value => BigInt(value)), b = range.slice(1).split(".").map(value => BigInt(value));
+  if (a[0] !== b[0] || a[1] < b[1] || a[1] === b[1] && a[2] < b[2]) return false;
+  if (range[0] === "~" || b[0] === 0n && b[1] > 0n) return a[1] === b[1];
+  return b[0] !== 0n || a[1] === b[1] && a[2] === b[2];
+}
+function validateContributions(manifest: UiPackageManifest): void {
+  if (manifest.contributes === undefined) return;
+  const contributes = manifest.contributes;
+  if (!contributes || typeof contributes !== "object" || Array.isArray(contributes)
+      || Object.keys(contributes).some(key => key !== "pages"))
+    throw Error(`Invalid UI contributions: ${manifest.id}`);
+  if (contributes.pages === undefined) return;
+  if (!Array.isArray(contributes.pages) || contributes.pages.length > 64) throw Error(`Invalid UI page contributions: ${manifest.id}`);
+  const ids = new Set<string>(), paths = new Set<string>();
+  const reference = manifest.id === "console.ui.default";
+  const corePaths = ["overview", "services", "templates", "nodes", "images", "gateways", "logs", "features", "audit", "systemlogs", "accounts", "maintenance", "settings"];
+  for (const page of contributes.pages) {
+    if (!page || typeof page !== "object" || Object.keys(page).some(key => !["id", "slot", "path", "title", "roles", "section", "order"].includes(key))
+        || !SLOT.test(page.id) || !page.id.startsWith(manifest.id + ".") || ids.has(page.id)
+        || typeof page.slot !== "string" || !manifest.provides.some(item => item.slot === page.slot && item.kind !== "service" && item.version === UI_SDK_VERSION)
+        || !reference && !page.slot.startsWith(manifest.id + ".") || typeof page.path !== "string" || paths.has(page.path)
+        || (reference ? !corePaths.includes(page.path) : !page.path.startsWith(`extensions/${manifest.id}/`)
+          || !/^[a-z][a-z0-9-]{0,47}$/.test(page.path.slice(`extensions/${manifest.id}/`.length)))
+        || typeof page.title !== "string" || !page.title.trim() || page.title.length > 100 || /[\x00-\x1f]/.test(page.title)
+        || page.section !== undefined && (typeof page.section !== "string" || !page.section.trim() || page.section.length > 60 || /[\x00-\x1f]/.test(page.section))
+        || page.order !== undefined && (!Number.isInteger(page.order) || page.order < -10000 || page.order > 10000)
+        || !Array.isArray(page.roles) || !page.roles.length || page.roles.length > 3
+        || page.roles.some(role => !["admin", "operator", "viewer"].includes(role)) || new Set(page.roles).size !== page.roles.length)
+      throw Error(`Invalid, conflicting or unnamespaced UI page: ${manifest.id}`);
+    ids.add(page.id); paths.add(page.path);
+  }
 }
 export function validateUiBootstrap(input: unknown, requiredSlots: readonly string[]): UiBootstrap {
   if (!input || typeof input !== "object") throw Error("Invalid UI bootstrap manifest");
@@ -199,16 +195,24 @@ export function validateUiBootstrap(input: unknown, requiredSlots: readonly stri
   for (const key of ["hostGeneration", "providerGeneration"] as const)
     if (graph[key] !== undefined && !DIGEST.test(graph[key]!)) throw Error(`Invalid UI ${key}`);
   for (const manifest of graph.packages) {
-    if (!manifest || !ID.test(manifest.id) || packages.has(manifest.id) || !VERSION.test(manifest.version)
+    if (!manifest || !ID.test(manifest.id) || packages.has(manifest.id) || !VERSION.test(manifest.version) || manifest.version.length > 64
       || manifest.sdkVersion !== UI_SDK_VERSION || !Array.isArray(manifest.provides) || manifest.provides.length > 512
       || (manifest.requires !== undefined && (!Array.isArray(manifest.requires) || manifest.requires.length > 512)))
       throw Error(`Invalid or duplicate UI package: ${manifest?.id}`);
     const slots = new Set<string>();
     for (const contribution of manifest.provides) {
-      if (!contribution || !SLOT.test(contribution.slot) || !VERSION.test(contribution.version) || slots.has(contribution.slot))
+      if (!contribution || !SLOT.test(contribution.slot) || !VERSION.test(contribution.version) || contribution.version.length > 64 || slots.has(contribution.slot))
         throw Error(`Invalid or duplicate provider in ${manifest.id}`);
       slots.add(contribution.slot);
+      if (contribution.kind !== undefined && !["component", "service"].includes(contribution.kind)) throw Error(`Invalid UI contract kind: ${manifest.id}`);
+      if (contribution.kind === "service") {
+        const methods = contribution.methods;
+        if (!contribution.slot.startsWith(manifest.id + ".") || !Array.isArray(methods) || !methods.length || methods.length > 64
+            || methods.some(method => typeof method !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(method) || ["constructor", "prototype", "__proto__"].includes(method))
+            || new Set(methods).size !== methods.length) throw Error(`Invalid UI service method contract: ${manifest.id}`);
+      } else if (contribution.methods !== undefined) throw Error(`Component UI contract declares service methods: ${manifest.id}`);
     }
+    validateContributions(manifest);
     if (manifest.entry && (typeof manifest.entry.path !== "string"
       || !/^\/api\/ui-plugins\/assets\/[a-f0-9]{64}\/[a-zA-Z0-9_.-]+\.(?:m?js)$/.test(manifest.entry.path)
       || !DIGEST.test(manifest.entry.sha256))) throw Error(`Untrusted UI artifact path/digest: ${manifest.id}`);
@@ -224,10 +228,17 @@ export function validateUiBootstrap(input: unknown, requiredSlots: readonly stri
   }
   for (const slot of requiredSlots) if (!Object.hasOwn(graph.bindings, slot)) throw Error(`Required UI slot is unbound: ${slot}`);
   for (const [slot, selected] of Object.entries(graph.bindings)) {
-    if (!SLOT.test(slot) || typeof selected !== "string" || !packages.get(selected)?.provides.some(p => p.slot === slot && compatible(p.version, "^1.0.0")))
+    if (!SLOT.test(slot) || typeof selected !== "string" || !packages.get(selected)?.provides.some(p => p.slot === slot
+        && (!requiredSlots.includes(slot) || compatible(p.version, "^1.0.0"))))
       throw Error(`Missing, incompatible or ambiguous UI provider: ${slot} -> ${String(selected)}`);
   }
   const selected = new Set(Object.values(graph.bindings));
+  const pageIds = new Set<string>(), pageRoutes = new Set<string>();
+  for (const manifest of graph.packages) for (const page of manifest.contributes?.pages ?? []) {
+    if (manifest.id !== "console.ui.default" && graph.bindings[page.slot] !== manifest.id) continue;
+    if (pageIds.has(page.id) || pageRoutes.has(page.path)) throw Error(`Selected UI page identity or route conflicts: ${page.id}`);
+    pageIds.add(page.id); pageRoutes.add(page.path);
+  }
   const visited = new Set<string>(), visiting = new Set<string>();
   function visit(id: string) {
     if (visiting.has(id)) throw Error(`UI dependency cycle: ${[...visiting, id].join(" -> ")}`);
@@ -269,8 +280,13 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
   const selected = new Set(Object.values(graph.bindings));
   const loaded = new Map<string, UiPlugin>();
   const abort = new AbortController(), cleanups: (() => void | Promise<void>)[] = [];
-  const resolve = <T,>(slot: string): T => {
+  const resolve: UiResolver = <T,>(reference: string | UiSlotRef<T>): T => {
+    const slot = typeof reference === "string" ? reference : reference.slot;
     const selectedId = Object.hasOwn(graph.bindings, slot) ? graph.bindings[slot] : undefined;
+    if (typeof reference !== "string") {
+      const version = graph.packages.find(manifest => manifest.id === selectedId)?.provides.find(item => item.slot === slot)?.version;
+      if (!version || !compatible(version, reference.version)) throw Error(`UI slot reference version mismatch: ${slot}@${reference.version}`);
+    }
     const providers = selectedId ? loaded.get(selectedId)?.providers : undefined;
     const provider = providers && Object.hasOwn(providers, slot) ? providers[slot] : undefined;
     if (!provider) throw Error(`Selected UI provider unavailable: ${slot} (${selectedId ?? "unbound"})`);
@@ -319,8 +335,10 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
       for (const slot of declared) if (!Object.hasOwn(plugin.providers, slot) || !plugin.providers[slot]) throw Error(`Declared UI provider missing: ${id}/${slot}`);
       const methods: Record<string, string> = { "ui.actions": "invoke", "ui.icons": "render", "ui.i18n": "translate", "ui.element": "render" };
       for (const [slot, provider] of Object.entries(plugin.providers)) {
-        if (Object.hasOwn(methods, slot)) {
-          if (typeof (provider as Record<string, unknown>)[methods[slot]] !== "function") throw Error(`Invalid UI contract implementation: ${id}/${slot}`);
+        const custom = manifest.provides.find(item => item.slot === slot);
+        if (Object.hasOwn(methods, slot) || custom?.kind === "service") {
+          for (const method of custom?.kind === "service" ? custom.methods! : [methods[slot]])
+            if (typeof (provider as Record<string, unknown>)[method] !== "function") throw Error(`Invalid UI contract implementation: ${id}/${slot}/${method}`);
           if (slot === "ui.i18n") {
             const locale = (provider as UiI18n).locale;
             if (typeof locale !== "string" || locale.length > 64 || Intl.getCanonicalLocales(locale).length !== 1)
@@ -352,8 +370,19 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
         onStop: fn => cleanups.push(fn), consume: resolve, assetUrl, loadAsset })), 15000, `UI activation ${id}`);
     }
     for (const id of selected) await load(id);
-    return { generation: graph.generation, bindings: Object.freeze({ ...graph.bindings }), resolve, stop };
+    return { generation: graph.generation, bindings: Object.freeze({ ...graph.bindings }), pages: Object.freeze(graph.packages.flatMap(manifest => (manifest.contributes?.pages ?? []).filter(page => manifest.id === "console.ui.default" || graph.bindings[page.slot] === manifest.id))), resolve, stop };
   } catch (error) { await stop(); throw error; }
+}
+
+/** Extension routes are never core authentication, service or management routes. */
+export function isUiPagePath(path: string): boolean { return /^extensions\/[a-z][a-z0-9_.-]{0,95}\/[a-z][a-z0-9-]{0,47}$/.test(path); }
+export function UiContributedPage({ page }: UiPageProps) {
+  const host = useHost();
+  const allowed = host.auth?.authenticated && page.roles.includes(host.meta?.mode === "demo" ? "admin" : host.auth.user?.role ?? "viewer");
+  const runtime = useUiRuntime();
+  if (!allowed) return <p role="alert">当前账号没有访问此页面的权限。</p>;
+  const Page = runtime.resolve<React.ComponentType<UiPageProps>>(page.slot);
+  return <Page page={page} />;
 }
 
 export class UiFailureBoundary extends React.Component<{ children: React.ReactNode; onFailure?: () => Promise<void> | void }, { error: string }> {
@@ -397,5 +426,5 @@ export function UiGenerationGuard({ generation }: { generation: string }) {
 
 export const browserUiSdk = Object.freeze({ sdkVersion: UI_SDK_VERSION, UI_ACTIONS, React, createElement: React.createElement,
   client: Object.freeze({ api, post, download, readSession, setCsrfToken, parseStrictJson, createMutationIntent, createOperationKey }), useUnsavedChanges, hasUnsavedChanges,
-  definePlugin, useHost, UiHostProvider, notify, createPortal, useUiContract, useSlot: useUiContract, useAction, useTranslation, UiText, UiElement, UiSlot, UiRegion, UiButton, withUiSlot });
+  definePlugin, defineSlot, provideSlot, useHost, UiHostProvider, notify, createPortal, useUiContract, useSlot: useUiContract, useAction, useTranslation, UiText, UiElement, UiSlot, UiRegion, UiButton, withUiSlot } satisfies MotorConsoleUiSdk);
 Object.defineProperty(globalThis, "MotorConsoleUiSdk", { value: browserUiSdk, configurable: false, writable: false });

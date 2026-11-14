@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "example.notes-ui",
+  "name": "独立便笺页面",
+  "description": "使用公共 UI SDK 和独立后端 Notes 模块。",
+  "version": "1.0.0",
+  "sdkVersion": "1.0.0",
+  "entrypoint": "entry.mjs",
+  "provides": [
+    { "slot": "example.notes-ui.page", "version": "1.0.0", "kind": "component" },
+    { "slot": "example.notes-ui.display", "version": "1.0.0", "kind": "service", "methods": ["format"] }
+  ],
+  "requires": [{ "slot": "example.notes-ui.display", "range": "^1.0.0" }],
+  "contributes": { "pages": [{ "id": "example.notes-ui.notes", "slot": "example.notes-ui.page",
+    "path": "extensions/example.notes-ui/notes", "title": "独立便笺",
+    "roles": ["admin", "operator", "viewer"], "section": "开发者扩展", "order": 20 }] }
+}

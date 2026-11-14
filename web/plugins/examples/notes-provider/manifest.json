@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "sdkVersion": 1,
+  "id": "example.notes",
+  "version": "1.0.0",
+  "factory": "create",
+  "contracts": { "ext.example-notes.notes": 1, "ext.example-notes.http": 1 },
+  "dependencies": {},
+  "contract_dependencies": {
+    "ext.example-notes.notes": { "storage.store": 1, "audit.sink": 1 },
+    "ext.example-notes.http": { "ext.example-notes.notes": 1 }
+  },
+  "contract_definitions": [
+    { "id": "ext.example-notes.notes", "version": 1, "methods": ["list_notes", "create_note"], "attributes": [], "optional": false, "critical": false },
+    { "id": "ext.example-notes.http", "version": 1, "methods": [], "attributes": ["routes"], "optional": false, "critical": false }
+  ],
+  "http_modules": [
+    {
+      "namespace": "example-notes",
+      "contract": "ext.example-notes.http",
+      "routes": [
+        { "path": "/api/plugins/example-notes/notes", "methods": ["GET"], "roles": ["admin", "operator", "viewer"], "account_only": true },
+        { "path": "/api/plugins/example-notes/notes", "methods": ["POST"], "roles": ["admin", "operator"], "account_only": true }
+      ]
+    }
+  ]
+}

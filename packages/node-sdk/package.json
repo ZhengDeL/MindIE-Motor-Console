@@ -1,0 +1,22 @@
+{
+  "name": "@mindie-motor/host-sdk",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Public typed contracts for MindIE-Motor Console process plugins",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "engines": { "node": ">=22.0.0" },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": { "@types/node": "22.15.30" },
+  "devDependencies": { "typescript": "5.8.3" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZhengDeL/MindIE-Motor-Console.git",
+    "directory": "packages/node-sdk"
+  }
+}

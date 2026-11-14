@@ -71,6 +71,8 @@ PR 应说明具体问题、修改后的行为、影响范围、验证结果和�
 
 ## 社区插件贡献
 
+完整插件框架从[开发者入口](web/docs/PLUGIN_FRAMEWORK.md)开始，使用独立 Python、UI 或 Node SDK 和 `plugin_dev.py init/check/pack`。新的业务契约、HTTP 模块和完整页面使用明确命名空间和版本，不修改核心路由分支；可替换参考实现也可新增模块。下述 community-status 专门展示保留的增量格式。
+
 插件作者使用目标宿主对应的源码或 PR 基线，并确认其 SDK 报告所需能力。阅读[插件开发指南](web/PLUGIN_DEVELOPMENT.md)，复制 [community-status 完整示例](web/plugins/examples/community-status/README.md)，按说明运行 `build` / `inspect`。样例的最低宿主版本为 `0.11.0`，不能据此自动修改其他插件声明的版本上界。
 
 每个贡献应包括稳定 ID、作者、许可证全文、兼容范围、显式依赖与最低访问角色，以及能运行的入口、说明文档和升级/回退方法。不得在导入模块时启动线程、联网、修改原生配置或执行部署；资源在工厂中创建后立即登记退出清理。

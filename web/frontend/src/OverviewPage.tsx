@@ -1,3 +1,4 @@
+import type { OverviewPageProps as Props } from '@mindie-motor/ui-sdk';
 import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useBranding } from "./brandingState";
 import { useState } from "react";
@@ -16,9 +17,7 @@ import {
   Server,
 } from "./icons";
 import { statusName, when } from "./api";
-import type { NodeInfo, Overview, Service } from "./api";
-import type { ConsolePage } from "./consoleNavigation";
-import type { NpuResourcesState } from "./useNpuResources";
+import type { NodeInfo, Overview } from "./api";
 import { isKubernetesAgent, summarizeDockerNpu } from "./npuResources";
 import { DockerNpuValue, KubernetesNpuContent } from "./NpuSummary";
 import { knownText, resourceNotice } from "./resourcePresentation";
@@ -33,22 +32,7 @@ import { readNotice, type ReadState } from "./readState";
 import "./overview.css";
 import { usePluginEnabled } from "./consolePlugins";
 
-type Props = {
-  overview: Overview | null;
-  services: Service[];
-  nodes: NodeInfo[];
-  servicesRead: ReadState;
-  nodesRead: ReadState;
-  npuResources: NpuResourcesState;
-  demo: boolean;
-  canOperate: boolean;
-  canAdminister: boolean;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onNavigate: (page: ConsolePage) => void;
-  onCreateService: () => void;
-  onOpenService: (service: Service) => void;
-};
+
 function DefaultReadNotice({ state, inline = false }: { state: ReadState; inline?: boolean }) {
   const message = readNotice(state);
   if (!message) return null;

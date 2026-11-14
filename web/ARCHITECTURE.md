@@ -54,6 +54,12 @@ flowchart TB
 
 存储在业务工厂之前选择。SQLite 使用本地持久磁盘和单写租约，PostgreSQL 使用专用会话 advisory lock；参考实现均不支持多 Uvicorn worker。其他存储提供者须实现完整 Repository/UoW、条件写、审计一致性和恢复合同，不能只暴露数据库连接。
 
+## 参考业务模块与新增扩展
+
+公共 DTO、Protocol 与 typed refs 分别位于独立的 Python/UI/Node SDK 包；参考实现消费同一份定义。服务工作流、任务协调和 HTTP API 位于 `backend/reference_modules`，根程序集只保留装配及强制请求边界。替代 API 从自己的工厂构建，不预先实例化未选参考路由；仅显式要求 v1 `reference_routes` 时才惰性构造对应参考模块。
+
+Python schema v2 可注册独立命名空间契约、逐产品依赖与 HTTP 模块，UI 可贡献完整页面、导航、深链接和自定义服务。新增合规模块不需要改根应用业务分支。架构、独立安装 SDK、脚手架和配对示例见[插件框架](docs/PLUGIN_FRAMEWORK.md)。
+
 ## 导入、选择、运行与回退
 
 ```mermaid

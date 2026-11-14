@@ -1,15 +1,10 @@
+import type { ConsolePlugin, PluginCatalog } from '@mindie-motor/ui-sdk';
+export type { ConsolePlugin, PluginCatalog } from '@mindie-motor/ui-sdk';
 import { createContext, useContext } from "react";
-import { UiSlot } from "./uiPluginSdk";
+import { UiSlot, useUiRuntime } from "./uiPluginSdk";
 import type { ReactNode } from "react";
 import type { ConsolePage } from "./consoleNavigation";
-import { parsePluginNavigation, type PluginNavigation } from "./communityPlugins";
-
-export type ConsolePlugin = {
-  id: string; name: string; version: string; api_version: number; kind: string;
-  enabled: boolean; required: boolean; description: string; dependencies: string[];
-  capabilities: string[]; pages: string[]; runtimes: string[]; restart_required: boolean;
-};
-export type PluginCatalog = { schemaVersion: 1; digest: string; active_storage_plugin: string; items: ConsolePlugin[]; navigation: PluginNavigation[] };
+import { parsePluginNavigation } from "./communityPlugins";
 
 /** The server selects installed, trusted plugins. No module URL or executable comes from HTTP. */
 export function parsePluginCatalog(input: unknown): PluginCatalog {
@@ -70,7 +65,10 @@ export function pageEnabled(catalog: PluginCatalog | null, page: ConsolePage): b
 
 /** Compile-time exhaustive page contributions; existing feature components retain their own state. */
 export type ConsolePageViews = Readonly<Record<ConsolePage, () => ReactNode>>;
-export function renderPageContribution(page: ConsolePage, catalog: PluginCatalog | null,
-  views: ConsolePageViews): ReactNode {
-  return pageEnabled(catalog, page) ? <UiSlot name={`page.${page}`} page={page} catalog={catalog}>{views[page]()}</UiSlot> : null;
+function RegisteredPage({ page, catalog, views }: { page: ConsolePage; catalog: PluginCatalog | null; views: ConsolePageViews }) {
+  const contribution = useUiRuntime().pages.find(item => item.path === page);
+  return pageEnabled(catalog, page) ? <UiSlot name={contribution?.slot ?? `page.${page}`} page={page} catalog={catalog}>{views[page]()}</UiSlot> : null;
+}
+export function renderPageContribution(page: ConsolePage, catalog: PluginCatalog | null, views: ConsolePageViews): ReactNode {
+  return <RegisteredPage page={page} catalog={catalog} views={views} />;
 }

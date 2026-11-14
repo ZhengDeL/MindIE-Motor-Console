@@ -1,7 +1,9 @@
+import type { BadgeProps, EmptyProps, SpinnerProps, FieldProps, SearchInputProps, ErrorBoxProps, InfoBoxProps, CopyProps, ConfirmProps, SegmentProps, SelectProps, StatBarProps, JsonEditorProps } from '@mindie-motor/ui-sdk';
+import type { ModalProps, ButtonProps } from '@mindie-motor/ui-sdk';
+export type { ModalProps, ButtonProps } from '@mindie-motor/ui-sdk';
 import { UiElement, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { ReactNode } from "react";
 import {
   AlertCircle,
   Check,
@@ -17,10 +19,7 @@ import { statusName } from "./api";
 function DefaultBadge({
   status,
   children,
-}: {
-  status: string;
-  children?: ReactNode;
-}) {
+}: BadgeProps) {
   return (
     <UiElement as="span" className={`badge badge-${status}`}>
       <UiElement as="i" />
@@ -33,12 +32,7 @@ function DefaultEmpty({
   description = "数据接入后将在这里展示。",
   icon,
   action,
-}: {
-  title?: string;
-  description?: string;
-  icon?: ReactNode;
-  action?: ReactNode;
-}) {
+}: EmptyProps) {
   return (
     <UiElement as="div" className="empty-state">
       <UiElement as="div" className="empty-icon">{icon ?? <Search size={25} />}</UiElement>
@@ -48,7 +42,7 @@ function DefaultEmpty({
     </UiElement>
   );
 }
-function DefaultSpinner({ label = "正在加载" }: { label?: string }) {
+function DefaultSpinner({ label = "正在加载" }: SpinnerProps) {
   return (
     <UiElement as="div"
       className="loading-state"
@@ -73,19 +67,7 @@ function DefaultButton({
   size = "small",
   actionId,
   actionContext,
-}: {
-  children: ReactNode;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
-  kind?: "primary" | "default" | "danger" | "text";
-  disabled?: boolean;
-  loading?: boolean;
-  className?: string;
-  type?: "button" | "submit";
-  title?: string;
-  size?: "small" | "medium" | "large";
-  actionId?: string;
-  actionContext?: Record<string, unknown>;
-}) {
+}: ButtonProps) {
   return (
     <UiButton
       actionId={actionId}
@@ -108,13 +90,7 @@ function DefaultField({
   hint,
   required,
   layout = "vertical",
-}: {
-  label: string;
-  children: ReactNode;
-  hint?: string;
-  required?: boolean;
-  layout?: "vertical" | "horizontal";
-}) {
+}: FieldProps) {
   return (
     <UiElement as="label" className={`field field-${layout}`}>
       <UiElement as="span" className="field-label">
@@ -133,12 +109,7 @@ function DefaultSearchInput({
   onChange,
   placeholder = "搜索名称、模型或节点",
   ariaLabel,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  ariaLabel?: string;
-}) {
+}: SearchInputProps) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <UiElement as="div" className="search-input">
@@ -166,7 +137,7 @@ function DefaultSearchInput({
     </UiElement>
   );
 }
-function DefaultErrorBox({ message }: { message: string }) {
+function DefaultErrorBox({ message }: ErrorBoxProps) {
   return (
     <UiElement as="div" className="error-box" role="alert">
       <AlertCircle size={17} />
@@ -174,7 +145,7 @@ function DefaultErrorBox({ message }: { message: string }) {
     </UiElement>
   );
 }
-function DefaultInfoBox({ children }: { children: ReactNode }) {
+function DefaultInfoBox({ children }: InfoBoxProps) {
   return (
     <UiElement as="div" className="info-box">
       <UiElement as="span" className="info-circle"><UiText>{"i"}</UiText></UiElement>
@@ -185,10 +156,7 @@ function DefaultInfoBox({ children }: { children: ReactNode }) {
 function DefaultCopy({
   value,
   label = "复制",
-}: {
-  value: string;
-  label?: string;
-}) {
+}: CopyProps) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,19 +235,7 @@ function synchronizeModalStack() {
   });
 }
 
-export type ModalProps = {
-  title: string;
-  subtitle?: string;
-  children: ReactNode;
-  onClose: () => void;
-  footer?: ReactNode | ((dismiss: () => void) => ReactNode);
-  wide?: boolean;
-  size?: "small" | "standard";
-  closeDisabled?: boolean;
-  contentKey?: string;
-  layout?: "dialog" | "drawer";
-  headerIcon?: ReactNode;
-};
+
 
 function overlayExitMilliseconds() {
   if (
@@ -484,17 +440,7 @@ function DefaultConfirm({
   busy = false,
   confirmDisabled = false,
   error,
-}: {
-  title: string;
-  description: ReactNode;
-  confirmText?: string;
-  onConfirm: () => void;
-  onClose: () => void;
-  danger?: boolean;
-  busy?: boolean;
-  confirmDisabled?: boolean;
-  error?: string;
-}) {
+}: ConfirmProps) {
   return (
     <Modal
       title={title}
@@ -532,11 +478,7 @@ function DefaultSegment({
   options,
   value,
   onChange,
-}: {
-  options: { value: string; label: string; icon?: ReactNode }[];
-  value: string;
-  onChange: (value: string) => void;
-}) {
+}: SegmentProps) {
   return (
     <UiElement as="div" className="segment">
       {options.map((x) => (
@@ -560,13 +502,7 @@ function DefaultSelect({
   children,
   ariaLabel,
   disabled = false,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  children: ReactNode;
-  ariaLabel?: string;
-  disabled?: boolean;
-}) {
+}: SelectProps) {
   return (
     <UiElement as="div" className="select-wrap">
       <UiElement as="select"
@@ -584,10 +520,7 @@ function DefaultSelect({
 function DefaultStatBar({
   value,
   kind = "orange",
-}: {
-  value: number | null | undefined;
-  kind?: string;
-}) {
+}: StatBarProps) {
   return (
     <UiElement as="div" className="stat-bar-wrap">
       <UiElement as="div" className="stat-bar">
@@ -606,13 +539,7 @@ function DefaultJsonEditor({
   label = "配置 JSON",
   rows = 17,
   disabled = false,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  label?: string;
-  rows?: number;
-  disabled?: boolean;
-}) {
+}: JsonEditorProps) {
   const nums = value.split("\n").length;
   return (
     <UiElement as="div" className="code-editor">

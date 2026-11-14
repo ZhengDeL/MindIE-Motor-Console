@@ -610,6 +610,17 @@
       ]
     },
     {
+      "id": "navigation.ui-page",
+      "component": "App.tsx",
+      "renderer": "UiButton",
+      "description": "组件本地动作 navigation.ui-page",
+      "context": [
+        "principal",
+        "page",
+        "label"
+      ]
+    },
+    {
       "id": "navigation.plugin",
       "component": "App.tsx",
       "renderer": "UiButton",

@@ -1,4 +1,6 @@
-export type ReadState = { loaded: boolean; refreshing: boolean; error: string };
+import type { ReadState } from '@mindie-motor/ui-sdk';
+export type { ReadState } from '@mindie-motor/ui-sdk';
+
 
 /** A successful empty response is distinct from a read that has not completed. */
 export const readNotice = ({ loaded, refreshing, error }: ReadState): string => !loaded

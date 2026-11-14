@@ -1,4 +1,4 @@
-import { UiElement, withUiSlot, UiButton, UiText, UiRegion, UiHostProvider } from "./uiPluginSdk";
+import { UiElement, withUiSlot, UiButton, UiText, UiRegion, UiHostProvider, useUiRuntime, isUiPagePath, UiContributedPage } from "./uiPluginSdk";
 import { lazy, useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Home, PanelLeftClose, PanelLeftOpen } from "./icons";
 import DeferredPanel from "./DeferredPanel";
@@ -304,15 +304,16 @@ function DefaultServiceMenu({
   );
 }
 function DefaultApp() {
+  const uiRuntime = useUiRuntime();
   const branding = useBranding();
   useEffect(() => { applyDocumentBranding(branding); }, [branding]);
   const [page, setPage] = useState<Page>(() => {
     const p = window.location.hash.slice(1);
-    return isConsolePage(p) ? p : parsePluginPageHash(p) ? "settings" : "overview";
+    return isConsolePage(p) ? p : (parsePluginPageHash(p) || isUiPagePath(p)) ? "settings" : "overview";
   });
   const [externalPage, setExternalPage] = useState<string | null>(() => {
     const hash = window.location.hash.slice(1);
-    return parsePluginPageHash(hash) ? hash : null;
+    return parsePluginPageHash(hash) || isUiPagePath(hash) ? hash : null;
   });
   const currentExternalPage = useRef(externalPage);
   const currentPage = useRef(page);
@@ -615,8 +616,11 @@ function DefaultApp() {
   const pluginRole: PluginAccess | "demo" | null = principalKey.current !== null
     ? meta?.mode === "demo" ? "demo" : auth?.user?.role ?? null : null;
   const externalNavigation = (pluginCatalog?.navigation ?? []).filter((item) => pluginPagePermitted(item, pluginRole));
+  const uiNavigation = uiRuntime.pages.filter(item => isUiPagePath(item.path) && !!pluginRole
+    && item.roles.includes(pluginRole === "demo" ? "admin" : pluginRole)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id.localeCompare(b.id));
+  const uiContribution = uiNavigation.find(item => item.path === externalPage);
   const externalContribution = externalNavigation.find((item) => pluginPageHash(item) === externalPage);
-  const currentTitle = externalPage ? externalContribution?.title ?? "插件页面" : titles[page];
+  const currentTitle = externalPage ? uiContribution?.title ?? externalContribution?.title ?? "插件页面" : titles[page];
   // Event callbacks retain their render's principal, so an older modal or
   // response cannot reopen account-specific views after a session change.
   const viewIdentity = principalKey.current;
@@ -643,7 +647,7 @@ function DefaultApp() {
   useEffect(() => {
     const hash = () => {
       const p = window.location.hash.slice(1);
-      if (parsePluginPageHash(p) && p !== currentExternalPage.current) {
+      if ((parsePluginPageHash(p) || isUiPagePath(p)) && p !== currentExternalPage.current) {
         if (hasUnsavedChanges()) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${currentExternalPage.current ?? currentPage.current}`);
         navigatePlugin(p);
       } else if (isConsolePage(p) && (p !== currentPage.current || currentExternalPage.current)) {
@@ -704,7 +708,7 @@ function DefaultApp() {
     afterNavigate?.();
   };
   const navigatePlugin = (hash: string) => {
-    if (!parsePluginPageHash(hash)) return;
+    if (!parsePluginPageHash(hash) && !isUiPagePath(hash)) return;
     navigate("settings", () => {
       currentExternalPage.current = hash;
       setExternalPage(hash);
@@ -1261,8 +1265,8 @@ function DefaultApp() {
   if (auth && !auth.authenticated)
     return <LoginPage status={auth} onAuthenticated={() => refresh()} />;
   return (
-    <UiHostProvider value={{ api, post, download, auth, meta, services, nodes, page,
-      navigate: next => { if (!isConsolePage(next)) throw Error(`Unknown console page: ${next}`); navigate(next); },
+    <UiHostProvider value={{ api, post, download, auth, meta, services, nodes, page: externalPage ?? page,
+      navigate: next => { if (isConsolePage(next)) navigate(next); else if (isUiPagePath(next) || parsePluginPageHash(next)) navigatePlugin(next); else throw Error(`Unknown console page: ${next}`); },
       notify, workflows: { createService: () => { if (canCreateServices) setEditor("new"); },
         editService, openService, serviceAction: performAction } }}>
     <PluginContext.Provider value={pluginCatalog}>
@@ -1301,6 +1305,12 @@ function DefaultApp() {
               </UiElement>}
             </UiElement>
           ))}
+          {!!uiNavigation.length && <UiElement as="div" className="nav-group"><UiElement as="span" className="nav-group-label"><UiText>{"扩展页面"}</UiText></UiElement>
+            {uiNavigation.map(item => <UiButton actionId="navigation.ui-page" key={item.id} className={`nav-item ${externalPage === item.path ? "active" : ""}`}
+              data-ui-page={item.path} aria-label={item.title} title={sidebarCollapsed ? item.title : undefined}
+              aria-current={externalPage === item.path ? "page" : undefined} onClick={() => navigatePlugin(item.path)}>
+              <UiElement as="span" className="nav-symbol" aria-hidden="true"><Box size={20} /></UiElement><UiElement as="span" className="nav-label">{item.title}</UiElement></UiButton>)}
+          </UiElement>}
           {!!externalNavigation.length && <UiElement as="div" className="nav-group"><UiElement as="span" className="nav-group-label"><UiText>{"社区插件"}</UiText></UiElement>
             {externalNavigation.map((item) => <UiButton actionId="navigation.plugin" key={pluginPageHash(item)} className={`nav-item ${externalPage === pluginPageHash(item) ? "active" : ""}`}
               data-plugin-page={pluginPageHash(item)} aria-label={item.title} title={sidebarCollapsed ? item.title : undefined}
@@ -1397,7 +1407,7 @@ function DefaultApp() {
         </UiRegion>
         <UiElement as="main" ref={mainRef} id="main-content" className="main-content" tabIndex={-1}>
           <DeferredPanel key={`${sessionRevision}:${externalPage ?? page}:${detail?.id ?? ""}`} label={currentTitle}>
-          {externalPage ? externalContribution && queryIdentity ? <CommunityPluginPage key={`${queryIdentity}:${pluginCatalog?.digest}:${externalPage}`} contribution={externalContribution} identity={queryIdentity} /> :
+          {externalPage ? uiContribution && queryIdentity ? <UiContributedPage key={`${queryIdentity}:${uiRuntime.generation}:${externalPage}`} page={uiContribution} /> : externalContribution && queryIdentity ? <CommunityPluginPage key={`${queryIdentity}:${pluginCatalog?.digest}:${externalPage}`} contribution={externalContribution} identity={queryIdentity} /> :
             <UiRegion name="layout.panel" as="section" className="panel"><Empty title={!pluginCatalog ? "正在确认插件页面" : "插件页面不可用"}
               description={pluginError || "该页面尚未加载、已被停用或当前账号没有访问权限。请在系统设置中核对实际插件清单。"}
               action={<><Button actionId="navigation.settings" onClick={() => navigate("settings")}><UiText>{"打开系统设置"}</UiText></Button><Button actionId="plugins.catalog.refresh" loading={pluginQuery.refreshing} onClick={() => void pluginQuery.refresh()}><UiText>{"重新读取清单"}</UiText></Button></>} /></UiRegion> : <>
@@ -1505,7 +1515,7 @@ function DefaultApp() {
       )}
       {commandOpen && auth?.authenticated && !logoutBusy && <DeferredPanel label="快速查找" onClose={() => setCommandOpen(false)}>
         <CommandPalette groups={navigation} services={pluginEnabled(pluginCatalog, "services") ? services : []} nodes={pluginEnabled(pluginCatalog, "nodes") ? nodes : []} onNavigate={navigate}
-          externalPages={externalNavigation.map((item) => ({ id: pluginPageHash(item), label: item.title, description: item.plugin_id, icon: Box, onSelect: () => navigatePlugin(pluginPageHash(item)) }))}
+          externalPages={[...externalNavigation.map((item) => ({ id: pluginPageHash(item), label: item.title, description: item.plugin_id, icon: Box, onSelect: () => navigatePlugin(pluginPageHash(item)) })), ...uiNavigation.map(item => ({ id: item.path, label: item.title, description: item.section ?? "扩展页面", icon: Box, onSelect: () => navigatePlugin(item.path) }))]}
           onOpenService={openService} onLocateNode={locateNode} onClose={() => setCommandOpen(false)} actions={[
             ...(canCreateServices ? [{ id: "create-service", label: "创建推理服务", description: "从模板或已有配置开始", icon: Plus, onSelect: () => setEditor("new") }] : []),
             ...(canAdminister && pluginEnabled(pluginCatalog, "nodes") ? [{ id: "connect-node", label: "接入节点", description: "登记已有执行 Agent", icon: Server, onSelect: () => setNodeModal(true) }] : []),

@@ -1,4 +1,5 @@
 /** Independent provider using only the public context and console.http.handler contract. */
+/** @satisfies {import("@mindie-motor/host-sdk").Plugin} */
 export default {
   activate(ctx) {
     ctx.provide('console.http.handler', {

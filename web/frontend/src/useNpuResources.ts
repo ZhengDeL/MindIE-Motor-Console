@@ -9,7 +9,7 @@ import {
 import type { AgentNpuInventory } from "./npuResources";
 import { useObservationClock } from "./resourceObservation";
 
-export type NpuResourcesState = ReturnType<typeof useNpuResources>;
+export type { NpuResourcesState } from "@mindie-motor/ui-sdk";
 type Snapshot = { key: string; sources: AgentNpuInventory[] };
 const REFRESH_MS = 30_000;
 const MAX_BACKOFF_MS = 120_000;

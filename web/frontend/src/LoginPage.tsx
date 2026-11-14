@@ -1,3 +1,4 @@
+import type { LoginPageProps } from '@mindie-motor/ui-sdk';
 import { UiElement, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useId, useState } from "react";
 import type { InputHTMLAttributes } from "react";
@@ -71,10 +72,7 @@ function DefaultPasswordInput({
 function DefaultLoginPage({
   status,
   onAuthenticated,
-}: {
-  status: AuthStatus;
-  onAuthenticated: () => Promise<void>;
-}) {
+}: LoginPageProps) {
   const appearance = useAppearance();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

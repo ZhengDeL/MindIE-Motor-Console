@@ -137,7 +137,7 @@ const plugin: Plugin = {
       if (!isAbsolute(executable) || !isAbsolute(cwd)) throw new PluginError("SETTINGS", "Bridge executable and cwd must be explicit absolute paths");
       if (!Array.isArray(config.args) || config.args.some(value => typeof value !== "string" || value.includes("\0"))) throw new PluginError("SETTINGS", "Bridge process.args must be fixed string argv");
       const args = config.args as string[];
-      const readyPath = stringSetting(config.readyPath ?? "/healthz", "bridge.process.readyPath");
+      const readyPath = stringSetting(config.readyPath ?? "/ready", "bridge.process.readyPath");
       if (!readyPath.startsWith("/") || readyPath.startsWith("//") || readyPath.includes("\\")) throw new PluginError("SETTINGS", "Readiness path must be an origin-relative HTTP path");
       const readyUrl = new URL(readyPath, upstream);
       const startupTimeout = integerSetting(config.startupTimeoutMs ?? 20000, "bridge.process.startupTimeoutMs", 100, 25000);

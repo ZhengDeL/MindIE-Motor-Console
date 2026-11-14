@@ -4,9 +4,14 @@ ARG PYTHON_BUILD_IMAGE=python:3.12-slim-bookworm
 ARG NGINX_BUILD_IMAGE=nginx:stable-alpine
 FROM ${NODE_BUILD_IMAGE} AS frontend-build
 ARG ASCEND_VISIBLE_DEVICES=void
-WORKDIR /build
+WORKDIR /build/packages/ui-sdk
+COPY packages/ui-sdk/package.json packages/ui-sdk/package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY packages/ui-sdk/ ./
+RUN npm run build
+WORKDIR /build/web/frontend
 COPY web/frontend/package.json web/frontend/package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY web/frontend/ ./
 RUN npm run build
 
@@ -63,7 +68,8 @@ RUN pip install --index-url "${PYPI_INDEX_URL}" --no-cache-dir --require-hashes 
 COPY mindie-motor/upstream /opt/motor/upstream
 RUN chmod -R a-w /opt/motor/upstream
 COPY web/backend /app/backend
-COPY --from=frontend-build /build/dist/ui-default-manifest.json /app/ui-default-manifest.json
+COPY packages/python-sdk/motor_console_sdk /app/motor_console_sdk
+COPY --from=frontend-build /build/web/frontend/dist/ui-default-manifest.json /app/ui-default-manifest.json
 COPY web/scripts /app/scripts
 COPY web/compose.docker-agent.yaml web/compose.kubernetes-agent.yaml \
      web/compose.docker-kubernetes-agent.yaml web/compose.agent-kubectl-client.yaml /app/rollout-assets/
@@ -85,7 +91,7 @@ LABEL org.opencontainers.image.title="MindIE-Motor Console Web" \
     org.opencontainers.image.version="${CONSOLE_VERSION}" \
     org.opencontainers.image.revision="${VCS_REF}" \
     org.opencontainers.image.source="https://github.com/ZhengDeL/MindIE-Motor-Console"
-COPY --from=frontend-build /build/dist /usr/share/nginx/html
+COPY --from=frontend-build /build/web/frontend/dist /usr/share/nginx/html
 COPY web/deploy/nginx/web.conf /etc/nginx/conf.d/default.conf
 # One event-loop worker matches the console's 0.5 CPU budget. Host CPU-based
 # auto workers can exhaust the 64-PID limit on large accelerator servers.
@@ -96,4 +102,4 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O /dev/null htt
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
 FROM runtime AS bundled
-COPY --from=frontend-build /build/dist /app/frontend/dist
+COPY --from=frontend-build /build/web/frontend/dist /app/frontend/dist

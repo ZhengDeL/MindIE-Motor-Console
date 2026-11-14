@@ -1,14 +1,12 @@
 # Browser UI SDK 1.0.0
 
-`index.ts` is the public authoring facade. Its accessor reads the running host's
-React singleton; type-only references do not import the application's implementations.
-This is a source SDK, not a published npm package. Keep `react` and `react-dom`
-external, or use `getUiSdk().React` directly. An independently imported `.mcui`
-entry must be one self-contained ESM file with no module imports.
+`@mindie-motor/ui-sdk` is an independent npm tarball built from [`../../../packages/ui-sdk`](../../../packages/ui-sdk). Install the tarball into an empty external project and use its public DTOs, props, clients and typed slot references. The Console consumes those same contracts. `index.ts` remains a compatibility re-export. The package has its own 1.0.0 version and has not been published to npm.
+
+React and React DOM stay external; use `getUiSdk().React` from the running host. An imported `.mcui` entry must be a single self-contained ESM file. [`examples/draft-page`](examples/draft-page) builds independently, contributes a new page and its own versioned service contract, and reads/saves real Control API drafts. Extension paths use `extensions/<package-id>/<leaf>` and explicit account roles. This registers navigation and deep links without editing the host page switch.
 
 ```ts
-import { getUiSdk } from "./path/to/frontend/sdk";
-import type { UiPlugin, UiComponentProps, ServiceEditorProps } from "./path/to/frontend/sdk";
+import { getUiSdk } from "@mindie-motor/ui-sdk";
+import type { UiPlugin, UiComponentProps, ServiceEditorProps } from "@mindie-motor/ui-sdk";
 const sdk = getUiSdk();
 const Editor = ({ Default, ...props }: UiComponentProps<ServiceEditorProps>) =>
   sdk.createElement("div", { className: "my-editor" }, sdk.createElement(Default, props));

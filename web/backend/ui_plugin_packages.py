@@ -54,7 +54,7 @@ def _identifier(value, *, slot=False):
 
 
 def _version(value):
-    if not isinstance(value, str) or not _VERSION.fullmatch(value):
+    if not isinstance(value, str) or len(value) > 64 or not _VERSION.fullmatch(value):
         raise UiPluginError("UI versions must be explicit stable semver values")
     return value
 
@@ -75,7 +75,7 @@ def member_name(value: str):
 
 
 def validate_manifest(value: Any, *, default=False) -> dict:
-    fields = {"schemaVersion", "id", "name", "description", "version", "sdkVersion", "provides", "requires", "entrypoint"}
+    fields = {"schemaVersion", "id", "name", "description", "version", "sdkVersion", "provides", "requires", "entrypoint", "contributes"}
     if default:
         fields.add("buildDigest")
     _object(value, fields, {"schemaVersion", "id", "version", "sdkVersion", "provides", "requires"}, "UI manifest")
@@ -97,20 +97,32 @@ def validate_manifest(value: Any, *, default=False) -> dict:
             raise UiPluginError("Invalid UI contract declarations")
         names = set()
         for entry in entries:
-            allowed, required = ({"slot", "version"}, {"slot", "version"}) if collection == "provides" else ({"slot", "range", "optional"}, {"slot", "range"})
+            allowed, required = ({"slot", "version", "kind", "methods"}, {"slot", "version"}) if collection == "provides" else ({"slot", "range", "optional"}, {"slot", "range"})
             _object(entry, allowed, required, "UI contract")
             slot = _identifier(entry["slot"], slot=True)
             if slot in names:
                 raise UiPluginError("Duplicate UI contract declaration")
             names.add(slot)
             if collection == "provides":
-                if _version(entry["version"]) != SDK_VERSION:
+                if _version(entry["version"]) != SDK_VERSION and slot.startswith(("ui.", "component.", "page.", "layout.")):
                     raise UiPluginError("Unsupported UI contract version")
+                kind = entry.get("kind", "component")
+                if not isinstance(kind, str) or kind not in {"component", "service"}:
+                    raise UiPluginError("Unsupported UI contract kind")
+                if kind == "service":
+                    methods = entry.get("methods")
+                    if (not slot.startswith(identifier+".") or not isinstance(methods, list) or not 1 <= len(methods) <= 64
+                            or any(not isinstance(method, str) or not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_]{0,63}", method) or method in {"constructor", "prototype", "__proto__"} for method in methods)
+                            or len(set(methods)) != len(methods)):
+                        raise UiPluginError("Custom UI service contracts require namespaced slots and explicit unique methods")
+                elif "methods" in entry:
+                    raise UiPluginError("Component UI contracts cannot declare service methods")
             else:
-                if entry["range"] not in {SDK_VERSION, "^"+SDK_VERSION, "~"+SDK_VERSION}:
+                if not isinstance(entry["range"], str) or len(entry["range"]) > 65 or not re.fullmatch(r"[~^]?(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", entry["range"]):
                     raise UiPluginError("Unsupported UI dependency range")
                 if "optional" in entry and type(entry["optional"]) is not bool:
                     raise UiPluginError("UI optional dependency flag must be boolean")
+    validate_contributions(value, default=default)
     if not default:
         entry = member_name(value.get("entrypoint", ""))
         if "/" in entry or PurePosixPath(entry).suffix not in {".js", ".mjs"}:
@@ -119,6 +131,62 @@ def validate_manifest(value: Any, *, default=False) -> dict:
         raise UiPluginError("Default UI implementation is supplied by the host Web artifact")
     return json_document(canonical_json(value, maximum=MAX_STATE_BYTES), maximum=MAX_STATE_BYTES)
 
+
+
+def compatible(actual: str, required: str) -> bool:
+    if actual == required:
+        return True
+    if not required or required[0] not in "^~":
+        return False
+    a, b = tuple(map(int, actual.split("."))), tuple(map(int, required[1:].split(".")))
+    if a < b or a[0] != b[0]:
+        return False
+    if required[0] == "~" or b[0] == 0 and b[1] > 0:
+        return a[1] == b[1]
+    return a == b if b[0] == 0 else True
+
+
+def validate_contributions(manifest: dict, *, default=False):
+    if "contributes" not in manifest:
+        return
+    contributions = manifest["contributes"]
+    _object(contributions, {"pages"}, set(), "UI contributions")
+    pages = contributions.get("pages", [])
+    if not isinstance(pages, list) or len(pages) > 64:
+        raise UiPluginError("Invalid UI page contributions")
+    slots = {item["slot"] for item in manifest["provides"]}
+    identities, routes = set(), set()
+    for page in pages:
+        _object(page, {"id", "slot", "path", "title", "roles", "section", "order"},
+                {"id", "slot", "path", "title", "roles"}, "UI page")
+        identity = _identifier(page["id"], slot=True)
+        slot, route = _identifier(page["slot"], slot=True), page["path"]
+        if (not identity.startswith(manifest["id"]+".") or slot not in slots
+                or next((item.get("kind", "component") for item in manifest["provides"] if item["slot"] == slot), None) != "component"
+                or next((item["version"] for item in manifest["provides"] if item["slot"] == slot), None) != SDK_VERSION
+                or not default and not slot.startswith(manifest["id"]+".")):
+            raise UiPluginError("UI page identity and slot must belong to its package namespace")
+        if not isinstance(route, str) or (not default and not re.fullmatch(
+                "extensions/"+re.escape(manifest["id"])+r"/[a-z][a-z0-9-]{0,47}", route)):
+            raise UiPluginError("UI page route must use its reserved extension namespace")
+        if default and route not in {"overview", "services", "templates", "nodes", "images", "gateways", "logs", "features", "audit", "systemlogs", "accounts", "maintenance", "settings"}:
+            raise UiPluginError("Invalid reference UI page route")
+        if identity in identities or route in routes:
+            raise UiPluginError("Duplicate UI page identity or route")
+        identities.add(identity)
+        routes.add(route)
+        roles = page["roles"]
+        if (not isinstance(roles, list) or not 1 <= len(roles) <= 3
+                or any(not isinstance(role, str) or role not in {"admin", "operator", "viewer"} for role in roles)
+                or len(set(roles)) != len(roles)):
+            raise UiPluginError("UI page roles must explicitly list unique supported account roles")
+        for key, maximum in (("title", 100), ("section", 60)):
+            if key not in page and key == "section":
+                continue
+            if not isinstance(page[key], str) or not page[key].strip() or len(page[key]) > maximum or any(ord(c) < 32 for c in page[key]):
+                raise UiPluginError("Invalid UI page presentation metadata")
+        if "order" in page and (type(page["order"]) is not int or not -10000 <= page["order"] <= 10000):
+            raise UiPluginError("Invalid UI page navigation order")
 
 def inspect_archive(raw: bytes) -> tuple[dict, dict[str, bytes]]:
     if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_ARCHIVE_BYTES:
@@ -250,6 +318,12 @@ class UiPackageStore:
                     asset_metadata[identifier].append({"path": member, "sha256": hashlib.sha256(data).hexdigest()})
             entry = manifest["entrypoint"]
             entry_metadata[identifier] = {"path": "/api/ui-plugins/assets/"+digest+"/"+entry, "sha256": hashlib.sha256(files[entry]).hexdigest()}
+        builtin_slots = {item["slot"] for item in self.default["provides"]}
+        for identifier, manifest in packages.items():
+            if identifier != DEFAULT_ID:
+                for contribution in manifest["provides"]:
+                    if contribution["slot"] not in builtin_slots and not contribution["slot"].startswith(identifier+"."):
+                        raise UiPluginError("New UI contracts must belong to their package namespace")
         bindings = {p["slot"]: DEFAULT_ID for p in self.default["provides"]}
         for slot, identifier in overrides.items():
             bindings[_identifier(slot, slot=True)] = _identifier(identifier)
@@ -260,6 +334,15 @@ class UiPackageStore:
         unused = set(selected)-needed
         if unused:
             raise UiPluginError("Selected UI package has no bound slots: " + sorted(unused)[0])
+        page_ids, page_routes = set(), set()
+        for identifier in needed | {DEFAULT_ID}:
+            for page in packages[identifier].get("contributes", {}).get("pages", []):
+                if identifier != DEFAULT_ID and bindings.get(page["slot"]) != identifier:
+                    continue
+                if page["id"] in page_ids or page["path"] in page_routes:
+                    raise UiPluginError("UI page identity or route conflicts with another selected provider")
+                page_ids.add(page["id"])
+                page_routes.add(page["path"])
         dependencies = {identifier: set() for identifier in needed}
         for identifier in needed:
             for requirement in packages[identifier]["requires"]:
@@ -268,6 +351,9 @@ class UiPackageStore:
                     if requirement.get("optional", False):
                         continue
                     raise UiPluginError("Missing required UI slot: " + requirement["slot"])
+                contribution = next(item for item in packages[provider]["provides"] if item["slot"] == requirement["slot"])
+                if not compatible(contribution["version"], requirement["range"]):
+                    raise UiPluginError("UI dependency version mismatch: " + identifier + "/" + requirement["slot"])
                 if provider != identifier:
                     dependencies[identifier].add(provider)
         order, visiting, visited = [], set(), set()
@@ -285,9 +371,11 @@ class UiPackageStore:
         for identifier in sorted(needed):
             visit(identifier)
         public = []
-        for identifier in order:
+        for identifier in ([DEFAULT_ID] if DEFAULT_ID not in order else []) + order:
             manifest = packages[identifier]
             item = {key: manifest[key] for key in ("id", "version", "sdkVersion", "provides", "requires")}
+            if "contributes" in manifest:
+                item["contributes"] = manifest["contributes"]
             if identifier == DEFAULT_ID and "buildDigest" in manifest:
                 item["buildDigest"] = manifest["buildDigest"]
             if identifier in entry_metadata:

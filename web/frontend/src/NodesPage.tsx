@@ -1,3 +1,4 @@
+import type { NodesPageProps } from '@mindie-motor/ui-sdk';
 import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -21,7 +22,6 @@ import {
 import ClusterNodesPanel from "./ClusterNodes";
 import { AgentNpuResources } from "./NpuSummary";
 import { isKubernetesAgent, isValidResourcePercent } from "./npuResources";
-import type { NpuResourcesState } from "./useNpuResources";
 import NodeResourceDetails from "./NodeResourceDetails";
 import { nodeObservation, useObservationClock } from "./resourceObservation";
 import { serverNow } from "./serverClock";
@@ -122,20 +122,7 @@ function DefaultNodesPage({
   onRolloutHistory,
   onAddNode,
   onRolloutAgent,
-}: {
-  nodes: NodeInfo[];
-  resources: NpuResourcesState;
-  search: string;
-  setSearch: (s: string) => void;
-  refresh: () => void;
-  notify: (s: string, tone?: string) => void;
-  onDelete: (n: NodeInfo) => void;
-  demo: boolean;
-  canAdminister: boolean;
-  onRolloutHistory?: () => void;
-  onAddNode?: () => void;
-  onRolloutAgent?: () => void;
-}) {
+}: NodesPageProps) {
   const [busy, setBusy] = useState("");
   const [probeError, setProbeError] = useState("");
   const [clusterAgent, setClusterAgent] = useState<NodeInfo | null>(null);

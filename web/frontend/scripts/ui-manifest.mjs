@@ -30,6 +30,16 @@ for (const filename of inputs) {
   hash.update(filename); hash.update("\0");
   hash.update((await readFile(path.join(root, filename), "utf8")).replace(/\r\n/g, "\n")); hash.update("\0");
 }
+// Public SDK source and build metadata participate in the host artifact identity.
+const sdkRoot = path.resolve(root, "../../packages/ui-sdk");
+async function sdkFiles(directory) {
+  const entries = await readdir(path.join(sdkRoot, directory), { withFileTypes: true });
+  return (await Promise.all(entries.map(entry => entry.isDirectory() ? sdkFiles(`${directory}/${entry.name}`) : [`${directory}/${entry.name}`]))).flat();
+}
+for (const filename of [...await sdkFiles("src"), ...await sdkFiles("scripts"), "package.json", "package-lock.json"].sort()) {
+  hash.update(`ui-sdk/${filename}\0`);
+  hash.update((await readFile(path.join(sdkRoot, filename), "utf8")).replace(/\r\n/g, "\n")); hash.update("\0");
+}
 hash.update(JSON.stringify(manifest));
 manifest.buildDigest = hash.digest("hex");
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

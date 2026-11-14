@@ -1,3 +1,4 @@
+import type { UiIcons } from "@mindie-motor/ui-sdk";
 import { forwardRef } from "react";
 import { useUiContract } from "./uiPluginSdk";
 import type { ForwardRefExoticComponent, RefAttributes, SVGProps } from "react";
@@ -89,7 +90,7 @@ export type ConsoleIcon = ForwardRefExoticComponent<
 function createIcon(Definition: LucideIcon, name: string): ConsoleIcon {
   const Icon = forwardRef<SVGSVGElement, ConsoleIconProps>(
     ({ size = 18, width = size, height = size, color, className, style, spin = false, ...props }, ref) => {
-      const pack = useUiContract<{ render: (id: string, props: Record<string, any>, Default: LucideIcon) => React.ReactNode }>("ui.icons");
+      const pack = useUiContract<UiIcons>("ui.icons");
       const labelled = Boolean(props["aria-label"] || props["aria-labelledby"]);
       return pack.render(name, { ...props, ref, size, width, height, focusable: "false",
         "aria-hidden": props["aria-hidden"] ?? !labelled,

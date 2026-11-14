@@ -1,19 +1,8 @@
+import type { PluginAccess, PluginNavigation, PluginPackage, PluginPackages, PluginTable } from '@mindie-motor/ui-sdk';
+export type { PluginAccess, PluginNavigation, PluginPackage, PluginPackages, PluginTable } from '@mindie-motor/ui-sdk';
 import { parseStrictJson } from "./api";
 
 /** Declarative community pages never supply a script URL or executable markup. */
-export type PluginAccess = "admin" | "operator" | "viewer";
-export type PluginNavigation = {
-  plugin_id: string; id: string; title: string; description: string; kind: "status-table";
-  endpoint: string; group: string; access: PluginAccess;
-};
-export type PluginPackage = {
-  id: string; name: string; version: string; digest: string; license: string; author: string;
-  description: string; access: PluginAccess; selected: boolean; loaded: boolean; blocked_reason?: string;
-  compatible_with_host?: boolean;
-};
-export type PluginPackages = { schemaVersion: 1; revision: number; pending_restart: boolean; items: PluginPackage[] };
-export type PluginTable = { title: string; summary: string; columns: { key: string; label: string }[];
-  rows: Record<string, string | number | boolean | null>[]; updated_at: string };
 
 const identifier = /^[a-z][a-z0-9-]{0,63}$/;
 export const MAX_PLUGIN_CONFIGURATION_BYTES = 32 * 1024;

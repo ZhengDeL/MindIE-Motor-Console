@@ -14,10 +14,10 @@ const declarations = contributions.map(item => `  ${JSON.stringify(item.slot)}: 
 const source = `/** Concrete reference providers. Resolve selected implementations during activation, before interactive rendering. */
 import { createElement } from "react";
 import type { ComponentType } from "react";
-const loaders: Record<string, () => Promise<ComponentType<any>>> = {
+const loaders: Record<string, () => Promise<unknown>> = {
 ${declarations}
 };
-const implementations = new Map<string, ComponentType<any>>();
+const implementations = new Map<string, unknown>();
 const pending = new Map<string, Promise<void>>();
 function prepare(slot: string): Promise<void> {
   if (implementations.has(slot)) return Promise.resolve();
@@ -27,9 +27,9 @@ function prepare(slot: string): Promise<void> {
   pending.set(slot, loading);
   return loading;
 }
-export const referenceUiComponents: Readonly<Record<string, ComponentType<any>>> = Object.freeze(Object.fromEntries(
-  Object.keys(loaders).map(slot => [slot, function ConcreteReferenceProvider(props: any) {
-    const Implementation = implementations.get(slot);
+export const referenceUiComponents: Readonly<Record<string, unknown>> = Object.freeze(Object.fromEntries(
+  Object.keys(loaders).map(slot => [slot, function ConcreteReferenceProvider(props: object) {
+    const Implementation = implementations.get(slot) as ComponentType<object> | undefined;
     if (!Implementation) throw Error(\x60Selected reference component was not initialized: \x24{slot}\x60);
     return createElement(Implementation, props);
   }]),

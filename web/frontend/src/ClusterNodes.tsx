@@ -1,3 +1,5 @@
+import type { ClusterNode } from '@mindie-motor/ui-sdk';
+export type { ClusterNode } from '@mindie-motor/ui-sdk';
 import { UiElement, UiRegion, withUiSlot, UiButton, UiText } from "./uiPluginSdk";
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Layers3, RefreshCw, Server } from "./icons";
@@ -24,24 +26,6 @@ import {
 } from "./ui";
 import "./cluster-nodes.css";
 
-export type ClusterNode = {
-  name: string;
-  uid: string;
-  roles: string[];
-  internal_ips: string[];
-  ready: "True" | "False" | "Unknown";
-  unschedulable: boolean;
-  kubelet_version: string;
-  container_runtime: string;
-  architecture: string;
-  os: string;
-  labels: Record<string, string>;
-  taints: { key: string; value?: string; effect: string }[];
-  resources: {
-    capacity: Record<string, string>;
-    allocatable: Record<string, string>;
-  };
-};
 export type SchedulingChoice = {
   key: string;
   label: string;

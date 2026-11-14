@@ -52,8 +52,11 @@ python web/scripts/serve.py --mode demo --host 127.0.0.1 --port 19080
 ```bash
 cd web/frontend
 npm ci
+node ../../packages/ui-sdk/scripts/build.mjs
 npm run dev -- --host 127.0.0.1
 ```
+
+干净源码先用上面的构建命令生成公共 UI SDK；本地 `file:` 依赖链接本身不会生成其 `dist` 入口。正式 `npm run build` 已包含这个 SDK 构建步骤。
 
 打开 `http://127.0.0.1:5174`。成功标志是页面加载、节点/服务等演示列表可读，浏览器 `/api` 请求由 Vite 转发至 `127.0.0.1:19080`。演示模式提供模拟数据和有限的本地操作，不执行宿主部署、不加载上传插件，不能作为真实硬件、模型或生产安全验收。
 

@@ -102,7 +102,7 @@ function importedTemplate(value: unknown): TemplateInput {
     throw Error("模板文件缺少 user_config；请导入模板或完整服务配置 JSON");
   if (data.config_redacted)
     throw Error("文件中的配置已脱敏，无法导入为完整模板");
-  if (data.runtime != null && !["docker", "kubernetes"].includes(data.runtime))
+  if (data.runtime != null && data.runtime !== "docker" && data.runtime !== "kubernetes")
     throw Error("运行环境必须为 Docker、Kubernetes 或 null");
   if (
     data.tags != null &&
@@ -113,8 +113,8 @@ function importedTemplate(value: unknown): TemplateInput {
   return templateInput({
     name: typeof data.name === "string" ? data.name : "",
     description: typeof data.description === "string" ? data.description : "",
-    tags: data.tags ?? [],
-    runtime: data.runtime ?? null,
+    tags: Array.isArray(data.tags) ? data.tags : [],
+    runtime: data.runtime === "docker" || data.runtime === "kubernetes" ? data.runtime : null,
     motor_profile:
       typeof data.motor_profile === "string" ? data.motor_profile : "",
     user_config: object(data.user_config, "服务配置"),

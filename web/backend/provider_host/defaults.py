@@ -403,6 +403,52 @@ def routes(ctx):
     return ctx.require("reference_routes")
 
 
+def service_workflow(ctx):
+    from ..reference_modules.services_workflow import factory
+    return factory(ctx)
+
+
+def task_coordinator(ctx):
+    from ..reference_modules.services_tasks import factory
+    return factory(ctx)
+
+
+def service_api(ctx):
+    from ..reference_modules.services_api import factory
+    return factory(ctx)
+
+
+def console_api(ctx):
+    from ..reference_modules.console_api import factory
+    return factory(ctx)
+
+
+def agent_api(ctx):
+    from ..reference_modules.services_agents import factory
+    return factory(ctx)
+
+
+API_FACTORIES = {
+    "api.agent-docker": (agent_api, ("runtime.docker", "runtime.kubernetes", "telemetry.host", "security.agent", "motor.native")),
+    "api.agent-kubernetes": (agent_api, ("runtime.kubernetes", "security.agent")),
+    "api.auth": (console_api, ("security.identity",)),
+    "api.accounts": (console_api, ("security.identity",)),
+    "api.nodes": (console_api, ("storage.store", "audit.sink", "agent.connection", "telemetry.inventory")),
+    "api.templates": (console_api, ("storage.store", "audit.sink", "templates.catalog", "motor.native")),
+    "api.system": (console_api, ("storage.store", "audit.sink", "maintenance.manager", "branding.manager")),
+    "api.extensions": (console_api, ("storage.store", "audit.sink", "agent.connection", "integration.grafana")),
+    "api.plugins": (console_api, ("storage.store", "audit.sink", "plugins.packages")),
+    "api.services": (service_api, ("storage.store", "audit.sink", "agent.connection", "services.workflow", "tasks.coordinator", "resources.placement")),
+    "api.metrics": (service_api, ("storage.store", "audit.sink", "agent.connection", "services.workflow", "telemetry.service-health", "telemetry.service-metrics")),
+    "api.runtime-logs": (service_api, ("storage.store", "audit.sink", "agent.connection", "services.workflow", "logs.runtime")),
+    "api.gateways": (service_api, ("storage.store", "audit.sink", "agent.connection", "services.workflow")),
+    "api.tasks": (service_api, ("storage.store", "audit.sink", "tasks.coordinator", "agent.connection")),
+    "api.overview": (console_api, ("storage.store", "audit.sink", "resources.inventory")),
+    "api.images": (console_api, ("storage.store", "audit.sink", "agent.connection", "motor.native")),
+    "api.audit": (console_api, ("storage.store", "audit.sink")),
+    "api.frontend": (console_api, ()),
+}
+
 def reference_providers():
     definitions = {
         "console.application": (application, tuple(name for name in CONTRACTS if name != "console.application")),
@@ -412,6 +458,8 @@ def reference_providers():
         "security.session": (session, ("storage.store",)),
         "security.policy": (policy, ("security.session",)),
         "security.agent": (lambda ctx: AgentIdentity(), ()),
+        "services.workflow": (service_workflow, ("storage.store", "audit.sink", "logs.platform", "agent.connection", "motor.native")),
+        "tasks.coordinator": (task_coordinator, ("storage.store", "audit.sink", "logs.platform", "agent.connection", "services.workflow", "tasks.scheduler", "tasks.recovery")),
         "tasks.scheduler": (scheduler, ()), "agent.connection": (connection, ("security.secrets",)),
         "tasks.recovery": (task_recovery, ()), "demo.seed": (demo_seed, ()),
         "telemetry.inventory": (inventory, ("storage.store", "audit.sink", "agent.connection")),
@@ -430,10 +478,12 @@ def reference_providers():
     }
     for name in CONTRACTS:
         if name.startswith("api."):
-            definitions[name] = (routes, ())
+            definitions[name] = API_FACTORIES[name]
     from ..version import CONSOLE_VERSION
     source_files = {
         "console.application": ("default_console.py", "provider_host/http.py"),
+        "services.workflow": ("reference_modules/services_workflow.py",),
+        "tasks.coordinator": ("reference_modules/services_tasks.py", "reference_modules/services_workflow.py"),
         "storage.store": ("store.py", "ports/storage.py", "storage"),
         "security.secrets": ("fleet.py",), "security.identity": ("auth.py",),
         "security.agent": ("agent_credentials.py",), "audit.sink": ("store.py",),
@@ -467,6 +517,21 @@ def reference_providers():
         digest = hashlib.sha256(inspect.getsource(factory).encode("utf-8"))
         if name in source_types:
             digest.update(inspect.getsource(source_types[name]).encode("utf-8"))
+        import motor_console_sdk
+        sdk_root = Path(motor_console_sdk.__file__).resolve().parent
+        # Critical compatibility follows only the public contracts used by this
+        # product; UI and unrelated SDK additions do not invalidate live work.
+        sdk_sources = {"storage.store": ("storage.py",), "services.workflow": ("workflows.py",),
+            "tasks.coordinator": ("workflows.py",)}
+        for filename in sdk_sources.get(name, ()):
+            digest.update(filename.encode("utf-8") + b"\0" + (sdk_root / filename).read_bytes())
+        if name == "storage.store":
+            from motor_console_sdk import StorageV1
+            digest.update(inspect.getsource(StorageV1).encode("utf-8"))
+        if name in {"motor.native", "runtime.kubernetes", "runtime.docker", "resources.ledger"}:
+            from motor_console_sdk import AdmissionContextV1, NativeRenderContextV1
+            for dto in (AdmissionContextV1, NativeRenderContextV1):
+                digest.update(inspect.getsource(dto).encode("utf-8"))
         paths = api_paths if name.startswith("api.") else [root / item for item in source_files.get(name, ())]
         expanded = []
         for path in paths:

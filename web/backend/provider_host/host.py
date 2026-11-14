@@ -15,7 +15,9 @@ from types import MappingProxyType
 
 from ..plugin_host.contracts import PluginConfigurationError, PluginInstance
 from .catalogue import CONTRACTS, route_contract
-from .contracts import Provider, ProviderContext
+from .contracts import Provider, ProviderContext, _LazyInput
+from motor_console_sdk.contracts import ProviderResult
+from motor_console_sdk.validation import extension_contracts, http_modules, validate_product
 
 _ID = re.compile(r"[a-z][a-z0-9_.-]{0,95}\Z")
 _VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+\Z")
@@ -43,6 +45,14 @@ class ProviderHost:
         from .defaults import reference_providers
         self.settings, self.cleanup = MappingProxyType(dict(settings)), cleanup
         self._sealed = False
+        self._contracts = MappingProxyType(dict(CONTRACTS))
+        self._http_modules = ()
+        import motor_console_sdk
+        sdk_root = Path(motor_console_sdk.__file__).resolve().parent
+        sdk_digest = hashlib.sha256()
+        for path in sorted(sdk_root.glob("*.py")):
+            sdk_digest.update(path.name.encode("utf-8") + b"\0" + path.read_bytes())
+        self._sdk_artifact = {"version": motor_console_sdk.__version__, "sha256": sdk_digest.hexdigest()}
         self._providers = {provider.id: provider for provider in reference_providers()}
         self._external_artifacts = {}
         self._bindings = {contract: {"provider": "reference." + contract, "version": self._providers["reference." + contract].version, "contract_version": 1}
@@ -62,35 +72,74 @@ class ProviderHost:
 
     def _refresh_generation(self):
         canonical = json.dumps({"bindings": self.describe()["bindings"], "host": self.describe()["host"],
-                                "external_artifacts": self._external_artifacts}, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+                                "external_artifacts": self._external_artifacts,
+                                "contracts": self.describe()["contracts"], "http_modules": self._http_modules, "sdk": self._sdk_artifact}, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
         self.generation = hashlib.sha256(canonical.encode()).hexdigest()
 
     def set_bootstrap_artifacts(self, name, signature):
         """Host bootstrap only, before any factory executes or receives context."""
         if self._attempted or self._sealed or name in self._external_artifacts:
             raise PluginConfigurationError("Bootstrap artifact identity must be fixed before any factory executes")
+        if name == "legacy-additive-packages":
+            legacy_ids = {item.get("id") for item in signature}
+            collisions = legacy_ids & {item["namespace"] for item in self._http_modules}
+            if collisions:
+                raise PluginConfigurationError("HTTP namespace conflicts with selected legacy .qhplugin: " + ", ".join(sorted(collisions)))
         self._external_artifacts[name] = json.loads(json.dumps(signature, allow_nan=False))
         self._refresh_generation()
 
     def _configure(self, document):
-        if not isinstance(document, dict) or set(document) != {"schemaVersion", "providers", "bindings"} or type(document["schemaVersion"]) is not int or document["schemaVersion"] != 1:
-            raise PluginConfigurationError("Provider assembly requires schemaVersion=1, providers and bindings")
-        if not isinstance(document["providers"], list) or not isinstance(document["bindings"], dict):
+        base = {"schemaVersion", "providers", "bindings"}
+        if (not isinstance(document, dict) or type(document.get("schemaVersion")) is not int
+                or document["schemaVersion"] not in {1, 2}
+                or not base <= set(document)
+                or set(document) - base - ({"contract_definitions", "http_modules"} if document["schemaVersion"] == 2 else set())):
+            raise PluginConfigurationError("Provider assembly requires schemaVersion=1 or 2, providers and bindings")
+        if (not isinstance(document["providers"], list) or len(document["providers"]) > 256
+                or not isinstance(document["bindings"], dict)):
             raise PluginConfigurationError("Provider declarations and bindings have invalid types")
+        try:
+            extensions = extension_contracts(document.get("contract_definitions", []), CONTRACTS)
+            self._contracts = MappingProxyType({**CONTRACTS, **extensions})
+            self._http_modules = http_modules(document.get("http_modules", []), self._contracts)
+        except ValueError as error:
+            raise PluginConfigurationError(str(error)) from error
+        for name in extensions:
+            if name not in document["bindings"]:
+                raise PluginConfigurationError("Extension contracts require explicit exact bindings: " + name)
         for item in document["providers"]:
             required = {"id", "version", "contracts", "dependencies", "module_file", "sha256", "factory", "trust_code"}
-            if not isinstance(item, dict) or set(item) != required:
+            if (not isinstance(item, dict) or not required <= set(item)
+                    or set(item) - required - ({"contract_dependencies"} if document["schemaVersion"] == 2 else set())):
                 raise PluginConfigurationError("Installed provider declaration has an invalid schema")
             identifier, version = item["id"], item["version"]
-            if not isinstance(identifier, str) or not _ID.fullmatch(identifier) or identifier in self._providers or not isinstance(version, str) or not _VERSION.fullmatch(version):
+            if not isinstance(identifier, str) or not _ID.fullmatch(identifier) or identifier.startswith(("reference.", "core.", "internal.")) or identifier in self._providers or not isinstance(version, str) or not _VERSION.fullmatch(version):
                 raise PluginConfigurationError("Provider identity is invalid or duplicated")
             if item["trust_code"] is not True:
                 raise PluginConfigurationError("Installed provider code requires explicit trust_code=true")
-            if not isinstance(item["contracts"], dict) or not item["contracts"] or any(name not in CONTRACTS or CONTRACTS[name].internal or type(version) is not int or version != CONTRACTS[name].version for name, version in item["contracts"].items()):
+            if not isinstance(item["contracts"], dict) or not item["contracts"] or any(name not in self._contracts or self._contracts[name].internal or type(version) is not int or version != self._contracts[name].version for name, version in item["contracts"].items()):
                 raise PluginConfigurationError("Installed provider declares an unsupported contract version")
             dependencies = item["dependencies"]
-            if not isinstance(dependencies, list) or any(not isinstance(value, str) or value not in CONTRACTS or CONTRACTS[value].internal for value in dependencies) or len(set(dependencies)) != len(dependencies):
+            if isinstance(dependencies, dict) and document["schemaVersion"] == 2:
+                if any(name not in self._contracts or type(version) is not int or version != self._contracts[name].version
+                       for name, version in dependencies.items()):
+                    raise PluginConfigurationError("Provider dependency version mismatch")
+                dependencies = list(dependencies)
+            if not isinstance(dependencies, list) or any(not isinstance(value, str) or value not in self._contracts or self._contracts[value].internal for value in dependencies) or len(set(dependencies)) != len(dependencies):
                 raise PluginConfigurationError("Installed provider dependencies are invalid")
+            scoped_dependencies = None
+            if "contract_dependencies" in item:
+                scoped = item["contract_dependencies"]
+                if dependencies or not isinstance(scoped, dict) or set(scoped) != set(item["contracts"]):
+                    raise PluginConfigurationError("Per-contract dependencies must cover all provided contracts with empty global dependencies")
+                scoped_dependencies = {}
+                for owner, requirements in scoped.items():
+                    if (not isinstance(requirements, dict) or any(name not in self._contracts
+                            or self._contracts[name].internal or type(version) is not int
+                            or version != self._contracts[name].version for name, version in requirements.items())):
+                        raise PluginConfigurationError("Per-contract dependency has an unknown contract or incompatible exact version")
+                    scoped_dependencies[owner] = tuple(requirements)
+                scoped_dependencies = MappingProxyType(scoped_dependencies)
             path = Path(item["module_file"])
             if not path.is_absolute() or not path.is_file() or path.is_symlink() or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"] or "") or not isinstance(item["factory"], str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", item["factory"]):
                 raise PluginConfigurationError("Installed provider requires a regular absolute module_file, SHA256 and factory name")
@@ -100,6 +149,10 @@ class ProviderHost:
             raw = read_regular(path, 4 * 1024 * 1024)
             if len(raw) > 4 * 1024 * 1024 or hashlib.sha256(raw).hexdigest() != item["sha256"]:
                 raise PluginConfigurationError("Installed provider artifact digest mismatch: " + identifier)
+            try:
+                compile(raw.decode("utf-8"), str(path), "exec", dont_inherit=True)
+            except (UnicodeError, SyntaxError) as error:
+                raise PluginConfigurationError("Installed provider must contain valid UTF-8 Python: " + identifier) from error
             def load(context, *, record=dict(item), verified_path=path):
                 content = read_regular(verified_path, 4 * 1024 * 1024)
                 if hashlib.sha256(content).hexdigest() != record["sha256"]:
@@ -114,7 +167,7 @@ class ProviderHost:
                     module.__file__ = str(verified_path)
                     sys.modules[name] = module
                     try:
-                        exec(compile(content, str(verified_path), "exec"), module.__dict__)
+                        exec(compile(content.decode("utf-8"), str(verified_path), "exec", dont_inherit=True), module.__dict__)
                     except BaseException:
                         if sys.modules.get(name) is module: del sys.modules[name]
                         raise
@@ -127,27 +180,34 @@ class ProviderHost:
                     raise PluginConfigurationError("Installed factory must be synchronous and callable")
                 return factory(context)
             self._providers[identifier] = Provider(identifier, version, tuple(item["contracts"]), load,
-                                                  tuple(dependencies), item["sha256"])
+                                                  tuple(dependencies), item["sha256"], scoped_dependencies)
         for contract, value in document["bindings"].items():
-            if contract in CONTRACTS and CONTRACTS[contract].internal:
+            if contract in self._contracts and self._contracts[contract].internal:
                 raise PluginConfigurationError("Host assembly/enforcement is internal and cannot be overridden: " + contract)
-            if contract in CONTRACTS and CONTRACTS[contract].optional and value is None:
-                value = {"provider": None, "version": None, "contract_version": 1}
-            if contract not in CONTRACTS or not isinstance(value, dict) or set(value) != {"provider", "version", "contract_version"}:
+            if contract in self._contracts and self._contracts[contract].optional and value is None:
+                value = {"provider": None, "version": None, "contract_version": self._contracts[contract].version}
+            if contract not in self._contracts or not isinstance(value, dict) or set(value) != {"provider", "version", "contract_version"}:
                 raise PluginConfigurationError("Unknown contract or invalid exact binding: " + str(contract))
             self._bindings[contract] = dict(value)
             self._overrides.add(contract)
 
     def _validate_graph(self):
         for contract, binding in self._bindings.items():
-            if binding["provider"] is None and CONTRACTS[contract].optional:
+            if binding["provider"] is None and self._contracts[contract].optional:
+                if binding["version"] is not None or type(binding["contract_version"]) is not int or binding["contract_version"] != self._contracts[contract].version:
+                    raise PluginConfigurationError("Unbound optional contract requires its exact version and no provider version: " + contract)
                 continue
             if (not isinstance(binding["provider"], str) or not _ID.fullmatch(binding["provider"])
                     or not isinstance(binding["version"], str) or not _VERSION.fullmatch(binding["version"])):
                 raise PluginConfigurationError("Provider binding requires exact literal identity and semantic version: " + contract)
             provider = self._providers.get(binding["provider"])
-            if provider is None or provider.version != binding["version"] or contract not in provider.contracts or type(binding["contract_version"]) is not int or binding["contract_version"] != CONTRACTS[contract].version:
+            if provider is None or provider.version != binding["version"] or contract not in provider.contracts or type(binding["contract_version"]) is not int or binding["contract_version"] != self._contracts[contract].version:
                 raise PluginConfigurationError("Missing provider or incompatible exact contract binding: " + contract)
+        for contract, binding in self._bindings.items():
+            provider = self._providers.get(binding["provider"])
+            requirements = self.dependencies_for(contract) if provider else ()
+            if contract != "console.application" and any(name not in self._bindings or self._bindings[name]["provider"] is None and not self._contracts[name].optional for name in requirements):
+                raise PluginConfigurationError("Selected provider has an unbound dependency: " + contract)
         visited, stack = set(), []
         def visit(contract):
             if contract in stack:
@@ -156,12 +216,18 @@ class ProviderHost:
                 return
             stack.append(contract)
             provider = self._providers.get(self._bindings[contract]["provider"])
-            for dependency in provider.dependencies if provider is not None else ():
+            for dependency in self.dependencies_for(contract) if provider is not None else ():
                 visit(dependency)
             stack.pop()
             visited.add(contract)
         for contract in self._bindings:
             visit(contract)
+
+    def dependencies_for(self, contract):
+        provider = self._providers.get(self._bindings[contract]["provider"])
+        if provider is None:
+            return ()
+        return provider.contract_dependencies[contract] if provider.contract_dependencies is not None else provider.dependencies
 
     def is_reference(self, contract):
         return self._bindings[contract]["provider"] == "reference." + contract
@@ -170,10 +236,12 @@ class ProviderHost:
         if contract not in self._bindings:
             raise PluginConfigurationError("Unknown provider contract: " + str(contract))
         provider = self._providers.get(self._bindings[contract]["provider"])
-        return {"contract": contract, **self._bindings[contract], "artifact": provider.artifact if provider else None}
+        return {"contract": contract, **self._bindings[contract], "artifact": provider.artifact if provider else None,
+                "contract_definition": self.contract_definition(contract),
+                "dependencies": {name: self._contracts[name].version for name in self.dependencies_for(contract)}}
 
     def describe(self):
-        public = [name for name in sorted(self._bindings) if not CONTRACTS[name].internal]
+        public = [name for name in sorted(self._bindings) if not self._contracts[name].internal]
         states = []
         for contract in public:
             state = ("unbound" if self._bindings[contract]["provider"] is None else
@@ -184,19 +252,34 @@ class ProviderHost:
         return {"schemaVersion": 1, "sdk_version": 1, "restart_required": True,
                 "sealed": self._sealed, "host": self.binding("console.application"),
                 "bindings": [self.binding(contract) for contract in public], "states": states,
-                "external_artifacts": copy.deepcopy(self._external_artifacts)}
+                "external_artifacts": copy.deepcopy(self._external_artifacts),
+                "contracts": [self.contract_definition(name) for name in sorted(self._contracts)],
+                "http_modules": copy.deepcopy(list(self._http_modules)), "sdk": dict(self._sdk_artifact)}
 
     def sdk_description(self):
         from dataclasses import asdict
         from .sdk import product_shape
-        return {"schemaVersion": 1, "sdk_version": 1,
-            "contracts": [{**asdict(CONTRACTS[name]), "product": product_shape(name)} for name in sorted(CONTRACTS) if not CONTRACTS[name].internal],
+        modules = {item["contract"]: item for item in self._http_modules}
+        def shape(name):
+            if name in modules:
+                return {"kind": "APIRouter | tuple[BaseRoute, ...]", "inputs": [],
+                    **copy.deepcopy(modules[name]), "authorization": "mandatory selected Session/Policy, roles, CSRF and audit",
+                    "mode": "control", "nested_routers": False, "websockets": False}
+            if name in CONTRACTS:
+                return product_shape(name)
+            spec = self._contracts[name]
+            return {"kind": "object", "methods": list(spec.methods), "attributes": list(spec.attributes)}
+        return {"schemaVersion": 1, "sdk_version": 1, "sdk": dict(self._sdk_artifact),
+            "contracts": [{**asdict(self._contracts[name]), "product": shape(name)}
+                for name in sorted(self._contracts) if not self._contracts[name].internal],
             "context": {"settings": ["data_dir", "upstream_dir", "mode", "configuration", "console_token"],
-                        "methods": ["consume(contract, version=1, **inputs)", "require(name)", "on_shutdown(callback, *args, **kwargs)", "binding(contract)"]},
+                        "extension_settings": ["data_dir", "upstream_dir", "mode"],
+                        "methods": ["consume(contract, version=1, **inputs)", "consume(ContractRef[T]) -> T",
+                                    "require(name)", "on_shutdown(callback, *args, **kwargs)", "binding(contract)"]},
             "lifecycle": "synchronous bootstrap; reverse-order cleanup; restart-only selection"}
 
     def resolve(self, contract: str, version: int = 1, **inputs):
-        spec = CONTRACTS.get(contract)
+        spec = self._contracts.get(contract)
         if spec is None or type(version) is not int or spec.version != version:
             raise PluginConfigurationError("Unsupported provider contract: " + str(contract) + " v" + str(version))
         if contract in self._instances:
@@ -217,12 +300,14 @@ class ProviderHost:
             if inspect.isawaitable(value):
                 if inspect.iscoroutine(value): value.close()
                 raise PluginConfigurationError("Provider factory returned an awaitable: " + contract)
-            if isinstance(value, PluginInstance):
+            if isinstance(value, (PluginInstance, ProviderResult)):
                 if value.close:
                     ProviderContext(self, provider, contract, inputs).on_shutdown(value.close)
                 value = value.value
-            if value is None and not spec.optional or value is not None and (any(not callable(getattr(value, method, None)) for method in spec.methods) or any(not hasattr(value, name) for name in spec.attributes)):
-                raise PluginConfigurationError("Provider does not implement the selected contract: " + contract)
+            try:
+                validate_product(spec, value)
+            except ValueError as error:
+                raise PluginConfigurationError(str(error)) from error
             self._instances[contract] = value
             return value
         finally:
@@ -255,8 +340,8 @@ class ProviderHost:
         agent_contracts = {"api.agent-docker", "api.agent-kubernetes"}
         for contract in (name for name in CONTRACTS if name.startswith("api.")
                          and (name in agent_contracts) == (self.settings["mode"] == "agent")):
-            value = self.resolve(contract, reference_routes=tuple(grouped.get(contract, ())),
-                                 application_state=application.state)
+            inputs = self._api_factory_inputs(application, contract, tuple(grouped.get(contract, ())))
+            value = self.resolve(contract, **inputs)
             routes = getattr(value, "routes", value)
             if not isinstance(routes, (tuple, list)):
                 raise PluginConfigurationError("HTTP provider must return an APIRouter or route sequence: " + contract)
@@ -266,9 +351,35 @@ class ProviderHost:
                 route_methods[id(route)] = http_route_methods(contract, route)
                 retained.append(route)
                 if hasattr(value, "routes"):
-                    route_sources[id(route)] = (value, {})
+                    route_sources.setdefault(id(route), (value, {}))
             for callback in getattr(value, "on_shutdown", ()):
                 self.cleanup.callback(callback)
+        if self._http_modules and self.settings.get("mode") == "control":
+            from .http import protect_extension_route
+            session, policy = self.resolve("security.session"), self.resolve("security.policy")
+            audit = self.resolve("audit.sink")
+            for module in self._http_modules:
+                value = self.resolve(module["contract"])
+                routes = getattr(value, "routes", value)
+                if not isinstance(routes, (tuple, list)):
+                    raise PluginConfigurationError("Extension HTTP factory must return direct routes or APIRouter")
+                expected = {(item["path"], method): item for item in module["routes"] for method in item["methods"]}
+                actual = set()
+                for route in routes:
+                    methods = http_route_methods(module["contract"], route)
+                    for method in methods:
+                        key = (getattr(route, "path", None), method)
+                        if key not in expected or key in actual:
+                            raise PluginConfigurationError("Extension HTTP route/method differs from validated declaration: " + repr(key))
+                        actual.add(key)
+                    secured = protect_extension_route(route, self, session, policy, audit, expected)
+                    route_methods[id(secured)] = methods
+                    retained.append(secured)
+                if actual != set(expected):
+                    raise PluginConfigurationError("Extension HTTP factory omitted declared routes or methods")
+                for callback in getattr(value, "on_shutdown", ()):
+                    from ..plugin_host.contracts import synchronous_cleanup
+                    self.cleanup.callback(synchronous_cleanup(callback))
         seen = set()
         for route in retained:
             for method in route_methods[id(route)]:
@@ -284,6 +395,63 @@ class ProviderHost:
             mount(selected, route_sources)
         else:
             application.router.routes[:] = selected
+
+    def _api_factory_inputs(self, application, contract, captured):
+        inputs = {"reference_routes": captured, "application_state": application.state,
+                  "api_inputs": getattr(application.state, "reference_api_inputs", None)}
+        if not self.is_reference(contract):
+            original_inputs = dict(inputs)
+            inputs["reference_routes"] = _LazyInput(lambda: self._reference_routes(contract, original_inputs))
+        return inputs
+
+    def prepare_api_routes(self, application, contracts):
+        """Resolve explicitly requested selected APIs for the legacy v1 bridge.
+
+        This never chooses an unselected reference factory. Final route and
+        permission validation remains in select_api_routes after contributions.
+        """
+        if self._sealed:
+            raise PluginConfigurationError("HTTP graph is sealed; preparation requires restart")
+        if (not isinstance(contracts, (tuple, list)) or len(set(contracts)) != len(contracts)
+                or any(name not in CONTRACTS or not name.startswith("api.") for name in contracts)):
+            raise PluginConfigurationError("HTTP preparation requires distinct known API contracts")
+        capture = getattr(application, "provider_routes", None)
+        routes = capture()[0] if callable(capture) else application.router.routes
+        for name in contracts:
+            captured = tuple(route for route in routes if route_contract(getattr(route, "path", "")) == name)
+            self.resolve(name, **self._api_factory_inputs(application, name, captured))
+
+    def _reference_routes(self, contract, inputs):
+        """Legacy SDK capability; independent API factories never call this."""
+        from ..plugin_host.contracts import synchronous_cleanup
+        reference = self._providers["reference." + contract]
+        context = ProviderContext(self, reference, contract, inputs)
+        product = reference.factory(context)
+        if inspect.isawaitable(product):
+            if inspect.iscoroutine(product): product.close()
+            raise PluginConfigurationError("Reference route factory returned an awaitable")
+        if isinstance(product, (PluginInstance, ProviderResult)):
+            if product.close: context.on_shutdown(product.close)
+            product = product.value
+        routes = getattr(product, "routes", product)
+        if not isinstance(routes, (tuple, list)):
+            raise PluginConfigurationError("Reference route capability did not return direct routes")
+        for callback in getattr(product, "on_shutdown", ()):
+            self.cleanup.callback(synchronous_cleanup(callback))
+        return tuple(routes)
+
+    def contract_definition(self, contract):
+        from dataclasses import asdict
+        return json.loads(json.dumps(asdict(self._contracts[contract])))
+
+    def http_roles(self, path, method):
+        """Inspect declared permissions; mandatory host policy remains the access ceiling."""
+        from starlette.routing import compile_path
+        for module in self._http_modules:
+            for route in module["routes"]:
+                if method in route["methods"] and compile_path(route["path"])[0].fullmatch(path):
+                    return frozenset(route["roles"]), route["account_only"]
+        return None
 
     def seal(self):
         self._sealed = True

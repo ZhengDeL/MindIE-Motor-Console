@@ -20,7 +20,7 @@ function DefaultInferenceResponse({ answer }: { answer: InferenceResult }) {
     { label: "生成 Token", value: answer.usage?.completion_tokens },
     { label: "其中思考 Token", value: answer.usage?.completion_tokens_details?.reasoning_tokens },
     { label: "总 Token", value: answer.usage?.total_tokens },
-  ].filter((item) => typeof item.value === "number" && Number.isSafeInteger(item.value) && item.value >= 0);
+  ].filter((item): item is { label: string; value: number } => typeof item.value === "number" && Number.isSafeInteger(item.value) && item.value >= 0);
   return (
     <UiElement as="div" className="inference-result" aria-label="模型返回结果">
       <UiElement as="div" className="inference-result-status">

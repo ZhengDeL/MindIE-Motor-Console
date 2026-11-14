@@ -57,7 +57,7 @@ export function applyNativeAigwField(
   return {
     ...config,
     motor_coordinator_config: {
-      ...config.motor_coordinator_config,
+      ...(isRecord(config.motor_coordinator_config) ? config.motor_coordinator_config : {}),
       aigw,
     },
   };

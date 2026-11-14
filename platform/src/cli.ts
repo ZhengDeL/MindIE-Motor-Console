@@ -4,7 +4,9 @@ import { PluginHost } from "./host/runtime.js";
 import { planSummary, validateComposition } from "./host/planner.js";
 import { pinComposition, replaceComposition } from "./host/selection.js";
 import { importArtifact } from "./host/importer.js";
-import { digest, readDocumentBytes } from "./host/artifacts.js";
+import { digest, inspectArtifact, packageDigest, readDocumentBytes, readJson } from "./host/artifacts.js";
+import { parseManifest } from "./host/schema.js";
+import { join, resolve } from "node:path";
 
 function print(value: unknown): void { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); }
 function argumentsFor(values: string[], allowed: string[]): Record<string, string> {
@@ -17,7 +19,8 @@ function argumentsFor(values: string[], allowed: string[]): Record<string, strin
   for (const flag of allowed) if (!Object.hasOwn(result, flag)) throw new PluginError("ARGUMENTS", `Missing --${flag}`);
   return result;
 }
-const usage = `console-platform import --source REVIEWED_DIRECTORY --store ARTIFACT_DIRECTORY
+const usage = `console-platform inspect --source REVIEWED_DIRECTORY
+console-platform import --source REVIEWED_DIRECTORY --store ARTIFACT_DIRECTORY
 console-platform pin --input TEMPLATE --output NEW_CONFIG
 console-platform validate --config CONFIG
 console-platform start --config CONFIG
@@ -33,6 +36,14 @@ The recovery command is local; there is no recovery HTTP endpoint or implicit fa
 async function main(): Promise<void> {
   const [command, ...values] = process.argv.slice(2);
   if (command === "help" || command === "--help" || !command) { process.stdout.write(`${usage}\n`); return; }
+  if (command === "inspect") {
+    const args = argumentsFor(values, ["source"]);
+    const root = resolve(args.source!);
+    const manifest = parseManifest(await readJson(join(root, "manifest.json")));
+    const selection = { id: manifest.id, version: manifest.version, root, sha256: await packageDigest(root) };
+    const artifact = await inspectArtifact(selection, join(process.cwd(), "composition.json"));
+    print({ package: selection, manifest: artifact.manifest, codeExecuted: false, selected: false }); return;
+  }
   if (command === "import") {
     const args = argumentsFor(values, ["source", "store"]);
     print(await importArtifact(args.source!, args.store!)); return;

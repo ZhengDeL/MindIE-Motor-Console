@@ -1,10 +1,11 @@
 """Executable v1 contracts and route ownership, independent of provider IDs."""
 from .contracts import Contract
+from types import MappingProxyType
 
 # A replacement must implement the actual methods called by reference modules.
 # Storage includes its public repository transaction port: callers never receive
 # the selected driver's SQL connection. See backend/ports/storage.py.
-CONTRACTS = {item.id: item for item in (
+CONTRACTS = MappingProxyType({item.id: item for item in (
     Contract("console.application", internal=True),
     Contract('storage.store', methods=('list', 'get', 'put', 'put_many', 'delete', 'page', 'revisions', 'unit_of_work', 'health', 'close', 'storage_info', 'backup', 'mutate_audited', 'mutate_many_audited', 'compare_and_mutate_audited', 'audit', 'audit_items', 'query_audit', 'prune_audit'), attributes=('directory', 'schema_version')),
     Contract("security.secrets", methods=("encrypt", "decrypt")),
@@ -15,6 +16,8 @@ CONTRACTS = {item.id: item for item in (
     Contract('audit.sink', methods=('audit', 'query_audit', 'audit_items', 'prune_audit', 'mutate_audited', 'mutate_many_audited', 'compare_and_mutate_audited', 'append_event'), attributes=()),
     Contract("logs.platform", methods=("write", "query", "export_jsonl", "close")),
     Contract("logs.runtime", methods=("read", "close")),
+    Contract("services.workflow", methods=("get", "list", "create", "update", "delete", "export", "revisions", "reconcile", "plan", "require_scalable", "plan_scale", "execution_placements", "payload", "render"), critical=True),
+    Contract("tasks.coordinator", methods=("submit", "run", "get", "list"), critical=True),
     Contract("tasks.scheduler", methods=("submit", "shutdown")),
     Contract("tasks.recovery", methods=("__call__",)),
     Contract("demo.seed", methods=("__call__",)),
@@ -40,7 +43,7 @@ CONTRACTS = {item.id: item for item in (
     *(Contract("api." + name) for name in (
         "auth", "accounts", "nodes", "services", "overview", "templates", "images", "gateways",
         "runtime-logs", "metrics", "tasks", "audit", "system", "extensions", "plugins", "frontend", "agent-docker", "agent-kubernetes")),
-)}
+)})
 
 
 def route_contract(path: str) -> str | None:
