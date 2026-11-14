@@ -107,6 +107,8 @@ Docker SDK 的 I/O 超时和调用间预算不能硬取消正在进行的底层�
 
 Kubernetes 的 capacity/allocatable 是集群调度资源份额，不是瞬时空闲或利用率。K8S 执行 Agent 的硬件观测仅覆盖其宿主，worker 硬件指标由集群侧监控提供。集群快照过期后不能据此选择部署节点。
 
+已有 Kubernetes Node/NPU Exporter 由 Prometheus 逐 Pod/Endpoint 抓取，以 `cluster/node/id` 关联到真实节点和设备；不使用一个负载均衡 Service 地址代表多个宿主。完整采集架构、现有 Monitor 复用、普通 Prometheus 配置及看板接入见 [Kubernetes 监控说明](docs/KUBERNETES_MONITORING.md)。当前未将全集群 Prometheus 指标回填到每个 worker 的平台资源详情。
+
 ### Agent 与控制面存在时钟偏差
 
 库存GET支持请求绑定的数据年龄证明。控制面为每次请求生成随机 nonce；Agent 在返回时绑定同一 nonce，并从实际采集开始的单调计时锚点计算各组件年龄。控制面加入完整请求耗时后，只在接收时换算一次本地有效期。库存、CPU/内存、NPU 当前值、上次成功值和资源账本分别到期，缓存命中、繁忙回退和数据库读取均不会刷新采样年龄。原始来源时间单独保留，账本条目的历史事件时间不会改写。

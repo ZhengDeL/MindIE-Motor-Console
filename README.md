@@ -68,6 +68,8 @@ flowchart LR
 
 每个独立 Docker 执行宿主通常部署一个 Agent；一个 Kubernetes 集群通常配置一个执行连接，由集群调度 Pod，不为此在每个工作节点重复安装管理 Agent。具体权限和副本按管理边界配置。
 
+Kubernetes 已有 Node/NPU Exporter 时，复用 Prometheus 逐节点抓取及 Grafana 展示；平台执行连接读取的节点资源份额与宿主硬件指标分别处理。详见 [Docker/Kubernetes 采集架构与接入示例](web/docs/KUBERNETES_MONITORING.md)。
+
 ## 文档与贡献
 
 - [完整文档导航](web/docs/README.md)：安装、操作、监控、维护、插件及版本说明。

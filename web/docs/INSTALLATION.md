@@ -116,7 +116,7 @@ docker compose --env-file web/.env.production -f web/compose.modular.yaml ps
 
 按[Agent 运维](../AGENT_OPERATIONS.md)或[新节点推送](../AGENT_ROLLOUT.md)准备独立凭据、TLS 和持久账本。推送只安装新节点，不覆盖已有 Agent。默认只读，先核对身份、产品协议、运行时与资源来源，再授权管理写入。
 
-CPU/内存/OS 来自 [Node Exporter](DOCKER_NODE_EXPORTER.md)，NPU 来自[受信宿主快照或 NPU Exporter](DOCKER_NPU_EXPORTER.md)。数据缺失、陈旧或设备映射未知时不能补零或绕过准入。Kubernetes 的监控由集群侧维护；集群调度资源份额不是实时空闲。
+CPU/内存/OS 来自 [Node Exporter](DOCKER_NODE_EXPORTER.md)，NPU 来自[受信宿主快照或 NPU Exporter](DOCKER_NPU_EXPORTER.md)。数据缺失、陈旧或设备映射未知时不能补零或绕过准入。Kubernetes 的监控由集群侧维护，复用方式及逐节点采集图见 [Kubernetes 监控接入](KUBERNETES_MONITORING.md)；集群调度资源份额不是实时空闲。
 
 模型镜像、所有节点可读的权重、驱动、通信网络和端口分别准备。模板保存不启动模型；审查原生 JSON、角色/节点/设备布局并执行预检，再由 Agent 最终准入。Kubernetes 部署还需集群管理员预置必要组件并按[原生集成说明](NATIVE_INTEGRATION.md)审核权限，不将单命名空间 Role 或平台页面状态视为完整部署能力。
 

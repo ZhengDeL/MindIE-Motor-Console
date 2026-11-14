@@ -13,6 +13,8 @@ Node Exporter 负责主机 CPU、内存、磁盘、网络等操作系统指标�
 
 ## 先理解 `containerMode=docker`
 
+集群已有采集器的发现、网络、节点身份和指标流向见 [Kubernetes 监控接入](KUBERNETES_MONITORING.md)。`NodeIP:8082` 不是所有 K8s 安装的默认可达端点，须核对实际 Pod 网络及现有抓取配置。
+
 官方 v26.2.0 的 `-containerMode=docker` 参数有效，但它选择的是 **Docker 相关 CRI + containerd gRPC**，不是直接使用 Docker REST API。默认会尝试 dockershim/cri-dockerd；`/var/run/docker.sock` 不能当作 CRI 地址。仅挂载 Docker socket 不会获得完整容器归属。
 
 核对 v26.2.0 的启动参数、容器采集器和动态配置后，没有找到可靠的“关闭 CRI、只保留硬件采集”开关。不要编造 `-containerMode=none`、`-disableCRI`，也不要用 `-platform=Telegraf` 代替，它仍会初始化容器采集。[原生启动与参数](https://github.com/Ascend/mind-cluster/blob/6cb6683c8b73d1c26341bb81a2c1cefe12a855ca/component/npu-exporter/cmd/npu-exporter/main.go)、[运行时连接实现](https://github.com/Ascend/mind-cluster/blob/6cb6683c8b73d1c26341bb81a2c1cefe12a855ca/component/npu-exporter/collector/container/runtime_ops.go)。

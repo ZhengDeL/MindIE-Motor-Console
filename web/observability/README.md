@@ -1,5 +1,7 @@
 # Docker 运行观测模块
 
+已有 Kubernetes 监控栈时，优先复用集群 Prometheus/Grafana，不执行本页命令另建一套。逐节点采集图、现有 Exporter 的发现与认证、看板标签适配及 Agent 单宿主边界见 [Kubernetes 监控接入](../docs/KUBERNETES_MONITORING.md)。本页的 Docker 安装工具只生成静态目标配置，不提供 Kubernetes 自动发现。
+
 此模块独立运行 Grafana OSS、Prometheus 和 HTTPS 入口，复用已经安装的 Node Exporter、Ascend NPU Exporter。它不修改 Motor 原生调度逻辑，不挂载 NPU 或 Docker socket，也不参与推理流量。平台、数据库、Agent 与模型服务可以分别维护。这里的独立部署模块不是 Grafana 插件市场安装包；平台 Grafana 插件只管理连接、只读检查和可选导航入口，Grafana 自身仍使用独立登录。
 
 本项目显示名称为 **MindIE-Motor Console**。看板 UID、跳转路径及预计算序列保持现有接口标识，便于已有安装继续读取历史数据；不要为了修改页面名称而单独改写这些标识。对应关系见[显示品牌与技术身份](../docs/BRANDING.md#显示品牌与技术身份)。

@@ -15,8 +15,10 @@ flowchart LR
     A -->|固定 helper 与 Docker SDK| D[原生 Motor 容器]
     K -->|原生清单 / UID 保护| R[Kubernetes 资源与原生 Operator]
     K -. 控制台内推理调试 .-> M[Motor Coordinator]
-    E[Node / NPU 观测源] -->|有界只读采样| A
-    E -->|Prometheus 抓取| P[Prometheus 历史指标]
+    E[Docker 宿主观测源] -->|单宿主有界只读采样| A
+    KE[K8s Agent 对应宿主观测源] -->|可选，单宿主采样| K
+    E -->|Exporter 指标，不含文件快照| P[Prometheus 历史指标]
+    CE[K8s 既有逐节点 Exporter] -->|逐 Pod 或 Endpoint 抓取| P
     P --> G[Grafana 独立登录]
   end
   D --> M
@@ -26,6 +28,8 @@ flowchart LR
 ```
 
 实线表示管理、采样或正常业务通路；虚线是控制台内 Kubernetes 推理调试的例外。外部业务推理通常直接访问 Coordinator/已有网关，不经过 Control、数据库或执行 Agent。图中的 Docker 与 Kubernetes 是可选执行后端，不表示同一 NPU 可以被两者同时自由分配。
+
+Kubernetes 节点容量通过执行 Agent 查询 API；全集群 CPU、内存和 NPU 硬件指标由既有 Prometheus 逐实例抓取 Exporter，再由 Grafana 展示。Agent 的宿主快照仅属于其对应宿主，当前没有全 worker 的 Exporter 自动发现或 PromQL 汇聚接口。两种运行环境的独立采集图、Operator/普通 Prometheus 示例和标签合同见 [Kubernetes 监控接入](docs/KUBERNETES_MONITORING.md)。
 
 | 组件 | 职责与代码入口 |
 | --- | --- |
@@ -40,22 +44,28 @@ SQLite 使用本地持久磁盘和内核单写租约；PostgreSQL 通过专用�
 
 ## 模块与插件边界
 
+本节描述当前实现。内置工厂、模块开关和社区增量扩展尚不等于所有默认提供者可替换；实际缺口见[扩展面核对](PLUGIN_EXTENSION_POINTS.md#可扩展与可替换的现状)。完整 UI 与业务提供者均可替换的目标另见[可替换插件架构设计](docs/REPLACEABLE_PLUGIN_ARCHITECTURE.md)，不得把目标图当成当前实现图。
+
 ```mermaid
 flowchart TB
-  BOOT[启动配置与存储 bootstrap] --> ST[Store 与选定数据库适配器]
+  BOOT[启动配置与已选择社区包声明] --> HOST[静态清单与依赖图校验]
+  HOST --> ST[Store 与选定数据库适配器]
   ST --> CORE["固定宿主边界<br/>身份 · RBAC · 审计<br/>资源归属与最终准入"]
-  CORE --> HOST[插件清单与依赖图校验]
-  HOST --> CTX["PluginContext<br/>CommunityContext"]
-  CTX --> BI["内置业务工厂<br/>节点 · 服务 · 模板<br/>网关 · 观测"]
-  CTX --> CO["受信社区工厂<br/>已选择的精确摘要"]
-  BI --> IF["provide / consume<br/>精确接口版本"]
-  CO --> IF
+  CORE --> CTX[PluginContext]
+  CTX --> BI["固定选择的内置工厂<br/>品牌 · 节点 · 部分服务<br/>网关 · 镜像 · 模板"]
+  CTX --> CC[CommunityContext 受限门面]
+  CC --> CO["受信社区工厂<br/>已选择的精确摘要"]
+  BI -->|输出接口，默认业务尚未以此反向装配| IF[精确版本接口表]
+  CO -->|provide / consume| IF
+  CORE --> FIX["宿主固定桥接或内联<br/>运行时 · Grafana<br/>服务主流程及部分系统路由"]
   BI --> LIFE[ExitStack 同步清理]
   CO --> LIFE
   HOST --> UI["页面与路由声明<br/>前端能力展示"]
 ```
 
 存储是早期 bootstrap 依赖，不是一个能由社区工厂在启动末尾替换的普通服务。存储配置保持独立适配契约；插件宿主在业务装配阶段提供依赖、路由归属、接口和清理能力，不能接管宿主认证、审计或准入端点。隐藏某页面不会关闭对应安全机制。
+
+静态清单在开库前校验，业务工厂在宿主服务准备后装配。图中内置工厂与固定桥接是不同实现层次；工厂输出接口不代表默认业务已通过接口表选择第三方替代实现。
 
 内置 [PluginContext](backend/plugin_host/context.py) 注入宿主明确允许的服务；社区 [CommunityContext](backend/plugin_host/community.py) 只公开 SDK 服务门面。`provide/consume` 使用精确接口版本，插件只能消费自身或直接声明依赖的接口。清单拒绝重复 ID、缺失/循环/停用依赖、路由冲突和停用当前数据库驱动，启动后封存，不静默补依赖或降级接口版本。普通社区工厂由 `community.mount` 在应用后期装配。
 

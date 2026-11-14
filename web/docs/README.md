@@ -43,6 +43,7 @@
 | [资源观测与准入](../RESOURCE_MANAGEMENT.md) | Exporter、声明、账本、硬件观测和部署前检查。 |
 | [Node Exporter](DOCKER_NODE_EXPORTER.md) | Docker 主机 CPU、内存、OS、磁盘和网络采集。 |
 | [NPU Exporter 与采集](DOCKER_NPU_EXPORTER.md) | 设备映射、指标、进程、健康及兼容采集方式。 |
+| [Kubernetes 监控接入](KUBERNETES_MONITORING.md) | 复用集群既有 Exporter、逐节点抓取图、Monitor/SD 配置及平台快照边界。 |
 | [模板示例](../examples/templates/README.md) | 完整原生配置、自定义模板与预检前提。 |
 | [离线能力指南](OFFLINE_CAPABILITIES.md) | 在界面查看配置示例、说明和限制。 |
 | [Kubernetes 访问入口](KUBERNETES_ENDPOINTS.md) | Service/NodePort、端点、所有权与访问限制。 |
@@ -60,6 +61,7 @@
 - [插件管理](../PLUGINS.md)：导入、信任、下次启动选择、停用及回退。
 - [插件开发](../PLUGIN_DEVELOPMENT.md)：Manifest、公开 Context、API/页面、限额与完整操作流程。
 - [扩展面](../PLUGIN_EXTENSION_POINTS.md)：当前公开合同与后续模块化方向。
+- [可替换插件架构设计](REPLACEABLE_PLUGIN_ARCHITECTURE.md)：默认实现与第三方同契约替换、完整 UI 插件、语言取舍及验收目标；尚未实现。
 - [宿主合同](../backend/plugin_host/README.md)、[包格式与恢复](../backend/plugin_host/packages/README.md)。
 - [完整示例](../plugins/examples/community-status/README.md)、[离线 Schema](../plugins/sdk/README.md)。
 - [贡献指南](../../CONTRIBUTING.md)、[安全报告](../../SECURITY.md)、[许可来源](../../NOTICE.md)。

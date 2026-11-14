@@ -8,6 +8,8 @@ Node Exporter 提供宿主 CPU、内存、系统版本、磁盘、文件系统�
 
 ## 1. 先确认是否已有采集器
 
+Kubernetes 中已有 DaemonSet/Prometheus 时，改按 [Kubernetes 监控接入](KUBERNETES_MONITORING.md)复用逐节点采集、TLS/认证和看板，不运行本页 Docker 安装步骤。
+
 只读检查目标节点：
 
 ```bash
