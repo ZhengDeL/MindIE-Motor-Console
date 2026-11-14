@@ -1,6 +1,6 @@
 # MindIE-Motor Console 部署入口
 
-本说明对应 **0.11.1 源码**；固定发行标签在正式发布后使用。新安装和已有安装升级从 [0.11.1 部署与升级](docs/DEPLOYMENT_0.11.1.md)及[生产运行手册](PRODUCTION.md)开始。源码、镜像摘要、SDK 能力和签名升级清单必须匹配；不能只修改页面版本号。
+本说明对应 **v0.11.1 正式发行源码**。新安装和已有安装升级从 [0.11.1 部署与升级](docs/DEPLOYMENT_0.11.1.md)及[生产运行手册](PRODUCTION.md)开始。源码、镜像摘要、SDK 能力和签名升级清单必须匹配；不能只修改页面版本号。
 
 0.11.0 首次将社区插件包导入纳入正式发行。部署后在已登录会话通过 `/api/plugin-sdk` 的 `features` 确认 `community-import-v1`、`http-routes-v1` 和 `status-table-v1`。上传只做校验与暂存；管理员明确信任并选择后，下次启动才加载。插件与宿主同进程执行，不是安全沙箱，详见[插件宿主说明](backend/plugin_host/README.md)。
 
