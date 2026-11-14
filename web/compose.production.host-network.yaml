@@ -1,0 +1,10 @@
+# Optional control-only override for hosts with Docker bridge networking disabled.
+# Requires Docker Compose >= 2.24.4 for !reset. Keep the matching env marker:
+# MOTOR_CONTROL_NETWORK_MODE=host
+services:
+  control:
+    network_mode: host
+    ports: !reset []
+    environment:
+      MOTOR_LISTEN_HOST: ${MOTOR_CONTROL_BIND_IP:-127.0.0.1}
+      MOTOR_LISTEN_PORT: ${MOTOR_CONTROL_PORT:-19080}

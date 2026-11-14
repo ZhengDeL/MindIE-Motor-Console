@@ -1,0 +1,14 @@
+{
+  "groups": [
+    {
+      "name": "qinghuan-host-cpu",
+      "interval": "30s",
+      "rules": [
+        {
+          "record": "qinghuan:host_cpu_busy_percent:rate2m",
+          "expr": "max by(cluster,node) (((100 * (1 - avg by(cluster,node,instance) ((rate(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"}[2m]) and (node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"} and ((node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"} >= 0) and (node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"} <= 9007199254740991)) and ((time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"}) >= 0) and (time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\"} and ((time() - timestamp(up{job=\"node-exporter\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\"} and ((time() - timestamp(up{job=\"node-exporter\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\"}) < 90))) == 1) == 1)))))) >= 0) <= 100)"
+        }
+      ]
+    }
+  ]
+}

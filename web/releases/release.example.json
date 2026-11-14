@@ -1,0 +1,12 @@
+{
+  "release_schema": 1,
+  "id": "qinghuan-0.11.0",
+  "version": "0.11.0",
+  "image": "registry.example.test/motor-console@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "agent_protocol": 1,
+  "db_schema_min": 2,
+  "db_schema_max": 2,
+  "notes": "Example only. Replace with a real reviewed image digest and sign using the offline publisher key.",
+  "product_id": "motor-console",
+  "web_image": "registry.example.test/motor-console-web@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+}

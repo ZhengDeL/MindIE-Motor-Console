@@ -1,0 +1,57 @@
+name: 插件能力提案
+description: 提议新的可选能力，说明场景、接口、权限与验收范围。
+title: "[Plugin] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先阅读 CONTRIBUTING.md 和 web/PLUGIN_DEVELOPMENT.md。
+        不要提交密码、令牌、kubeconfig、客户地址或节点日志。安全漏洞请按 SECURITY.md 私密报告。
+  - type: input
+    id: target-version
+    attributes:
+      label: 目标平台版本与 SDK 能力
+      description: 填写目标标签或提交，以及需要的插件 API/feature；社区包自0.11.0起提供，未选定时说明兼容目标。
+    validations:
+      required: true
+  - type: input
+    id: plugin-id
+    attributes:
+      label: 建议插件 ID
+      description: 小写字母、数字和连字符，例如 community-status。
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 用户场景与期望结果
+      description: 描述实际用户、操作和可验证的结果。
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: 接口、依赖与最低权限
+      description: 说明数据来源、宿主 API 版本、依赖插件、网络或文件副作用。
+    validations:
+      required: true
+  - type: textarea
+    id: native-boundary
+    attributes:
+      label: 与原生 MindIE-Motor 的边界
+      description: 原生配置或入口如何保持兼容；如无部署影响，写明原因。
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: 验收、升级与回退
+      description: 列出需要检查的正常与失败场景、真实外部环境、数据迁移和旧版回退。
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: 参考实现与许可证
+      description: 提供直接来源链接，说明拟复用代码或资源的许可证。

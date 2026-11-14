@@ -1,0 +1,20 @@
+.platform-brand { width: 100%; max-width: 100%; min-width: 0; }
+.platform-brand-icon { display: block; width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; }
+.platform-brand .platform-brand-wordmark { min-width: 0; width: auto; flex: 0 1 auto; max-width: 100%; }
+.platform-brand .platform-brand-wordmark b, .platform-brand .platform-brand-wordmark small { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-brand.compact { justify-content: center; gap: 0; }
+.platform-brand.compact .platform-brand-wordmark b { font-size: 18px; line-height: 28px; }
+.platform-brand-login { justify-content: center; }
+.platform-brand-login .platform-brand-wordmark small { color: var(--muted); }
+.platform-brand-login .platform-brand-wordmark b { font-size: 22px; }
+.sidebar-version .sidebar-brand-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.branding-fields { min-width: 0; padding: 0; margin: 20px 0; border: 0; display: grid; gap: 18px; }
+.branding-fields .field { margin: 0; min-width: 0; }
+.branding-fields small { color: var(--muted); line-height: 1.7; }
+.branding-icon-actions, .branding-save-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.branding-icon-actions { margin-bottom: 8px; }
+.branding-preview { min-width: 0; padding: 16px; margin: 18px 0; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--canvas); }
+.branding-preview .small-caption { display: block; margin: 0 0 12px; }
+.platform-brand-preview { min-height: 44px; }
+.platform-branding-settings .settings-context-note { margin-top: 0; }
+@media (max-width: 480px) { .branding-preview { padding: 12px; } .branding-save-actions .btn { flex: 1 1 auto; } }

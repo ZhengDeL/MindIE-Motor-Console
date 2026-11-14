@@ -1,0 +1,92 @@
+name: motor-console
+services:
+  control:
+    image: ${MOTOR_CONSOLE_IMAGE:?Use a reviewed image digest}
+    runtime: runc
+    user: "${MOTOR_CONTROL_UID:-10001}:${MOTOR_CONTROL_GID:-10001}"
+    environment:
+      MOTOR_MODE: control
+      MOTOR_PLUGIN_DIR: ${MOTOR_PLUGIN_DIR:-/var/lib/motor-console/plugin-packages}
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_CONTROL_DISABLED_PLUGINS:-}
+      MOTOR_NODE_SAMPLE_SECONDS: ${MOTOR_NODE_SAMPLE_SECONDS:-15}
+      MOTOR_NODE_SAMPLE_CONCURRENCY: ${MOTOR_NODE_SAMPLE_CONCURRENCY:-3}
+      MOTOR_ENV: production
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_SECRET_KEY_FILE: /run/motor-secrets/encryption.key
+      MOTOR_BOOTSTRAP_TOKEN_FILE: /run/motor-secrets/bootstrap.token
+      MOTOR_COOKIE_SECURE: "true"
+      MOTOR_TRUSTED_ORIGINS: ${MOTOR_TRUSTED_ORIGINS:?Configure the exact HTTPS public origin}
+      MOTOR_DOCUMENTATION_URL: ${MOTOR_DOCUMENTATION_URL:-}
+      MOTOR_RELEASE_DIR: /var/lib/motor-console/releases
+      MOTOR_RELEASE_PUBLIC_KEY_FILE: /run/motor-config/release.pub
+      MOTOR_ALLOW_LEGACY_TOKEN: "false"
+      MOTOR_OIDC_ENABLED: ${MOTOR_OIDC_ENABLED:-false}
+      MOTOR_OIDC_ISSUER: ${MOTOR_OIDC_ISSUER:-}
+      MOTOR_OIDC_CLIENT_ID: ${MOTOR_OIDC_CLIENT_ID:-}
+      MOTOR_OIDC_CLIENT_SECRET_FILE: ${MOTOR_OIDC_CLIENT_SECRET_FILE:-}
+      MOTOR_OIDC_REDIRECT_URI: ${MOTOR_OIDC_REDIRECT_URI:-}
+      MOTOR_OIDC_TOKEN_AUTH_METHOD: ${MOTOR_OIDC_TOKEN_AUTH_METHOD:-client_secret_basic}
+      MOTOR_OIDC_ROLE_CLAIM: ${MOTOR_OIDC_ROLE_CLAIM:-groups}
+      MOTOR_OIDC_ROLE_MAPPING: ${MOTOR_OIDC_ROLE_MAPPING:-}
+      MOTOR_OIDC_ENDPOINT_ORIGINS: ${MOTOR_OIDC_ENDPOINT_ORIGINS:-}
+      MOTOR_OIDC_CA_BUNDLE: ${MOTOR_OIDC_CA_BUNDLE:-}
+      MOTOR_UPSTREAM_DIR: ${MOTOR_CONTROL_UPSTREAM_DIR:-/opt/motor/upstream}
+      MOTOR_SOURCE_MANIFEST: ${MOTOR_CONTROL_SOURCE_MANIFEST:-}
+      MOTOR_SOURCE_MANIFEST_SHA256: ${MOTOR_CONTROL_SOURCE_MANIFEST_SHA256:-}
+      MOTOR_AGENT_CA_BUNDLE: ${MOTOR_AGENT_CA_BUNDLE:-}
+      MOTOR_AGENT_CLIENT_CERT_FILE: ${MOTOR_AGENT_CLIENT_CERT_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_FILE: ${MOTOR_AGENT_CLIENT_KEY_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_AGENT_MTLS_REQUIRED: ${MOTOR_AGENT_MTLS_REQUIRED:-false}
+      MOTOR_AGENT_ROLLOUT_ROOT: ${MOTOR_AGENT_ROLLOUT_ROOT:-/var/lib/motor-console-agents}
+      MOTOR_GATEWAY_ALLOWED_ORIGINS: ${MOTOR_GATEWAY_ALLOWED_ORIGINS:-}
+      MOTOR_GATEWAY_CA_BUNDLE: ${MOTOR_GATEWAY_CA_BUNDLE:-}
+      MOTOR_CA_BUNDLE: ${MOTOR_CA_BUNDLE:-}
+      MOTOR_INFERENCE_API_KEY: ${MOTOR_INFERENCE_API_KEY:-}
+      MOTOR_MANAGEMENT_KEY_FILE: ${MOTOR_MANAGEMENT_KEY_FILE:-}
+      MOTOR_CLIENT_CERT_FILE: ${MOTOR_CLIENT_CERT_FILE:-}
+      MOTOR_CLIENT_KEY_FILE: ${MOTOR_CLIENT_KEY_FILE:-}
+      MOTOR_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_CLIENT_CRL_FILE: ${MOTOR_CLIENT_CRL_FILE:-}
+      MOTOR_CLIENT_MTLS_REQUIRED: ${MOTOR_CLIENT_MTLS_REQUIRED:-false}
+    ports:
+      - "${MOTOR_CONTROL_BIND_IP:-127.0.0.1}:${MOTOR_CONTROL_PORT:-19080}:8000"
+    volumes:
+      - type: bind
+        source: ${MOTOR_CONTROL_DATA_DIR:?Use an absolute local data directory}
+        target: /var/lib/motor-console
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_CONTROL_DATA_DIR}/secrets
+        target: /run/motor-secrets
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_CONTROL_DATA_DIR}/profiles
+        target: /opt/motor-profiles
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_RELEASE_PUBLIC_KEY_HOST_FILE:?Configure the trusted public release key}
+        target: /run/motor-config/release.pub
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: 2
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "5"
+    restart: unless-stopped
+    stop_grace_period: 90s

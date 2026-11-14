@@ -1,0 +1,42 @@
+map $uri $qinghuan_cache_control {
+    default no-cache;
+    ~^/assets/ "public, max-age=31536000, immutable";
+    ~^/api/ no-store;
+}
+log_format qinghuan '$remote_addr $request_method $uri $status $body_bytes_sent $request_time $request_id';
+server {
+    listen 8080;
+    server_name _;
+    location = /health { access_log off; default_type text/plain; return 200 'ok'; }
+    location / { return 404; }
+}
+server {
+    listen 8443 ssl;
+    server_name _;
+    ssl_certificate /run/motor-tls/server.crt;
+    ssl_certificate_key /run/motor-tls/server.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    root /usr/share/nginx/html;
+    index index.html;
+    client_max_body_size 5m;
+    add_header Strict-Transport-Security 'max-age=31536000' always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy same-origin always;
+    add_header X-Frame-Options DENY always;
+    add_header Cache-Control $qinghuan_cache_control always;
+    access_log /dev/stdout qinghuan;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'" always;
+    location /api/ {
+        proxy_pass http://control:8000;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_read_timeout 195s;
+        proxy_send_timeout 30s;
+        proxy_buffering off;
+        proxy_hide_header Cache-Control;
+    }
+    location /assets/ { try_files $uri =404; }
+    location / { try_files $uri $uri/ /index.html; }
+}

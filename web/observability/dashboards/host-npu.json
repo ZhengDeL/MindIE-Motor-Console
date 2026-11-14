@@ -1,0 +1,1740 @@
+{
+  "uid": "qinghuan-host-npu",
+  "title": "集群概览 · 宿主与 NPU",
+  "description": "Node Exporter 与 Ascend NPU Exporter 的运行观测。当前值只使用90秒内成功采样，缺失保持空值；不表示部署预留或可分配资源。",
+  "schemaVersion": 39,
+  "version": 6,
+  "editable": false,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "qinghuan",
+    "node-exporter",
+    "ascend"
+  ],
+  "tooltip": {
+    "shared": true
+  },
+  "graphTooltip": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "cluster",
+        "label": "环境",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(up{job=~\"node-exporter|npu-exporter\"}, cluster)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "全部",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "node",
+        "label": "节点",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(up{job=~\"node-exporter|npu-exporter\",cluster=~\"$cluster\"}, node)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "全部",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "节点详情",
+      "type": "link",
+      "targetBlank": false,
+      "url": "/d/qinghuan-host-npu-node",
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "采集成功",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "成功抓取的 Node/NPU Exporter 目标数，不是节点数；见下方采集诊断。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) or (up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) == bool 1)",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "NPU 设备",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "身份有效且来源唯一的已采样芯片设备数，不是空闲卡数。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(((max by(cluster,node,id,name) ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 1))",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "NPU利用率",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "NPU AICore 利用率：仅对当前有效采样设备求平均；完整覆盖见设备表。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg((max by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)))",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "HBM 占用",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "已用/容量成对有效后按总容量加权；不代表模型独占。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * sum(((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0))) / sum((((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) and on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0))))",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "最高温度",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "当前有效芯片设备的最高温度；具体设备见节点详情。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max((max by(cluster,node,id) ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= -40) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 200) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= -40) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 200) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)))",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "NPU 功耗",
+      "type": "stat",
+      "gridPos": {
+        "x": 20,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "description": "已采样设备的功耗之和；不是整机输入功耗。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum((max by(cluster,node,id) ((npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 10000) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 10000) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_power{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)))",
+          "legendFormat": "",
+          "format": "time_series",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 0,
+          "noValue": "—",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "values": false
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "left",
+        "orientation": "horizontal",
+        "wideLayout": true,
+        "textMode": "value",
+        "text": {
+          "titleSize": 12,
+          "valueSize": 30
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "节点资源一览",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 8
+      },
+      "description": "点击节点进入逐卡详情。NPU 均值仅包括有效样本，HBM 最高为当前单芯片最高已用比例；— 表示缺失或过期，不补零。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by(host_key) (label_join((max by(cluster,node) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) and on(cluster,node) (count by(cluster,node) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "B",
+          "expr": "max by(host_key) (label_join((max by(cluster,node) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) and on(cluster,node) (count by(cluster,node) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "C",
+          "expr": "max by(host_key) (label_join(max by(cluster,node) (((100 * (1 - avg by(cluster,node,instance) ((rate(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}[2m]) and (node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} and ((node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} >= 0) and (node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} <= 9007199254740991)) and ((time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) >= 0) and (time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1)))))) >= 0) <= 100),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "D",
+          "expr": "max by(host_key) (label_join((100 * (1 - ((max by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) > 0)) / on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) and on(cluster,node) ((max by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) > 0))))),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "E",
+          "expr": "max by(host_key) (label_join(count by(cluster,node) (((max by(cluster,node,id,name) ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_name{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "F",
+          "expr": "max by(host_key) (label_join(avg by(cluster,node) ((max by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1))),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "G",
+          "expr": "max by(host_key) (label_join(max by(cluster,node) ((100 * ((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0)) / on(cluster,node,id) (((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) and on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0))))),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "H",
+          "expr": "max by(host_key) (label_join(max by(cluster,node) ((max by(cluster,node,id) ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= -40) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 200) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= -40) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 200) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_temperature{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1))),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "I",
+          "expr": "max by(host_key) (label_join(sum by(cluster,node) ((((max by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 0) or ((max by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 1)) == bool 0),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        },
+        {
+          "refId": "J",
+          "expr": "max by(host_key) (label_join(count by(cluster,node) ((((max by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 0) or ((max by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_health_status{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) == 1))),\"host_key\",\" / \",\"cluster\",\"node\"))",
+          "legendFormat": "",
+          "format": "table",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "host_key",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "host_key",
+            "format": "regexp",
+            "regExp": "/^(?<cluster>.+?) \\/ (?<node>.+?)$/"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "cluster",
+                "node",
+                "Value #A",
+                "Value #B",
+                "Value #C",
+                "Value #D",
+                "Value #E",
+                "Value #F",
+                "Value #G",
+                "Value #H",
+                "Value #I",
+                "Value #J"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "cluster": 0,
+              "node": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #E": 6,
+              "Value #F": 7,
+              "Value #G": 8,
+              "Value #H": 9,
+              "Value #I": 10,
+              "Value #J": 11
+            },
+            "renameByName": {
+              "cluster": "环境",
+              "node": "节点",
+              "Value #A": "宿主采集",
+              "Value #B": "NPU 采集",
+              "Value #C": "CPU",
+              "Value #D": "内存",
+              "Value #E": "NPU 数",
+              "Value #F": "NPU 均值",
+              "Value #G": "HBM 最高",
+              "Value #H": "最高温度",
+              "Value #I": "已报异常",
+              "Value #J": "健康采样"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "—",
+          "decimals": 1,
+          "custom": {
+            "align": "left",
+            "filterable": true,
+            "minWidth": 70
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "环境"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 75
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "节点"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "查看节点详情",
+                    "url": "/d/qinghuan-host-npu-node?var-node=${__data.fields[\"节点\"]}&var-cluster=${__data.fields[\"环境\"]}&from=${__from}&to=${__to}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "宿主采集"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 75
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "失败",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "成功",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NPU 采集"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 75
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "失败",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "成功",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "内存"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NPU 数"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 60
+              },
+              {
+                "id": "custom.minWidth",
+                "value": 60
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NPU 均值"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HBM 最高"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "最高温度"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "已报异常"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "text"
+                    },
+                    {
+                      "value": 1,
+                      "color": "red"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "健康采样"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "sortBy": [
+          {
+            "displayName": "节点",
+            "desc": false
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "title": "CPU 使用率 · 节点对比",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "description": "固定2分钟窗口，30秒预计算。历史从规则启用后开始积累，不回填此前数据；不改变原始CPU计数器保留期。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "((qinghuan:host_cpu_busy_percent:rate2m{cluster=~\"$cluster\",node=~\"$node\"} >= 0) <= 100) and ((time() - timestamp(qinghuan:host_cpu_busy_percent:rate2m{cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(qinghuan:host_cpu_busy_percent:rate2m{cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,node) (max by(cluster,node) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) == 1) and on(cluster,node) (count by(cluster,node) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1)",
+          "legendFormat": "{{node}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 7,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisBorderShow": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "内存使用率 · 节点对比",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(100 * (1 - ((max by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) > 0)) / on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) and on(cluster,node) ((max by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemAvailable_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node) (((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) > 0)))))",
+          "legendFormat": "{{node}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 7,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisBorderShow": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "NPU 利用率 · 节点均值",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "description": "不把64个设备叠在同一张概览图；逐卡变化请进入节点详情。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg by(cluster,node) ((max by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 100) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_utilization{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)))",
+          "legendFormat": "{{node}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 7,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisBorderShow": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "HBM 使用率 · 节点峰值",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "description": "各节点中已用 HBM 比例最高的设备；不是设备预留或资源准入。",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by(cluster,node) ((100 * ((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0)) / on(cluster,node,id) (((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0) and on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_used_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= on(cluster,node,id) ((max by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node,id) (count by(cluster,node,id) ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != -1) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967295) and (npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} != 4294967296)) and ((time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_chip_info_hbm_total_memory{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0)))))",
+          "legendFormat": "{{node}}",
+          "format": "time_series",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "—",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1.5,
+            "fillOpacity": 7,
+            "spanNulls": false,
+            "showPoints": "never",
+            "axisBorderShow": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "title": "采集诊断与系统信息",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "collapsed": true,
+      "panels": [
+        {
+          "id": 13,
+          "title": "采集目标与版本",
+          "type": "table",
+          "gridPos": {
+            "x": 0,
+            "y": 29,
+            "w": 24,
+            "h": 9
+          },
+          "description": "年龄是最近抓取时间，并非硬件更新承诺。抓取成功只说明 Exporter 可读，不代表模型健康。每个目标分别列出，重复来源也可见。",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by(target_key) (label_join(((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) or (up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))),\"target_key\",\" / \",\"cluster\",\"node\",\"job\",\"instance\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "B",
+              "expr": "max by(target_key) (label_join(((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"})) and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) or (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"})) and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))),\"target_key\",\" / \",\"cluster\",\"node\",\"job\",\"instance\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "C",
+              "expr": "max by(target_key) (label_join(((scrape_duration_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(scrape_duration_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(scrape_duration_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) or (scrape_duration_seconds{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(scrape_duration_seconds{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(scrape_duration_seconds{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))))),\"target_key\",\" / \",\"cluster\",\"node\",\"job\",\"instance\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "D",
+              "expr": "max by(target_key) (label_join(((scrape_samples_scraped{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(scrape_samples_scraped{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(scrape_samples_scraped{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))) or (scrape_samples_scraped{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(scrape_samples_scraped{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(scrape_samples_scraped{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))))),\"target_key\",\" / \",\"cluster\",\"node\",\"job\",\"instance\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "E",
+              "expr": "max by(target_key,exporter_version) (label_join((label_replace((node_exporter_build_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(node_exporter_build_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_exporter_build_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))),\"exporter_version\",\"$1\",\"version\",\"(.+)\") or label_replace((npu_exporter_version_info{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(npu_exporter_version_info{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(npu_exporter_version_info{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) (up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"npu-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)))),\"exporter_version\",\"$1\",\"exporterVersion\",\"(.+)\")),\"target_key\",\" / \",\"cluster\",\"node\",\"job\",\"instance\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "target_key",
+                "mode": "outerTabular"
+              }
+            },
+            {
+              "id": "extractFields",
+              "options": {
+                "source": "target_key",
+                "format": "regexp",
+                "regExp": "/^(?<cluster>.+?) \\/ (?<node>.+?) \\/ (?<job>.+?) \\/ (?<instance>.+?)$/"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "node",
+                    "job",
+                    "instance",
+                    "exporter_version",
+                    "Value #A",
+                    "Value #B",
+                    "Value #C",
+                    "Value #D"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "indexByName": {
+                  "node": 0,
+                  "job": 1,
+                  "instance": 2,
+                  "exporter_version": 3,
+                  "Value #A": 4,
+                  "Value #B": 5,
+                  "Value #C": 6,
+                  "Value #D": 7
+                },
+                "renameByName": {
+                  "node": "节点",
+                  "job": "采集器",
+                  "instance": "目标地址",
+                  "exporter_version": "Exporter 版本",
+                  "Value #A": "状态",
+                  "Value #B": "距上次抓取",
+                  "Value #C": "抓取耗时",
+                  "Value #D": "样本量"
+                }
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "—",
+              "decimals": 1,
+              "custom": {
+                "align": "left",
+                "filterable": true,
+                "minWidth": 70
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "状态"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 75
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "type": "value",
+                        "options": {
+                          "0": {
+                            "text": "失败",
+                            "color": "red"
+                          },
+                          "1": {
+                            "text": "成功",
+                            "color": "green"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "距上次抓取"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "抓取耗时"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "样本量"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Exporter 版本"
+                },
+                "properties": [
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "enablePagination": true,
+            "sortBy": [
+              {
+                "displayName": "节点",
+                "desc": false
+              }
+            ]
+          }
+        },
+        {
+          "id": 14,
+          "title": "系统与容量",
+          "type": "table",
+          "gridPos": {
+            "x": 0,
+            "y": 38,
+            "w": 24,
+            "h": 7
+          },
+          "description": "操作系统来自 node_os_info.pretty_name；内核和架构来自 uname。缺失字段保持空值。",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "max by(host_key,nodename,release,machine) (label_join((max by(cluster,node,nodename,release,machine) ((node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_uname_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "B",
+              "expr": "max by(host_key,pretty_name) (label_join((max by(cluster,node,pretty_name) ((node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_os_info{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "C",
+              "expr": "max by(host_key) (label_join((max by(cluster,node) (count by(cluster,node,instance) ((node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} and ((node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} >= 0) and (node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} <= 9007199254740991)) and ((time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) >= 0) and (time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1)))) and on(cluster,node) (count by(cluster,node) (count by(cluster,node,instance) ((node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} and ((node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} >= 0) and (node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"} <= 9007199254740991)) and ((time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) >= 0) and (time() - timestamp(node_cpu_seconds_total{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1)))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "D",
+              "expr": "max by(host_key) (label_join(((max by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) > 0),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "E",
+              "expr": "max by(host_key) (label_join((max by(cluster,node) ((node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_memory_SwapTotal_bytes{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            },
+            {
+              "refId": "F",
+              "expr": "max by(host_key) (label_join((time() - ((max by(cluster,node) ((node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) and on(cluster,node) (count by(cluster,node) ((node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} >= 0) and (node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} <= 9007199254740991)) and ((time() - timestamp(node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(node_boot_time_seconds{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90)) and on(cluster,job,instance) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) and on(cluster,node,job) (count by(cluster,node,job) ((up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"} and ((time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) >= 0) and (time() - timestamp(up{job=\"node-exporter\",cluster=~\"$cluster\",node=~\"$node\"}) < 90))) == 1) == 1))) == 1)) <= time())),\"host_key\",\" / \",\"cluster\",\"node\"))",
+              "legendFormat": "",
+              "format": "table",
+              "instant": true,
+              "range": false
+            }
+          ],
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "host_key",
+                "mode": "outerTabular"
+              }
+            },
+            {
+              "id": "extractFields",
+              "options": {
+                "source": "host_key",
+                "format": "regexp",
+                "regExp": "/^(?<cluster>.+?) \\/ (?<node>.+?)$/"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "node",
+                    "nodename",
+                    "pretty_name",
+                    "release",
+                    "machine",
+                    "Value #C",
+                    "Value #D",
+                    "Value #E",
+                    "Value #F"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "indexByName": {
+                  "node": 0,
+                  "nodename": 1,
+                  "pretty_name": 2,
+                  "release": 3,
+                  "machine": 4,
+                  "Value #C": 5,
+                  "Value #D": 6,
+                  "Value #E": 7,
+                  "Value #F": 8
+                },
+                "renameByName": {
+                  "node": "节点",
+                  "nodename": "主机名",
+                  "pretty_name": "操作系统",
+                  "release": "内核",
+                  "machine": "架构",
+                  "Value #C": "逻辑 CPU",
+                  "Value #D": "内存容量",
+                  "Value #E": "Swap 容量",
+                  "Value #F": "运行时间"
+                }
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "—",
+              "decimals": 1,
+              "custom": {
+                "align": "left",
+                "filterable": true,
+                "minWidth": 70
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "内存容量"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Swap 容量"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "运行时间"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "逻辑 CPU"
+                },
+                "properties": [
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "主机名"
+                },
+                "properties": [
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "操作系统"
+                },
+                "properties": [
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "内核"
+                },
+                "properties": [
+                  {
+                    "id": "custom.inspect",
+                    "value": true
+                  }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "showHeader": true,
+            "cellHeight": "sm",
+            "enablePagination": true,
+            "sortBy": [
+              {
+                "displayName": "节点",
+                "desc": false
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "指标说明",
+      "type": "row",
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 24,
+        "h": 1
+      },
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "collapsed": true,
+      "panels": [
+        {
+          "id": 16,
+          "title": "采样与读数",
+          "type": "text",
+          "gridPos": {
+            "x": 0,
+            "y": 30,
+            "w": 24,
+            "h": 5
+          },
+          "description": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "每 **30 秒**刷新。当前值要求目标抓取成功、指标与目标时间戳均在 **90 秒**内；缺失、过期或重复来源保持空值。\n\n**芯片设备数、进程数、利用率均不等于空闲卡数或部署许可。** HBM 按 Exporter MiB 换算；功耗仅覆盖上报芯片。网络只表示选中宿主网卡，不包含 NPU 专用互联。\n\n趋势遵循所选时间范围；历史峰值是历史观测。需要检查单个设备时，点击节点链接进入详情。"
+          }
+        }
+      ]
+    }
+  ]
+}

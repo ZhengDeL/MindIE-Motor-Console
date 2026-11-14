@@ -1,0 +1,67 @@
+name: motor-console-ingress
+services:
+  proxy:
+    image: ${MOTOR_INGRESS_IMAGE:?Use a reviewed registry/name@sha256 image digest}
+    runtime: runc
+    user: "101:101"
+    network_mode: host
+    environment:
+      MOTOR_INGRESS_IMAGE: ${MOTOR_INGRESS_IMAGE:?Use a reviewed registry/name@sha256 image digest}
+      MOTOR_INGRESS_HEALTH_HOST: ${MOTOR_INGRESS_HEALTH_HOST:?Use this host's certificate SAN DNS name or IPv4}
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        case "$$MOTOR_INGRESS_IMAGE" in
+          *@sha256:*) digest=$${MOTOR_INGRESS_IMAGE##*@sha256:} ;;
+          *) printf '%s\n' 'Ingress requires an immutable image digest' >&2; exit 1 ;;
+        esac
+        case "$$digest" in
+          ''|*[!0-9a-f]*) printf '%s\n' 'Invalid ingress image digest' >&2; exit 1 ;;
+        esac
+        [ "$${#digest}" -eq 64 ] || exit 1
+        case "$$MOTOR_INGRESS_HEALTH_HOST" in
+          ''|*[!A-Za-z0-9.-]*) printf '%s\n' 'Invalid certificate health host' >&2; exit 1 ;;
+        esac
+        exec nginx -c /etc/motor-console/nginx.conf -g 'daemon off;'
+    volumes:
+      - type: bind
+        source: ${MOTOR_INGRESS_CONFIG_DIR:?Use an existing absolute ingress config directory}
+        target: /etc/motor-console
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_INGRESS_TLS_DIR:?Use an existing absolute certificate directory without CA private keys}
+        target: /etc/motor-console-tls
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=0700,uid=101,gid=101
+      - /var/cache/nginx:size=16m,mode=0700,uid=101,gid=101
+      - /var/run:size=1m,mode=0700,uid=101,gid=101
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 128m
+    cpus: 0.5
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl --fail --silent --show-error --noproxy '*'
+          --connect-timeout 2 --max-time 5
+          --cacert /etc/motor-console-tls/ca.pem
+          "https://$$MOTOR_INGRESS_HEALTH_HOST:19443/ready" >/dev/null
+      interval: 30s
+      timeout: 7s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: local
+      options:
+        max-size: "5m"
+        max-file: "3"
+    restart: unless-stopped
+    stop_grace_period: 30s

@@ -1,0 +1,16 @@
+.settings-extension-form { display: grid; gap: 16px; min-width: 0; margin: 16px 0; padding: 0; border: 0; }
+.settings-extension-form .field { margin: 0; }
+.settings-extension { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.settings-extension:first-child { padding-top: 0; }
+.settings-extension:last-child { padding-bottom: 0; border: 0; }
+.settings-extension > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.settings-extension strong { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); }
+.settings-extension-status { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; margin: 8px 0; min-width: 0; }
+.settings-extension-scope { color: var(--text-secondary); font-size: var(--font-size-body-sm); line-height: 1.6; overflow-wrap: anywhere; }
+.settings-extension p { margin: 6px 0 0; color: var(--text-secondary); font-size: var(--font-size-body-sm); line-height: 1.7; overflow-wrap: anywhere; }
+.settings-content .description-list dd { min-width: 0; overflow-wrap: anywhere; }
+.settings-content .settings-actions { flex-wrap: wrap; }
+.settings-extension-actions > .btn:disabled { opacity: 1; color: var(--disabled-ink); background: var(--disabled-bg); border-color: var(--disabled-border); }
+.configuration-conflict-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.configuration-conflict-grid pre { max-height: 55dvh; overflow: auto; }
+@media (max-width: 800px) { .configuration-conflict-grid { grid-template-columns: minmax(0, 1fr); } }

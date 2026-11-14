@@ -1,0 +1,183 @@
+.placement-plan-dialog {
+  min-width: 0;
+  padding-top: 20px;
+}
+.placement-plan-settings {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.placement-plan-settings > .btn {
+  margin-top: 28px;
+}
+.placement-plan-settings .field {
+  margin-bottom: 0;
+}
+.placement-plan-notice {
+  padding: 11px 13px;
+  margin: 10px 0;
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: var(--font-size-caption);
+  line-height: 1.6;
+}
+.placement-plan-result {
+  display: grid;
+  gap: 6px;
+  padding: 15px 16px;
+  border-radius: 11px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+}
+.placement-plan-result strong {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+.placement-plan-result > span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+}
+.placement-plan-result.is-valid > strong {
+  color: var(--success);
+}
+.placement-plan-result.is-unavailable > strong {
+  color: var(--warning);
+}
+.placement-plan-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin: 18px 0 12px;
+  font-size: var(--font-size-caption);
+  color: var(--text-secondary);
+}
+.placement-plan-summary b {
+  color: var(--text);
+  font-size: var(--font-size-title-sm);
+  font-weight: var(--font-weight-semibold);
+  margin-right: 4px;
+}
+.placement-plan-dialog > .table-wrap {
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: auto;
+}
+.placement-plan-dialog table {
+  min-width: 660px;
+  table-layout: fixed;
+}
+.placement-plan-scroll-hint {
+  display: none;
+}
+.placement-plan-dialog th,
+.placement-plan-dialog td {
+  padding: 13px;
+  font-size: var(--font-size-caption);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.placement-plan-dialog .table-wrap:focus-visible,
+.placement-plan-exclusions summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.placement-plan-port {
+  display: block;
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+.placement-plan-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 15px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+}
+.placement-plan-basis {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.placement-plan-messages li {
+  overflow-wrap: anywhere;
+}
+.placement-plan-exclusions {
+  padding: 13px 15px;
+  margin-top: 16px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.placement-plan-exclusions summary {
+  cursor: pointer;
+  font-size: var(--font-size-caption);
+  color: var(--text-secondary);
+}
+.placement-plan-exclusions ul,
+.placement-plan-messages {
+  padding-left: 18px;
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+}
+.placement-plan-exclusions ul {
+  max-height: 200px;
+  overflow: auto;
+  margin: 10px 0 0;
+}
+.placement-plan-exclusions li + li {
+  margin-top: 8px;
+}
+.placement-plan-exclusions li > b {
+  font-weight: var(--font-weight-semibold);
+  margin-right: 10px;
+  overflow-wrap: anywhere;
+}
+.placement-plan-exclusions li > span {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.placement-plan-messages {
+  margin: 12px 0;
+  color: var(--warning);
+}
+.placement-plan-messages.is-error {
+  color: var(--danger);
+}
+.placement-plan-footer-note {
+  flex: 1;
+  font-size: var(--font-size-caption);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+@media (max-width: 640px) {
+  .placement-plan-scroll-hint {
+    display: block;
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-caption);
+  }
+  .placement-plan-settings {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .placement-plan-settings > .btn {
+    margin-top: 0;
+    justify-self: start;
+  }
+  .placement-plan-footer-note {
+    flex-basis: 100%;
+  }
+}

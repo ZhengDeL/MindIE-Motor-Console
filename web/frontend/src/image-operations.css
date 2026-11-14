@@ -1,0 +1,12 @@
+.image-operations { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.image-operations > .settings-actions { margin: 0; }
+.image-operation-status { margin: 16px 0 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface-subtle); }
+.image-operation-status > div { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.image-operation-status p { margin: 8px 0; overflow-wrap: anywhere; }
+.image-operation-status small { color: var(--text-secondary); line-height: 1.7; }
+.image-operations .settings-technical-detail { margin-top: 12px; }
+.image-task-history { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.image-task-history summary { cursor: pointer; color: var(--text-secondary); }
+.image-task-history-actions { display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+.image-task-history td:first-child { max-width: 520px; overflow-wrap: anywhere; }
+.image-task-history td:last-child { min-width: 100px; }

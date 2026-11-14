@@ -1,0 +1,1571 @@
+{
+  "schema_version": 1,
+  "motor_commit": "37d615f232a36b8dba8630ffc3a01a20d289c65e",
+  "guides": {
+    "PD分离": {
+      "purpose": "将输入计算交给 Prefill、逐 token 输出交给 Decode；平台分发部署任务，推理请求走 Coordinator 与引擎，KV 数据由原生 Connector 传输。",
+      "config_path": "motor_deploy_config.p_instances_num / d_instances_num",
+      "prerequisites": [
+        "已有与模型、Ascend 卡型和 vLLM / SGLang 版本匹配的 P/D 基线；各节点权重一致且通信网络可达。",
+        "P 与 D 均有可用设备与足够 HBM；不能仅按卡数推断模型能装下。HCCS / RoCE 参数沿用该模型已验证模板。",
+        "固定版本的 A3 Docker 启动器会先生成 Rank Table，逐卡调用 hccn_tool 查询设备 IP；部署分配的每个设备都须能用 hccn_tool -i 设备号 -ip -g 读取已规划的 IP 与掩码。宿主通信网卡 IP 与 NPU 设备 IP 是两类配置；缺少后者时，该启动入口会在加载引擎前退出。",
+        "这里描述的是当前 Motor 启动入口的前提，并不表示所有 HCCS 场景在底层都必须配置设备 IP。不要填充伪 IP 或复制其他节点地址；由网络管理员确认设备地址与物理拓扑，不要修改原生脚本绕过检查。"
+      ],
+      "notes": [
+        "vLLM 的 model / kv_transfer_config 与 SGLang 的 model-path / disaggregation 参数不同，切勿把一套引擎片段直接贴到另一套。"
+      ],
+      "examples": [
+        {
+          "title": "1P1D 拓扑增量",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_deploy_config\": {\n    \"p_instances_num\": 1,\n    \"d_instances_num\": 1,\n    \"single_p_instance_pod_num\": 1,\n    \"single_d_instance_pod_num\": 1\n  }\n}",
+          "notes": [
+            "这是实例数片段，不包含模型、镜像或每 Pod NPU 数。已有 3P1D 模板可将 p_instances_num 设为 3，并在布局分配 3 个 P 与 1 个 D。",
+            "不要与 hybrid_instances_num / motor_engine_union_config 混用；先从独立 P/D 模板复制，勿在运行服务上直接切换拓扑。"
+          ]
+        },
+        {
+          "title": "发送一条推理请求",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "INFER_URL=\"http://192.0.2.10:1025\"\nMODEL_NAME=\"YOUR_SERVED_MODEL_NAME\"\ncurl --fail --show-error \"$INFER_URL/v1/chat/completions\" \\\n  -H \"Content-Type: application/json\" \\\n  -d \"{\\\"model\\\":\\\"$MODEL_NAME\\\",\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"请回答：1+1等于几？\\\"}],\\\"max_tokens\\\":256,\\\"temperature\\\":0}\"",
+          "notes": [
+            "192.0.2.10 为文档示例地址，改为服务实际入口；MODEL_NAME 必须与 served_model_name 一致。启用 TLS / API Key 时使用受信证书并补认证头。",
+            "256 Token 仅是示例输出预算；含思考过程的模型可能在给出正文前耗尽预算。调试时按模型需求提高上限，并检查 finish_reason 与思考用量；length 表示截断，不能把空正文当作完整回答。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "查看角色和日志",
+          "expected": "平台布局中 P/D 数量正确，原生 Controller 已注册两类实例；Coordinator 日志能关联到 P、D 选点。"
+        },
+        {
+          "action": "执行普通与 stream=true 请求",
+          "expected": "返回有效模型文本；SSE 逐块输出并正常结束，无 KV 传输错误。容器 Running 不能替代本步。"
+        }
+      ],
+      "rollback": [
+        "新增验证服务可在推理服务详情先停止，再确认资源释放后删除；不要清理其他服务的设备或容器。",
+        "已有服务恢复导出的完整模板和原布局，经预检后按维护窗口重新部署；跨拓扑变更可能中断请求。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/pd_disaggregation.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "model_configs/vllm/user_config.json",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "model_configs/sglang/user_config.json",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/lib/docker_commands.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/startup/common.sh",
+          "reason": "418–432 行：A3 启动入口在引擎加载前生成通信 Rank Table"
+        },
+        {
+          "path": "examples/deployer/startup/hccl_tools.py",
+          "reason": "153–158、193–198 行：逐设备查询 IP，查询失败导致启动中止"
+        }
+      ]
+    },
+    "EPD分离": {
+      "purpose": "把多模态视觉编码单独交给 Encode，编码结果传给 Prefill，再交由 Decode 生成；纯文本请求不需要视觉编码阶段。",
+      "config_path": "motor_deploy_config.e_instances_num / motor_engine_encode_config.engine_config.ec-transfer-config",
+      "prerequisites": [
+        "使用 vLLM 多模态模型和支持 EPD 的配套镜像；本平台当前使用 Kubernetes，deploy_mode 为 infer_service_set 或 multi_deployment。",
+        "E/P 的 ECExampleConnector 共享目录必须实际可读写且指向同一存储；已有 P/D KV 传输配置保持有效。"
+      ],
+      "notes": [
+        "固定版本功能表声明 Docker 支持，但当前 Docker 启动入口不生成 Encode 角色；平台明确限制为 Kubernetes，不能在 Docker 假装启用。",
+        "EPD 不与 Union 混部拓扑组合。"
+      ],
+      "examples": [
+        {
+          "title": "在已有 P/D 基线上增加 1 个 E",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_deploy_config\": {\n    \"e_instances_num\": 1,\n    \"single_e_instance_pod_num\": 1,\n    \"e_pod_npu_num\": 2\n  },\n  \"motor_engine_encode_config\": {\n    \"engine_type\": \"vllm\",\n    \"engine_config\": {\n      \"model\": \"/mnt/weight/MULTIMODAL_MODEL\",\n      \"served_model_name\": \"YOUR_SERVED_MODEL_NAME\",\n      \"ec-transfer-config\": {\n        \"ec_connector\": \"ECExampleConnector\",\n        \"ec_role\": \"ec_producer\",\n        \"ec_connector_extra_config\": {\n          \"shared_storage_path\": \"/mnt/share/ec-cache\"\n        }\n      }\n    }\n  },\n  \"motor_engine_prefill_config\": {\n    \"engine_config\": {\n      \"ec-transfer-config\": {\n        \"ec_connector\": \"ECExampleConnector\",\n        \"ec_role\": \"ec_consumer\",\n        \"ec_connector_extra_config\": {\n          \"shared_storage_path\": \"/mnt/share/ec-cache\"\n        }\n      }\n    }\n  }\n}",
+          "notes": [
+            "用实际多模态模型替换 MULTIMODAL_MODEL / YOUR_SERVED_MODEL_NAME；按权重、TP 与设备资源调整 E 的卡数。",
+            "保留 P/D 的原 kv_transfer_config、资源与部署参数；Decode 不填 ec-transfer-config。"
+          ]
+        },
+        {
+          "title": "包含图片的客户端请求",
+          "format": "json",
+          "target": "请求体 JSON",
+          "code": "{\n  \"model\": \"YOUR_SERVED_MODEL_NAME\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"描述图片中的内容\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"http://192.0.2.20/sample.jpg\"\n          }\n        }\n      ]\n    }\n  ],\n  \"max_tokens\": 64\n}",
+          "notes": [
+            "图片地址必须能被服务访问，或使用该引擎支持的 data URL；示例地址不提供真实图片。请求发到实际 /v1/chat/completions 入口。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "创建服务时选择 Kubernetes，并选择已接通集群的 Agent；在 user_config 中合并 E/P 片段并补齐实际模型与存储。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "检查 E/P/D 注册",
+          "expected": "三类实例均就绪；缺少任一类时不能把纯文本偶然成功认作 EPD 已部署。"
+        },
+        {
+          "action": "先发纯文本，再发图片请求",
+          "expected": "文本可正常生成；图片请求在 E 日志出现编码，P 消费编码缓存，D 输出与图片相关的回答，无 EC 读写错误。"
+        }
+      ],
+      "rollback": [
+        "停止验证服务后恢复原 P/D 模板，移除 E 数量、Encode 配置与 E/P 的 EC 增量，再预检部署。",
+        "共享编码缓存按本服务目录单独清理；不得删除其他服务共享存储。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/EPD_disaggregation.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "examples/deployer/lib/docker_commands.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/router/dispatch.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "动态分桶调度": {
+      "purpose": "按真实输入长度和端点负载，将 Decode 分成短请求桶与长请求桶，减少长短请求互相干扰；当前为 POC，收益必须用目标业务对比。",
+      "config_path": "motor_coordinator_config.scheduler_config.decode_scheduler_type",
+      "prerequisites": [
+        "vLLM 的 P/D 分离服务；至少 2 个可用 Decode endpoint 才能同时有长短桶。只改 Decode 策略，不能把 dynamic_bucket 配给 Prefill / Encode / Union。",
+        "Coordinator 可只读访问与引擎一致的 tokenizer / 模型目录；不要求 KV Conductor。已验证收益依赖模型，请勿假定 GLM 或 DeepSeek 一定提升。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "Decode 长短桶配置",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"scheduler_config\": {\n      \"prefill_scheduler_type\": \"load_balance\",\n      \"decode_scheduler_type\": \"dynamic_bucket\",\n      \"dynamic_bucket_short_median\": 16384,\n      \"dynamic_bucket_long_median\": 98304,\n      \"dynamic_bucket_border\": 32768,\n      \"dynamic_bucket_length_scale\": 1.0,\n      \"dynamic_bucket_load_scale\": 4.0,\n      \"dynamic_bucket_short_bucket_count\": 2,\n      \"dynamic_bucket_long_bucket_count\": 6\n    }\n  }\n}",
+          "notes": [
+            "2:6 是比例示例，不是要求 8 台机器；实际按可用 endpoint 数分桶。long_median 必须大于 border，长度与桶数须为整数。"
+          ]
+        },
+        {
+          "title": "检查选桶证据",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "docker logs \"$COORDINATOR_CONTAINER\" 2>&1 | grep -F \"Dynamic bucket selected\"",
+          "notes": [
+            "COORDINATOR_CONTAINER 由服务布局 / Docker 实际容器名确定；Kubernetes 对同一日志关键字使用 kubectl logs。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "分别发送边界两侧长度请求",
+          "expected": "Coordinator 出现 Dynamic bucket selected，含 req_length / target_bucket / selected / loads；不是单凭请求返回 200。"
+        },
+        {
+          "action": "用相同数据对比 load_balance",
+          "expected": "记录 TTFT、TPOT、吞吐和尾延迟；tokenizer 失败或无可用桶会回退，不能把回退结果当作分桶收益。"
+        }
+      ],
+      "rollback": [
+        "将 decode_scheduler_type 恢复为原值（常见 load_balance），保留其他原生字段；按原部署流程更新并复测基础请求。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/dynamic_bucket.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/config/config_utils.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/scheduler/policy/dynamic_bucket.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "KV Cache亲和性调度": {
+      "purpose": "在负载与缓存覆盖之间选取 Prefill / Union 落点，让相同前缀更可能复用已有 KV。HBM 亲和与 CPU/Disk 池化是两个层次，需要分别验收。",
+      "config_path": "motor_coordinator_config.scheduler_config.prefill_scheduler_type / kv_conductor_config",
+      "prerequisites": [
+        "镜像内 python -m motor.kv_conductor --help 可正常执行；引擎支持 KV 事件并向 conductor 暴露事件端口。",
+        "Coordinator 的 tokenizer、chat template 与引擎一致。事件 block_size 必须匹配模型主注意力组；128 只适用于该粒度的模型，压缩或混合 KV 模型需要单独核对。",
+        "Kubernetes 可由原生部署生成 conductor；Docker 当前没有独立 conductor 布局角色，需要先由管理员准备可达 conductor，再在配置中显式填写地址。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "vLLM P/D：开启 HBM 事件与 Prefill 亲和",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"scheduler_config\": {\n      \"prefill_scheduler_type\": \"kv_cache_affinity\"\n    }\n  },\n  \"motor_engine_prefill_config\": {\n    \"engine_config\": {\n      \"kv-events-config\": {\n        \"publisher\": \"zmq\",\n        \"enable_kv_cache_events\": true,\n        \"endpoint\": \"tcp://*:5557\",\n        \"topic\": \"kv-events\"\n      }\n    }\n  },\n  \"kv_conductor_config\": {\n    \"block_size\": 128,\n    \"http_server_port\": 13333\n  }\n}",
+          "notes": [
+            "PD 混部将 engine 事件段放到 motor_engine_union_config，不同时创建 Prefill 段。Decode 不走 KV 亲和策略。",
+            "SGLang 配套事件配置不同版本需核对；顶层 kv_conductor_config.engine_type 设为 sglang，模型字段仍使用该引擎基线。"
+          ]
+        },
+        {
+          "title": "Docker 外接 conductor 的补充配置",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"kv_conductor_config\": {\n    \"conductor_service\": \"192.0.2.10\",\n    \"http_server_port\": 13333,\n    \"block_size\": 128,\n    \"model_path\": \"/mnt/weight/YOUR_MODEL\"\n  }\n}",
+          "notes": [
+            "192.0.2.10 / YOUR_MODEL 均需替换；conductor 必须先启动并通过 health / workers 验证，不能只填写地址。"
+          ]
+        },
+        {
+          "title": "检查 conductor 与注册",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "CONDUCTOR_URL=\"http://192.0.2.10:13333\"\ncurl --fail --show-error \"$CONDUCTOR_URL/health\"\ncurl --fail --show-error \"$CONDUCTOR_URL/workers\"",
+          "notes": [
+            "地址替换为实际 conductor；端口访问应限定于受控网络，不能公开缓存元数据。"
+          ]
+        },
+        {
+          "title": "Docker 外接 Conductor：独立验证容器示例",
+          "format": "shell",
+          "target": "管理员在选定宿主终端执行；不是平台自动任务",
+          "code": "MOTOR_IMAGE=\"YOUR_REVIEWED_MOTOR_IMAGE\"\nCONDUCTOR_IP=\"192.0.2.10\"\ndocker run --detach --name qinghuan-kv-conductor-example \\\n  --network host --restart unless-stopped --cpus 1 --memory 1g --pids-limit 128 \\\n  --entrypoint python \"$MOTOR_IMAGE\" -m motor.kv_conductor \\\n  --host \"$CONDUCTOR_IP\" --port 13333",
+          "notes": [
+            "镜像先离线准备并确认 python -m motor.kv_conductor --help 可用；IP 必须为宿主真实管理网地址。该容器不挂 NPU、权重或 Docker socket。",
+            "1 CPU / 1 GiB 是隔离验证上限，实际容量需另行评估；13333 只允许本服务管理网访问。先 health / workers 验证再启用亲和，不由平台自动创建或接管。",
+            "恢复时先把服务切回原策略；确认无消费者后，管理员仅停止和删除 qinghuan-kv-conductor-example 这一命名容器，不做全局清理。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "注册和事件",
+          "expected": "/workers 包含目标 P/U DP；日志没有持续 block_size_mismatch、事件解析和订阅连接错误。"
+        },
+        {
+          "action": "重复发送前缀超过一个 block 的请求",
+          "expected": "conductor query response 出现匹配覆盖；关联 scheduled 日志检查 matched / hbm / cpu / disk 与实际 instance / endpoint。"
+        },
+        {
+          "action": "对比性能与恢复",
+          "expected": "命中验证通过后再比较 TTFT / 吞吐；独立测试 conductor 重启后的重新注册，cached_tokens 单值不是完整证据。"
+        }
+      ],
+      "rollback": [
+        "prefill_scheduler_type 恢复原策略后先确认基础推理正常；再按依赖关系停用仅本服务使用的 conductor。",
+        "恢复原引擎 KV 事件配置，不清理其他业务缓存或共享 conductor。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/kvcache_affinity.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/config/config_utils.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/scheduler/policy/kv_cache_affinity.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/lib/generator/kv_conductor.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "model_configs/sglang/models/deepseek_v4_flash_0731/A3/user_config.json",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "Agent Hint 会话亲和与调度": {
+      "purpose": "客户端通过 X-Agent-Hint 带外请求头提供会话标识，使同会话优先复用同一推理实例；这里的 Agent 指应用框架，不是平台节点管理 Agent。",
+      "config_path": "env.json.motor_coordinator_env.MOTOR_SESSION_AFFINITY",
+      "prerequisites": [
+        "当前功能表按 vLLM 提供入口；原生消费逻辑作用于 Coordinator，不改变模型提示词或引擎 KV 驱逐策略。",
+        "客户端能构造 base64url JSON 请求头；多 worker 使用共享亲和时，容器 /dev/shm 必须可写。env.json 修改须通过重新部署 / 重建 Coordinator 环境生效，单独重启旧容器不会载入新环境。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "开启有界共享会话亲和",
+          "format": "json",
+          "target": "env.json",
+          "code": "{\n  \"motor_coordinator_env\": {\n    \"MOTOR_SESSION_AFFINITY\": \"1\",\n    \"MOTOR_SESSION_AFFINITY_SHARED\": \"1\",\n    \"MOTOR_SESSION_AFFINITY_PLACEMENT\": \"balanced\"\n  }\n}",
+          "notes": [
+            "保持 env.json 其他角色环境变量不变；不默认启用 strict priority，也不填任何演示密钥。"
+          ]
+        },
+        {
+          "title": "构造请求头并请求模型",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "HINT=$(python3 -c 'import base64,json; print(base64.urlsafe_b64encode(json.dumps({\"session\":{\"session_id\":\"demo-session-1\",\"epoch\":1}}).encode()).decode().rstrip(\"=\"))')\nINFER_URL=\"http://192.0.2.10:1025\"\ncurl --fail --show-error \"$INFER_URL/v1/chat/completions\" \\\n  -H \"Content-Type: application/json\" -H \"X-Agent-Hint: $HINT\" \\\n  -d '{\"model\":\"YOUR_SERVED_MODEL_NAME\",\"messages\":[{\"role\":\"user\",\"content\":\"你好\"}],\"max_tokens\":32}'",
+          "notes": [
+            "替换 INFER_URL / 模型名，连续两次使用同一 session_id；认证和 TLS 配置沿用实际服务。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "此项修改的是 env.json，不是 user_config；确认预检计划将环境变量注入 Coordinator，再在维护窗口部署。"
+      ],
+      "validation": [
+        {
+          "action": "关联两次相同会话的 scheduled 日志",
+          "expected": "第二次出现 aff=hit，instance 相同；首次 balanced 放置可见 placement=balanced。"
+        },
+        {
+          "action": "区分路由亲和与缓存驻留",
+          "expected": "亲和 pin 不保证引擎 KV 永不被驱逐；不能把同实例命中等同于 KV 命中。"
+        }
+      ],
+      "rollback": [
+        "移除本次增加的 MOTOR_SESSION_AFFINITY 系列环境变量，恢复原 env.json 并按维护流程重新创建 Coordinator。",
+        "客户端停止发送 X-Agent-Hint；保留共享表证据，勿全局删除其他服务 /dev/shm 文件。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/agent_hint.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/coordinator/domain/agent_hint_wire.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/domain/agent_hint.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/scheduler/runtime/session_affinity.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "KV池化能力部署": {
+      "purpose": "把可复用 KV 保存到共享 DRAM / 存储池；与 P→D 的实时 KV 直传是不同层。先验收池中真实写入与读取，再叠加缓存亲和。",
+      "config_path": "kv_cache_store_config / motor_engine_*_config.engine_config.kv_transfer_config",
+      "prerequisites": [
+        "vLLM P/D 分离，镜像包含对应 Store Connector、MemCache / Mooncake 运行时；SGLang、Union 不套用本例。",
+        "预先预算宿主 DRAM / HBM，核对镜像内 LocalService 配置与挂载；A3 的 MemCache 使用 standalone，A2 / 950PR 实际强制 inprocess。",
+        "下面 MultiConnector 示例只面向 MooncakeConnectorV1 可用的标准 attention 模型；混合 / 压缩 attention 模型必须沿用其专用实时传输 Connector，不得照抄替换。"
+      ],
+      "notes": [
+        "Yuanrong 后端另依赖 ETCD 和 dscli Worker，本平台 Docker 适配器当前仅打包 MemCache / Mooncake，其他后端应使用已满足依赖的 Kubernetes 路径。"
+      ],
+      "examples": [
+        {
+          "title": "标准 attention 的 vLLM P/D + MemCache 增量",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"kv_cache_store_config\": {\n    \"backend\": \"memcache\",\n    \"local_service_mode\": \"standalone\"\n  },\n  \"motor_engine_prefill_config\": {\n    \"engine_config\": {\n      \"kv_transfer_config\": {\n        \"kv_connector\": \"MultiConnector\",\n        \"kv_role\": \"kv_producer\",\n        \"kv_connector_extra_config\": {\n          \"connectors\": [\n            {\n              \"kv_connector\": \"MooncakeConnectorV1\",\n              \"kv_role\": \"kv_producer\",\n              \"kv_port\": \"30001\"\n            },\n            {\n              \"kv_connector\": \"AscendStoreConnector\",\n              \"kv_role\": \"kv_producer\",\n              \"kv_connector_extra_config\": {\n                \"backend\": \"memcache\"\n              }\n            }\n          ]\n        }\n      }\n    }\n  },\n  \"motor_engine_decode_config\": {\n    \"engine_config\": {\n      \"kv_transfer_config\": {\n        \"kv_connector\": \"MultiConnector\",\n        \"kv_role\": \"kv_consumer\",\n        \"kv_connector_extra_config\": {\n          \"connectors\": [\n            {\n              \"kv_connector\": \"MooncakeConnectorV1\",\n              \"kv_role\": \"kv_consumer\",\n              \"kv_port\": \"30002\"\n            },\n            {\n              \"kv_connector\": \"AscendStoreConnector\",\n              \"kv_role\": \"kv_consumer\",\n              \"kv_connector_extra_config\": {\n                \"backend\": \"memcache\"\n              }\n            }\n          ]\n        }\n      }\n    }\n  }\n}",
+          "notes": [
+            "这是 A3 标准 attention 组合示例；合并时保留原 Connector 所需的硬件、并行和 model 参数。后端必须与两个 AscendStoreConnector 一致。",
+            "需要池化事件时额外要求 MemCache Hybrid ≥1.2.0，并核对 MultiConnector 事件转发补丁；基础池化成功不代表池化亲和已成功。"
+          ]
+        },
+        {
+          "title": "选用 Mooncake 后端时必须显式填写的全局参数",
+          "format": "json",
+          "target": "user_config.json（替代 MemCache 全局段）",
+          "code": "{\n  \"kv_cache_store_config\": {\n    \"backend\": \"mooncake\",\n    \"protocol\": \"ascend\",\n    \"store_mode\": \"standalone\",\n    \"global_segment_size\": \"1GB\",\n    \"local_buffer_size\": \"1GB\",\n    \"eviction_high_watermark_ratio\": 0.9,\n    \"eviction_ratio\": 0.1\n  }\n}",
+          "notes": [
+            "同时把两侧 AscendStoreConnector backend 改为 mooncake；1GB 仅是最小验证示例，按真实容量与负载预算。",
+            "必须另核对硬件要求、HCCL_INTRA_ROCE_ENABLE=1、ASCEND_LOCAL_COMM_RES={\"version\":\"1.3\"} 与当前驱动 / CANN / Mooncake 版本；不能只改 backend 即上线。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "Docker 布局需包含 kv_store 管理角色并核对地址；Kubernetes 检查生成的存储清单、挂载与权限。确认内存预算后再预检部署。"
+      ],
+      "validation": [
+        {
+          "action": "先检查 MetaService / master，再查 LocalService / store，再查 P/D",
+          "expected": "池服务 ready，节点已注册，没有传输或分配错误；Mooncake Pod Ready 不能证明 master ready。"
+        },
+        {
+          "action": "冷命名空间下写入，再重复读取超过 128 token 的长前缀",
+          "expected": "观察池端真实 put / get / hit 计数与引擎日志增长，并返回正确文本；仅 cached_tokens 增长不足以证明出入池。"
+        },
+        {
+          "action": "结合资源详情和宿主监控",
+          "expected": "DRAM / HBM 在预先设定的预算范围内；没有挤占既有业务导致 OOM 或错误。"
+        }
+      ],
+      "rollback": [
+        "先停止向本次验证服务送流量，恢复完整原模板和 Connector 配置，经预检重新部署基础 P/D 服务。",
+        "确认所有消费者已切离后，才停止本服务独占的 kv_store；共享池不可随服务一起删除。保留日志和缓存命名空间证据。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/kv_cache_store/README.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/startup/roles/kv_store_backends/mooncake/mooncake_config.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "docs/zh/user_guide/features/kv_cache_store/backend/memcache.md",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "docs/zh/user_guide/features/kv_cache_store/backend/mooncake.md",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "max_tokens自适应": {
+      "purpose": "在转发前按真实 tokenizer 输入长度缩小输出 token 上限，使输入与输出预算不超过上下文窗口；不会截断输入，也不会修复已超长的输入。",
+      "config_path": "motor_coordinator_config.context_budget_mode",
+      "prerequisites": [
+        "vLLM，Coordinator 能读取与引擎相同的 tokenizer / 模型目录；P/D 的 max_model_len 使用其中较小的有效值。",
+        "只调整正整数 max_tokens / max_completion_tokens；缺少 token IDs 时不凭估算裁剪。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "P/D 分离开启上下文预算",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"context_budget_mode\": \"on\"\n  }\n}",
+          "notes": [
+            "保留实际 P/D 的 model 与 max_model_len。不要为此盲目修改模型支持的上下文长度。"
+          ]
+        },
+        {
+          "title": "Union 场景显式提供上下文上限",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"context_budget_mode\": \"on\",\n    \"aigw\": {\n      \"p_max_seqlen\": 114688,\n      \"d_max_seqlen\": 114688\n    }\n  }\n}",
+          "notes": [
+            "114688 是示例值，两值必须改成当前 Union 引擎真实支持的上限；这里 aigw 是原生元数据配置，不代表安装独立网关。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "进入“推理服务 → 创建推理服务”，选定模板与匹配的运行环境；在“服务配置”的 user_config.json / env.json 中逐字段合并本页片段。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "输入长度小于上下文上限，但输入+请求输出大于上限",
+          "expected": "日志出现 Context budget clamped，包含 requested / effective / prompt_tokens / max_model_len；返回正常推理结果。"
+        },
+        {
+          "action": "输入+输出本来就在窗口内",
+          "expected": "原输出上限保持不变；输入自身已超长时仍由引擎报错，不应被伪装成可用请求。"
+        }
+      ],
+      "rollback": [
+        "context_budget_mode 恢复 off 或原值，经原生配置更新流程生效，再复测边界请求；保留客户端自己的长度校验。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/max_tokens_adaptation.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/config/config_utils.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "motor/coordinator/scheduler/policy/kv_cache_affinity.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "自动弹性扩缩容": {
+      "purpose": "由 Kubernetes Infer Operator 和外部指标自动调整推理实例数量；平台保存原生策略，实际扩缩容仍由集群执行。",
+      "config_path": "scaling_policy.prefill / decode / union",
+      "prerequisites": [
+        "仅 Kubernetes infer_service_set，Infer Operator ≥26.1.0 并支持角色 scalingPolicy；Docker / multi_deployment 不支持本流程。",
+        "External Metrics Adaptor 或 Prometheus + Adapter 已离线安装，指标名称和命名空间 / 服务标签与实际时序一致。",
+        "集群有额外 NPU 容量；预先完成指标标定。指标缺失不是零负载，未经标定的利用率不应用于上线。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "P/D 使用已校验的排队指标",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_deploy_config\": {\n    \"deploy_mode\": \"infer_service_set\"\n  },\n  \"scaling_policy\": {\n    \"prefill\": {\n      \"min_replicas\": 1,\n      \"max_replicas\": 4,\n      \"metric\": \"vllm:num_requests_waiting\",\n      \"target\": 5,\n      \"target_type\": \"AverageValue\"\n    },\n    \"decode\": {\n      \"min_replicas\": 1,\n      \"max_replicas\": 4,\n      \"metric\": \"motor:generation_tokens_per_second\",\n      \"target\": 10,\n      \"target_type\": \"AverageValue\"\n    }\n  }\n}",
+          "notes": [
+            "必须替换成当前 Adapter 实际暴露的指标名；它不一定与 /metrics 原始名相同。5 / 10 仅为验证阈值示例，不能直接作为生产容量结论。",
+            "Union 使用 scaling_policy.union 并显式写 metric；已归一化利用率指标应使用 Value，不能再次 AverageValue 分摊。"
+          ]
+        },
+        {
+          "title": "先验证指标，再看 HPA",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "NAMESPACE=\"YOUR_NAMESPACE\"\nkubectl get apiservice v1beta1.external.metrics.k8s.io\nkubectl -n \"$NAMESPACE\" get hpa\nkubectl -n \"$NAMESPACE\" describe hpa",
+          "notes": [
+            "Adapter 要求 selector 时，查询 External Metrics API 必须带同一服务与角色标签。HPA 由 Operator 管理，不直接 patch HPA。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "创建 Kubernetes 服务，保持原 namespace / 模型 / 挂载，在服务配置合并 scaling_policy；保留原 min/max 基线。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "预检生成清单并核对 scalingPolicy",
+          "expected": "角色包含预期 min/max、metric、target 和服务作用域标签；没有额外 cluster-admin 授权。"
+        },
+        {
+          "action": "以隔离负载超过阈值，再降低负载",
+          "expected": "HPA Conditions 可取到实际数值，副本在边界内增加；等待稳定窗口后缩回，新增实例可完成真实请求。"
+        }
+      ],
+      "rollback": [
+        "恢复备份的 scaling_policy 或移除本次新增策略，通过原生服务重新部署更新 InferServiceSet。",
+        "等待 Operator 回收仅本服务的 HPA，再将实例数恢复基线；不要全局停止共享指标 Adapter。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/auto_scaling.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "examples/deployer/lib/generator/infer_service.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/lib/constant.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "手动扩缩容": {
+      "purpose": "在保持模型、镜像和并行配置不变的前提下，增加或减少已有 Kubernetes 推理角色的实例数。",
+      "config_path": "motor_deploy_config.p_instances_num / d_instances_num / hybrid_instances_num",
+      "prerequisites": [
+        "当前已通过全量部署建立 motor-config ConfigMap；Kubernetes Agent 具有该服务命名空间的必要权限。",
+        "只改实例数，取值 1..16；不能通过本操作切换 deploy_mode、引擎、权重、挂载或端口。与自动扩缩容并用前先明确唯一副本数控制者。"
+      ],
+      "notes": [
+        "Docker 当前通过固定布局部署，不提供与 Kubernetes 相同的原生在线扩缩容；不要在 Docker 服务上伪造成功。"
+      ],
+      "examples": [
+        {
+          "title": "P 从 1 扩为 2，D 保持 1",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_deploy_config\": {\n    \"p_instances_num\": 2,\n    \"d_instances_num\": 1\n  }\n}",
+          "notes": [
+            "Union 模板仅改 hybrid_instances_num，不能同时加入 P/D 字段。"
+          ]
+        },
+        {
+          "title": "原生维护命令（平台外备选）",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "cd examples/deployer\npython3 deploy.py --config_dir /absolute/path/to/service-config --update_instance_num --nostep",
+          "notes": [
+            "config_dir 必须包含与当前完整基线相同的 user_config.json / env.json，仅实例数不同；不要把本页片段当作完整文件。平台内操作优先使用服务详情的扩缩容入口。"
+          ]
+        }
+      ],
+      "steps": [
+        "打开已部署的 Kubernetes 服务详情，先导出原配置并记录各角色计数。",
+        "使用“扩缩容”入口只调整 P/D 或 Union 的计数，查看计划后确认；若同时启用了 HPA，先按维护流程处理策略，避免控制冲突。",
+        "从运行日志与实际模型请求完成验收，核对新增 / 删除的只属于本服务。"
+      ],
+      "validation": [
+        {
+          "action": "核对任务与 ConfigMap",
+          "expected": "任务成功，原生日志 instance num update end.；motor-config 中实例数与目标一致。"
+        },
+        {
+          "action": "检查角色与实际请求",
+          "expected": "新增高 index 的角色 ready 且可处理真实推理；缩容后高 index 回收，既有低 index 维持运行。"
+        }
+      ],
+      "rollback": [
+        "在同一服务扩缩容入口将计数改回备份值，再执行预检与确认；不通过删除任意 Pod 模拟缩容。",
+        "扩容冷缓存性能下降应先观察预热，不能把短时吞吐当作稳定容量。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/manual_scaling.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "examples/deployer/lib/config_validator.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/deploy.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "容器快照": {
+      "purpose": "保存可恢复的 Host 进程状态与 Device 权重状态，在后续创建或重调度时减少初始化等待；首次仍要冷启动并制作有效基准快照。",
+      "config_path": "motor_container_snapshot_config",
+      "prerequisites": [
+        "使用 containerd 的 Kubernetes + MindCluster 默认 CRD 模式，vLLM 支持 Device suspend / resume；Docker 平台入口不提供此自动管理能力。",
+        "openEuler ≥24.03 或 HCE 3.0，宿主已离线安装对应定制 CRIU 3.19 与 NPU 插件，MindCluster / CRD 具有快照能力。",
+        "Host 快照目录不能挂进容器；Device 权重目录必须挂载且目标节点可读。模型 / DP / TP 相同、芯片代际兼容，存储空间充足。"
+      ],
+      "notes": [],
+      "examples": [
+        {
+          "title": "默认 Kubernetes 快照配置",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_container_snapshot_config\": {\n    \"enable_snapshot\": true,\n    \"host_snapshot_image_path\": \"/shared/container-snapshots\",\n    \"mnt_mount_path\": \"/mnt/runtime-data\",\n    \"device_snapshot_weight_path\": \"/shared/snapshot-weights\"\n  }\n}",
+          "notes": [
+            "三条目录按实际共享存储与容器挂载替换，必须彼此职责清楚。不要将该段写到 motor_engine_*_config.motor_nodemanger_config.snapshot_config。"
+          ]
+        },
+        {
+          "title": "检查环境准备与服务事件",
+          "format": "shell",
+          "target": "管理员终端 / 已部署服务",
+          "code": "criu --version\nkubectl -n \"$NAMESPACE\" get pods -o wide\nkubectl -n \"$NAMESPACE\" get events --sort-by=.lastTimestamp",
+          "notes": [
+            "criu 应为配套 3.19；后两条由已配置最小权限 kubeconfig 的管理员执行，NAMESPACE 为实际服务命名空间。"
+          ]
+        }
+      ],
+      "steps": [
+        "在“模板管理”复制一份已验证可运行的模型模板，导出原始 JSON 留作恢复基线；保留镜像、模型路径、并行度和网络配置。",
+        "确认上述宿主 / MindCluster 依赖已由集群管理员部署，再选择 Kubernetes infer_service_set 并合并顶层快照段。",
+        "在“资源布局”核对角色、节点、NPU 与端口；到“检查与部署”执行预检，核对计划后再人工确认部署。指南只读，不会代你启用或执行。"
+      ],
+      "validation": [
+        {
+          "action": "首次冷启动制作基准",
+          "expected": "原生组件完成 Device suspend 与 Host checkpoint，元数据有效；基础推理完成后才认为快照可用。"
+        },
+        {
+          "action": "隔离服务中验证恢复",
+          "expected": "后续实例命中对应 namespace 的快照缓存，恢复后的 Controller 地址、任务标识、Pod IP 正确，真实推理与冷启动结果一致。"
+        }
+      ],
+      "rollback": [
+        "设置 enable_snapshot 为 false 并恢复完整原模板，以冷启动重新部署；热更新不适用于启用快照的 NodeManager。",
+        "模型或 DP/TP 变化后，先停用并隔离当前服务对应 namespace 的旧快照，再制作新快照；不要删共享目录根或其他服务缓存。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/container_snapshot.md",
+          "reason": "固定版本的功能说明与操作契约"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/lib/container_snapshot.py",
+          "reason": "配置解析、生成或实际消费实现"
+        },
+        {
+          "path": "examples/deployer/lib/generator/infer_service.py",
+          "reason": "配置解析、生成或实际消费实现"
+        }
+      ]
+    },
+    "D2D 权重加载": {
+      "purpose": "使同角色新实例从已有 ACTIVE 实例加载模型权重，缩短后续实例启动时间。",
+      "config_path": "motor_engine_{prefill,decode,union}_config.engine_config.model_loader_extra_config",
+      "prerequisites": [
+        "使用支持 netloader 的配套 vLLM Ascend 镜像；此能力仅 vLLM，A2/A3 的 PD 分离或混部场景。",
+        "至少先有一个可用 seed，且首实例可访问完整本地模型权重。后续 peer 必须是同角色 ACTIVE 实例。",
+        "核对 listen_port 加各 device_rank/DP 偏移后的端口可达且不冲突；使用 MTP 时还需考虑 draft 端口额外偏移 10000。"
+      ],
+      "notes": [
+        "不需要手工填写 peer IP。source=auto 与 listen_port 同时满足时，NodeManager 自动切换 load_format=netloader。",
+        "首实例冷加载是正常行为；仅看到 seed server 启动并不证明后续实例走了 D2D。"
+      ],
+      "examples": [
+        {
+          "title": "Prefill 与 Decode 分别启用 D2D",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_engine_prefill_config\": {\n    \"engine_type\": \"vllm\",\n    \"engine_config\": {\n      \"model_loader_extra_config\": {\n        \"source\": \"auto\",\n        \"listen_port\": 10000\n      }\n    }\n  },\n  \"motor_engine_decode_config\": {\n    \"engine_type\": \"vllm\",\n    \"engine_config\": {\n      \"model_loader_extra_config\": {\n        \"source\": \"auto\",\n        \"listen_port\": 20000\n      }\n    }\n  }\n}",
+          "notes": [
+            "10000/20000 是端口示例，需按实际多角色同宿主和 MTP 范围重新分配；混部使用 motor_engine_union_config。"
+          ]
+        },
+        {
+          "title": "只读检查运行证据",
+          "format": "shell",
+          "target": "NodeManager/引擎所在容器；先设置CONTAINER_NAME为实际容器",
+          "code": "docker logs --tail 300 \"$CONTAINER_NAME\" 2>&1 | grep -E \"Netloader|netloader|Elastic server\"",
+          "notes": [
+            "只读取实际目标日志，不触发故障；日志出现不替代上文的真实请求验收。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "先部署并等待 seed 实例进入 ACTIVE，再扩容或新建同角色实例；不要同时首次启动所有实例就假定有可用 peer。",
+        "在运行日志中分别查看 Controller 的 peer 发现与新实例引擎 netloader 传输日志。"
+      ],
+      "validation": [
+        {
+          "action": "检查 Controller 与 seed 日志",
+          "expected": "Controller 识别 D2D enabled；seed 出现 Elastic server started。"
+        },
+        {
+          "action": "观察第二个同角色实例并发送真实推理",
+          "expected": "新实例出现 netloader_p2p/HCCL recv/Netloader P2P load 传输记录，进入 ACTIVE，真实请求成功；不能只凭启动耗时推断。"
+        }
+      ],
+      "rollback": [
+        "恢复原始 model_loader_extra_config 和显式 load_format 设置；保留其他自定义加载参数。",
+        "确保每个回退实例均可访问本地完整权重后，按原布局重新部署并验收冷加载。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/startup_acceleration.md",
+          "reason": "L55: 开关条件与最小示例"
+        },
+        {
+          "path": "docs/zh/user_guide/features/startup_acceleration.md",
+          "reason": "L123: seed 与真实传输验证"
+        },
+        {
+          "path": "motor/controller/core/instance_assembler.py",
+          "reason": "L1099: Controller 同角色 D2D 检测"
+        },
+        {
+          "path": "motor/node_manager/core/services/native_engine/backends/vllm/config.py",
+          "reason": "L354: 真实消费并设置 netloader"
+        }
+      ]
+    },
+    "请求重调度": {
+      "purpose": "对可重试的引擎/传输故障重新选择实例；满足约束时可按已输出 token 续推流式请求。",
+      "config_path": "motor_coordinator_config.exception_config.reschedule_config.enable",
+      "prerequisites": [
+        "故障后仍有满足调度条件的健康实例。",
+        "仅 vLLM；输出后续推依赖 prompt_token_ids、choices[].token_ids 和 Token-ID prompt 的 /v1/completions 接口。",
+        "输出后续推限 n=1 的普通文本流；不支持 tools、非文本多模态、Chat logprobs 或非文本 response_format 等无法安全转换的语义。",
+        "按并发、上下文与请求体预留 Coordinator 内存；token 与请求体缓存不是零开销。"
+      ],
+      "notes": [
+        "固定版本官方能力表仅声明 Kubernetes 支持本项；Docker 入口不应因存在同名配置字段就标为支持。",
+        "reschedule_enabled 是 Python 属性，不是本版本推荐 JSON 开关；应使用嵌套 reschedule_config.enable。",
+        "transport_max_retry 包含首次尝试；设为 5 即最多再重试 4 次。关闭 token 续推不等于关闭所有输出前传输重试。"
+      ],
+      "examples": [
+        {
+          "title": "启用流式输出后的 Token 续推",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"exception_config\": {\n      \"reschedule_config\": {\n        \"enable\": true\n      },\n      \"transport_max_retry\": 5,\n      \"retry_delay\": 0.2\n    }\n  }\n}",
+          "notes": []
+        },
+        {
+          "title": "只读检查运行证据",
+          "format": "shell",
+          "target": "Kubernetes Coordinator；先设置实际NAMESPACE/COORDINATOR_POD",
+          "code": "kubectl -n \"$NAMESPACE\" logs \"$COORDINATOR_POD\" --tail=300",
+          "notes": [
+            "只读取实际目标日志，不触发故障；日志出现不替代上文的真实请求验收。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "选择 Kubernetes 运行环境并保持多健康实例；使变更在 Coordinator 中生效。",
+        "先正常验证流式 Token-ID 契约，再在隔离验收环境进行单实例故障测试；不要在共享生产实例直接注入故障。"
+      ],
+      "validation": [
+        {
+          "action": "用支持的普通文本流请求进行故障续推验收",
+          "expected": "发生可重试故障后改用健康实例，客户端已收内容不重复、剩余 max_tokens 正确扣减。"
+        },
+        {
+          "action": "核对不满足续推约束的请求",
+          "expected": "Token-ID 缺失或工具/多模态等不安全场景结束并返回错误；不能为了“成功”强制重放。"
+        }
+      ],
+      "rollback": [
+        "将 reschedule_config.enable 恢复 false，保留原 max_retry/transport_max_retry 与业务超时。",
+        "按当前部署方式更新 Coordinator 并验证正常流式与非流式请求。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/rescheduler.md",
+          "reason": "L23: 续推兼容性限制"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/rescheduler.md",
+          "reason": "L45: 准确 JSON 与重试次数语义"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L515: RescheduleConfig 与 ExceptionConfig"
+        },
+        {
+          "path": "motor/coordinator/router/rescheduler/rescheduler.py",
+          "reason": "L59: 实际 Token 缓存与重放实现"
+        },
+        {
+          "path": "docs/zh/user_guide/features/supported_features.md",
+          "reason": "L134: 官方运行时声明"
+        }
+      ]
+    },
+    "实例重调度": {
+      "purpose": "由 MindCluster/Kubernetes 回收故障实例并在健康资源重新创建完整实例。",
+      "config_path": "Kubernetes 推理 Pod 模板 metadata.labels: fault-scheduling / fault-retry-times",
+      "prerequisites": [
+        "仅 Kubernetes；已安装匹配版本的 Volcano、Ascend Device Plugin、ClusterD、MindCluster Infer Operator。",
+        "有满足整实例 NPU 数量、硬件类型、标签、亲和及网络拓扑的健康空闲资源。",
+        "多 Pod 实例按实例级方式恢复；权重、配置与需保留的数据使用可用持久存储。"
+      ],
+      "notes": [
+        "固定版本官方能力表仅声明 Kubernetes 支持本项；Docker 入口不应因存在同名配置字段就标为支持。",
+        "本项没有通用 instance_rescheduling.enabled JSON 开关。Motor 模板默认标签 grace/10000；不能凭修改一个字段就替代集群调度组件。",
+        "container_restart_managed 默认 null：K8s 环境自动启用外部容器恢复；Docker-only 默认不启用。",
+        "仅 Running 不代表实例已 ACTIVE，重建单个多 Pod 成员也不等于完成整实例重调度。"
+      ],
+      "examples": [
+        {
+          "title": "核对推理 Pod 模板的默认标签",
+          "format": "yaml",
+          "target": "Deployment/StatefulSet 的 spec.template；InferServiceSet 须定位到 spec.template.roles[].spec.template。以下片段从单角色 spec 开始，不可单独 kubectl apply",
+          "code": "spec:\n  template:\n    metadata:\n      labels:\n        fault-scheduling: grace\n        fault-retry-times: \"10000\"",
+          "notes": [
+            "与 InferServiceSet 的外层 role spec 区分；保留原 Pod 模板其他字段。启用 DP 故障恢复时原生生成器可能改为 external-force-pod-failed 并带 pod-rescheduling: on，不要覆盖其生成值。"
+          ]
+        },
+        {
+          "title": "查看部署状态与事件",
+          "format": "shell",
+          "target": "已授权 Kubernetes 管理环境",
+          "code": "kubectl -n \"$NAMESPACE\" get pods -o wide\nkubectl -n \"$NAMESPACE\" describe pod \"$POD_NAME\"",
+          "notes": [
+            "NAMESPACE/POD_NAME 由操作者设置为本服务实际对象。"
+          ]
+        }
+      ],
+      "steps": [
+        "选择 Kubernetes 服务；在节点/资源页先核对集群资源，再检查原生生成的工作负载标签与 Operator 状态。",
+        "如需修改原生 YAML，由管理员按当前 MindCluster 工作负载规范维护，不伪造为平台 JSON 开关。",
+        "只在隔离测试按实例级故障流程验证，并同步观察 Controller 与 Kubernetes 事件。"
+      ],
+      "validation": [
+        {
+          "action": "观察故障实例的完整生命周期",
+          "expected": "旧实例被隔离，创建新 UID 的完整实例，所有 NodeManager 注册并进入 ACTIVE。"
+        },
+        {
+          "action": "向服务发送真实请求",
+          "expected": "新实例承接推理；网络与 KV 传输正常，不能仅接受 Pod Running。"
+        }
+      ],
+      "rollback": [
+        "恢复变更前的原生模板与标签，按已批准的工作负载更新方式重新部署。",
+        "不要删除整个命名空间、共享 Operator 或持久卷；关闭故障标签也不等于关闭 K8s 自身的重试。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/instance_rescheduling.md",
+          "reason": "L25: 依赖、资源和多 Pod 边界"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/instance_rescheduling.md",
+          "reason": "L48: 准确标签与默认行为"
+        },
+        {
+          "path": "examples/deployer/yaml_template/infer_service_template.yaml",
+          "reason": "L474: Prefill 默认推理模板标签"
+        },
+        {
+          "path": "examples/deployer/lib/generator/engine.py",
+          "reason": "L228: DP 恢复标签由生成器维护"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "L375: 外部容器恢复的 K8s 自动识别"
+        }
+      ]
+    },
+    "故障实例重启": {
+      "purpose": "由原生故障策略尝试同实例全部引擎原地重启；失败时按外部运行环境进行容器级兜底。",
+      "config_path": "motor_controller_config.fault_tolerance_config / motor_engine_{prefill,decode,union}_config.motor_nodemanger_config.fault_tolerance_config",
+      "prerequisites": [
+        "Controller 与各 NodeManager 管理面可达，实例成员和故障状态正确上报。",
+        "模型权重可重新访问，加载时间与 relaunch 完成预算匹配。",
+        "容器级恢复依赖外部监督；Docker-only 无 Kubernetes 调度器，不能承诺自动创建替代节点实例。"
+      ],
+      "notes": [
+        "两侧 enable_engine_relaunch 默认 true；本功能默认生效，不需要臆造 restart.enabled。历史键拼写是 motor_nodemanger_config，请勿自行更正为 motor_node_manager_config。",
+        "在完整服务 user_config 中，NodeManager 配置放在对应 motor_engine_*_config 内；顶层同名段仅见于生成的配置概览等场景，不能据此假定完整服务部署会读取。",
+        "此处是 Motor 原生自愈，与平台“重启服务”按钮不同；正常推理流量不经过平台 Agent。",
+        "日志 relaunch finished/recovering(no ABNORMAL) 可以在端点 INITIAL、模型仍加载时出现，不是恢复成功的终态证据。"
+      ],
+      "examples": [
+        {
+          "title": "显式保留默认的原地重启能力",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_controller_config\": {\n    \"fault_tolerance_config\": {\n      \"enable_fault_tolerance\": true,\n      \"enable_engine_relaunch\": true,\n      \"engine_relaunch_complete_timeout_sec\": 600\n    }\n  },\n  \"motor_engine_prefill_config\": {\n    \"motor_nodemanger_config\": {\n      \"fault_tolerance_config\": {\n        \"enable_engine_relaunch\": true,\n        \"engine_restart_wait_timeout_sec\": 180.0,\n        \"engine_restart_freeze_sec\": 720.0\n      }\n    }\n  },\n  \"motor_engine_decode_config\": {\n    \"motor_nodemanger_config\": {\n      \"fault_tolerance_config\": {\n        \"enable_engine_relaunch\": true,\n        \"engine_restart_wait_timeout_sec\": 180.0,\n        \"engine_restart_freeze_sec\": 720.0\n      }\n    }\n  }\n}",
+          "notes": [
+            "示例预算沿用默认值。NodeManager freeze 要覆盖 Controller 完成预算；按实际模型加载时间整体评估，不独立任意缩短。"
+          ]
+        },
+        {
+          "title": "只读检查运行证据",
+          "format": "shell",
+          "target": "NodeManager所在容器；先设置CONTAINER_NAME为实际容器",
+          "code": "docker logs --tail 300 \"$CONTAINER_NAME\" 2>&1 | grep -E \"relaunch|restart|ABNORMAL|NORMAL\"",
+          "notes": [
+            "只读取实际目标日志，不触发故障；日志出现不替代上文的真实请求验收。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "优先保留默认值；仅在有故障恢复计划时调整预算，检查 Controller 与 NodeManager 两侧配置一致。",
+        "使用运行日志观察重启范围和各 rank 状态；故障注入只在隔离验收计划内执行。"
+      ],
+      "validation": [
+        {
+          "action": "观察恢复执行范围",
+          "expected": "故障策略对同一实例全部 NodeManager 协调 relaunch，不能仅重启部分 rank。"
+        },
+        {
+          "action": "核对最终实例与业务",
+          "expected": "端点恢复 NORMAL、实例 ACTIVE，真实普通/流式请求正常；不能只凭 recovering 日志或容器 Running。"
+        }
+      ],
+      "rollback": [
+        "恢复 Controller 与 NodeManager 两侧原值并按原布局重新部署；不要只改一侧开关。",
+        "若关闭原地重启，先确认替代的外部容器恢复机制和备用资源；不要误以为关闭后不再需要故障恢复。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/supported_features.md",
+          "reason": "L152: 默认生效及官方 Docker/K8s 支持声明"
+        },
+        {
+          "path": "motor/config/controller.py",
+          "reason": "L158: Controller 开关与预算默认值"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "L55: 准确配置段历史拼写"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "L613: 完整服务按Env.role从角色内部读取NM配置，非顶层"
+        },
+        {
+          "path": "motor/config/node_manager.py",
+          "reason": "L407: NodeManager 双窗口默认值"
+        },
+        {
+          "path": "motor/controller/fault_tolerance/strategy/engine_relaunch.py",
+          "reason": "L10: 原地引擎恢复与容器兜底"
+        },
+        {
+          "path": "motor/controller/fault_tolerance/strategy/engine_relaunch.py",
+          "reason": "L174: relaxed 恢复日志不等于 ACTIVE"
+        }
+      ]
+    },
+    "ScaleP2D故障恢复": {
+      "purpose": "Decode 因满足条件的硬件故障不可用时，释放部分 Prefill 实例为 Decode 恢复腾出节点。",
+      "config_path": "motor_controller_config.fault_tolerance_config + InferServiceSet 调度策略与 role 标签",
+      "prerequisites": [
+        "仅 Kubernetes InferServiceSet CRD、PD 分离；MindCluster >=26.1.0，具备优先级调度和实例强制删除能力。",
+        "至少两个 Prefill 实例且须保留一个；1P1D 没有可释放 P 容量。P/D 节点类型必须能相互满足调度。",
+        "仅 Decode 达 L4/L5/L6 故障且完成业务隔离等条件时触发；不是对任何慢请求或 P 故障自动切换。"
+      ],
+      "notes": [
+        "固定版本官方能力表仅声明 Kubernetes 支持本项；Docker 入口不应因存在同名配置字段就标为支持。",
+        "不适用于 Ascend950 PR/DT 异构：释放 PR 节点不能恢复 DT Decode。",
+        "原文后部出现 1P1D 验证示例，与同页至少保留一个 P 的前提矛盾；指南遵循真实容量公式，不以 1P1D 作成功用例。",
+        "这是可能主动停止 P 实例的故障策略；不是创建 Docker 容器的通用资源调度按钮。"
+      ],
+      "examples": [
+        {
+          "title": "Controller 侧开关",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_controller_config\": {\n    \"fault_tolerance_config\": {\n      \"enable_fault_tolerance\": true,\n      \"enable_scale_p2d\": true,\n      \"scale_p2d_d_instance_reinit_wait_timeout\": 60\n    }\n  }\n}",
+          "notes": []
+        },
+        {
+          "title": "InferServiceSet 侧配套片段",
+          "format": "yaml",
+          "target": "原生生成的 InferServiceSet；按对应 role 合并，不能用该片段覆盖完整 roles 列表",
+          "code": "spec:\n  template:\n    schedulingStrategy:\n      type: Priority\n    roles:\n      - name: prefill\n        priority: 2\n        spec:\n          template:\n            metadata:\n              labels:\n                fault-scheduling: external-force\n                fault-retry-times: \"10000\"\n      - name: decode\n        priority: 1\n        spec:\n          template:\n            metadata:\n              labels:\n                fault-scheduling: external-force\n                fault-retry-times: \"10000\"",
+          "notes": [
+            "保留原 replicas/workload/spec/template/spec、容器、资源、亲和、卷等字段。priority 数字越小调度优先级越高；示例 Decode=1、Prefill=2。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "选择 Kubernetes 并检查至少两 P 的布局；JSON 开关与 CRD Priority/role 标签两部分同时准备。",
+        "先检查生成清单及集群调度策略。只在隔离环境按真实 L4+ Decode 故障计划验收，不通过手工停止任意 P 来假装功能生效。"
+      ],
+      "validation": [
+        {
+          "action": "观察故障等级、自恢复等待和 P 释放",
+          "expected": "D 已隔离，等待窗口内未自恢复；实际释放满足容量要求的 P，同时至少保留一个 P。"
+        },
+        {
+          "action": "核对 D 与服务恢复",
+          "expected": "Operator 将 D 恢复到可用健康资源，实例 ACTIVE 且推理成功。只有 P 停止或 Pod 创建不能判成功。"
+        }
+      ],
+      "rollback": [
+        "将 enable_scale_p2d 恢复原值（禁用仅此项可设 false），保持其他故障恢复策略。",
+        "按变更前清单恢复调度优先级/标签与原 P/D 数量；确认容量后再扩回 P，不删除集群公共资源。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/scale_p2d.md",
+          "reason": "L9: 容量公式与恢复流程"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/scale_p2d.md",
+          "reason": "L27: CRD/版本/至少两 P 前提"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/scale_p2d.md",
+          "reason": "L63: JSON 与 YAML 双侧配置"
+        },
+        {
+          "path": "motor/config/controller.py",
+          "reason": "L139: 开关及等待预算"
+        },
+        {
+          "path": "motor/controller/fault_tolerance/strategy/strategy.py",
+          "reason": "L59: 只对 Decode 选择该策略"
+        },
+        {
+          "path": "motor/controller/fault_tolerance/strategy/scale_p2d.py",
+          "reason": "L71: 运行期策略实际实现"
+        }
+      ]
+    },
+    "主备倒换特性": {
+      "purpose": "通过 etcd 分布式锁分别为 Controller 和 Coordinator 选主，主故障后由备用接管。",
+      "config_path": "motor_{controller,coordinator}_config.standby_config.enable_master_standby / etcd_config",
+      "prerequisites": [
+        "仅官方声明支持的 Kubernetes 部署；etcd v3.6，至少三个副本及可靠持久存储。",
+        "至少两台能承载主备 Pod 的节点，满足模板强制反亲和；Controller/Coordinator 到 etcd 网络与 TLS 证书挂载可用。",
+        "客户端使用能跟随主节点切换的服务入口；业务侧配置重试，不能承诺零中断。"
+      ],
+      "notes": [
+        "固定版本官方能力表仅声明 Kubernetes 支持本项；Docker 入口不应因存在同名配置字段就标为支持。",
+        "Controller 与 Coordinator 的选主独立，可只开一个。不得写 standby_config.enabled 或只添加副本数代替原生选主。",
+        "开启后生成器将对应组件副本数设为 2，并自动启用 etcd 持久化。备用 readiness=503/READY0/1 是预期，其 liveness 可仍为 200。",
+        "开关和副本布局在启动/生成时确定，不支持仅保存配置就热切主备。"
+      ],
+      "examples": [
+        {
+          "title": "同时开启两组件主备",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_controller_config\": {\n    \"standby_config\": {\n      \"enable_master_standby\": true\n    },\n    \"etcd_config\": {\n      \"etcd_host\": \"etcd.default.svc.cluster.local\",\n      \"etcd_port\": 2379\n    }\n  },\n  \"motor_coordinator_config\": {\n    \"standby_config\": {\n      \"enable_master_standby\": true\n    },\n    \"etcd_config\": {\n      \"etcd_host\": \"etcd.default.svc.cluster.local\",\n      \"etcd_port\": 2379\n    }\n  }\n}",
+          "notes": [
+            "etcd DNS 与端口是原生文档示例，替换为实际已部署服务；本片段不会替你创建 etcd。"
+          ]
+        },
+        {
+          "title": "生产 etcd 双向 TLS 配置片段",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"tls_config\": {\n    \"etcd_tls_config\": {\n      \"enable_tls\": true,\n      \"ca_file\": \"/etc/motor/etcd/ca.pem\",\n      \"cert_file\": \"/etc/motor/etcd/client.pem\",\n      \"key_file\": \"/etc/motor/etcd/client.key\"\n    }\n  }\n}",
+          "notes": [
+            "路径是容器内示例，必须先为 Controller 和 Coordinator 只读挂载对应证书；不要将私钥文本保存为普通模板字段。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "部署前由管理员准备 etcd/PVC、相应证书与挂载；在预览清单中确认对应组件各 2 个副本、跨节点反亲和。",
+        "通过 Service 访问推理入口；检查主备角色，不要把备用未就绪误报为故障。",
+        "若需故障切换演练，仅在授权窗口对主 Pod 操作并观察备升主，记录实际恢复耗时与业务重试。"
+      ],
+      "validation": [
+        {
+          "action": "核对每个开启主备的组件",
+          "expected": "恰好一个主节点 readiness200、一个备节点 readiness503；两个均无法选主才需排查。"
+        },
+        {
+          "action": "测试主备倒换",
+          "expected": "备节点日志 Role changed from standby to master，Service Endpoint 更新，客户端经重试恢复真实推理。不要把文档约10/20秒写成保证时延。"
+        }
+      ],
+      "rollback": [
+        "恢复相应 enable_master_standby=false 后重新生成/部署单副本布局，验证入口可用。",
+        "保留 etcd 数据与备份，不通过删除共享 etcd/PVC 回滚；恢复原 TLS 与网络设置。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/standby.md",
+          "reason": "L9: etcd 版本/副本/反亲和与中断窗口"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/standby.md",
+          "reason": "L705: Controller 准确开关"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/standby.md",
+          "reason": "L868: Coordinator 准确开关"
+        },
+        {
+          "path": "docs/zh/user_guide/features/fault_tolerance/standby.md",
+          "reason": "L948: 主备 readiness 与真实倒换验证"
+        },
+        {
+          "path": "motor/config/standby.py",
+          "reason": "L17: 共享主备 schema"
+        },
+        {
+          "path": "examples/deployer/lib/generator/controller.py",
+          "reason": "L33: Controller 副本消费"
+        },
+        {
+          "path": "examples/deployer/lib/generator/coordinator.py",
+          "reason": "L36: Coordinator 副本消费"
+        }
+      ]
+    },
+    "虚推健康探测": {
+      "purpose": "通过轻量推理与 NPU AI Cube 采样识别“进程活着但无法推理”的异常。",
+      "config_path": "motor_engine_{prefill,decode,union}_config.health_check_config",
+      "prerequisites": [
+        "vLLM 的 Motor 虚推需要 HDK >=26.0.RC1，npu-smi watch 提供 AI Cube Usage，容器能读取相应指标。",
+        "最终引擎环境 ASCEND_GLOBAL_LOG_LEVEL 必须为字符串 \"3\"（ERROR 枚举），或未设置默认；不能直接填英文 ERROR。",
+        "引擎 /health 已 READY；配套 /metrics 能提供 capacity waiting 指标用于避免把资源排队误判失活。"
+      ],
+      "notes": [
+        "仅 vLLM 非 headless 的当前活跃 DP 主端点执行 Motor 主动虚推：初始 DP0，DP 缩容后可迁移。SGLang 由 NodeManager 恒启其原生生成式 /health，关闭此开关不会关闭 SGLang 自身检查。",
+        "虚推失败本身仅降级 UNHEALTHY/ABNORMAL；之后的故障恢复由独立心跳/重启策略联动，不等于每次超时立即重启。",
+        "首次 warmup 固定180秒；virtual_inference_timeout只控制后续周期请求。指标缺失、繁忙或 capacity 排队时不应累计为硬件失活。"
+      ],
+      "examples": [
+        {
+          "title": "P/D 引擎启用虚推",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_engine_prefill_config\": {\n    \"health_check_config\": {\n      \"enable_virtual_inference\": true,\n      \"npu_usage_threshold\": 3,\n      \"max_failure_count\": 6,\n      \"virtual_inference_timeout\": 5.0\n    }\n  },\n  \"motor_engine_decode_config\": {\n    \"health_check_config\": {\n      \"enable_virtual_inference\": true,\n      \"npu_usage_threshold\": 3,\n      \"max_failure_count\": 6,\n      \"virtual_inference_timeout\": 5.0\n    }\n  }\n}",
+          "notes": [
+            "混部在 motor_engine_union_config 配置同类字段。"
+          ]
+        },
+        {
+          "title": "保持引擎 ERROR 日志枚举",
+          "format": "json",
+          "target": "env.json",
+          "code": "{\n  \"motor_engine_prefill_env\": {\n    \"ASCEND_GLOBAL_LOG_LEVEL\": \"3\"\n  },\n  \"motor_engine_decode_env\": {\n    \"ASCEND_GLOBAL_LOG_LEVEL\": \"3\"\n  }\n}",
+          "notes": []
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "在环境变量页分别核对 P/D/Union 的最终日志等级；保持已有设备与其他环境变量。",
+        "服务部署后查看 NodeManager 日志，确认 warmup 和周期性虚推；优先做正常负载与繁忙负载验证，不在共享机器制造硬件故障。"
+      ],
+      "validation": [
+        {
+          "action": "查看 NodeManager 日志",
+          "expected": "出现 AI Cube usage check thread started、Virtual inference started 与 warmup completed。"
+        },
+        {
+          "action": "检查负载与业务",
+          "expected": "正常真实请求可用；繁忙/排队时不因单次虚推超时误报。没有采样能力时应识别功能未实际启用，而非当作健康成功。"
+        }
+      ],
+      "rollback": [
+        "将相应 health_check_config.enable_virtual_inference 恢复 false 并按原方式更新；保留其他 /health 参数。",
+        "若使用 SGLang，明确该动作不关闭其原生生成式 /health；恢复原环境变量前评估其他运维需求。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/sim_inference.md",
+          "reason": "L7: 原生拉起流程与 SGLang 边界"
+        },
+        {
+          "path": "docs/zh/user_guide/features/sim_inference.md",
+          "reason": "L80: 配置与 warmup 验证"
+        },
+        {
+          "path": "motor/config/endpoint.py",
+          "reason": "L109: 真实 health_check schema"
+        },
+        {
+          "path": "motor/node_manager/core/services/native_engine/virtual_inference/capabilities.py",
+          "reason": "L15: ERROR 实际枚举为3"
+        },
+        {
+          "path": "motor/node_manager/core/services/native_engine/virtual_inference/worker.py",
+          "reason": "L226: 周期请求与失败判断实际消费"
+        }
+      ]
+    },
+    "服务限流": {
+      "purpose": "对 Coordinator 推理入口的请求量与请求体大小设置上限，减轻突发流量压力。",
+      "config_path": "motor_coordinator_config.rate_limit_config",
+      "prerequisites": [
+        "客户端经 Coordinator 推理入口访问；直连引擎、Controller、NodeManager 不走此限流。",
+        "按 inference_workers_config.num_workers 与实际进程数折算总额度，确认目标QPS。",
+        "如使用 olc，镜像须有配套 olc-python 及可读规则目录；simple 不需要外部限流服务。"
+      ],
+      "notes": [
+        "simple 是每 Worker 各自独立令牌桶，不是跨进程、跨节点全局总限额；scope 改 per_ip 不会实现按 IP 分桶。",
+        "初始满桶允许突发；max_requests/window_size 是每 Worker 平均补充速率。",
+        "首次启用必须在启动时安装中间件；普通保存草稿不会热安装。默认跳过路径按前缀匹配，也跳过请求体检查。"
+      ],
+      "examples": [
+        {
+          "title": "使用 simple 并限制请求体",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"rate_limit_config\": {\n      \"enable_rate_limit\": true,\n      \"provider\": \"simple\",\n      \"max_requests\": 1000,\n      \"window_size\": 60,\n      \"max_request_body_size\": 8.0\n    }\n  }\n}",
+          "notes": [
+            "1000/60 为每 Worker 约16.7请求/秒、初始可突发1000；8.0单位MiB（文档称MB=1024²字节），按实际业务调整。"
+          ]
+        },
+        {
+          "title": "只读检查运行证据",
+          "format": "shell",
+          "target": "已设置为实际Coordinator推理入口的INFERENCE_URL",
+          "code": "curl -sS -D - \"$INFERENCE_URL/v1/models\"",
+          "notes": [
+            "按实际服务要求附加认证和CA；不要在共享截图回显令牌。此命令只读响应头，429负载验收另在授权窗口进行。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "启用后按当前部署方式更新 Coordinator；保持原认证和已有豁免路径，不为方便测试放开全部路径。",
+        "通过授权压测在隔离验收窗口验证限流；记录 Worker数、持续时间及响应头。"
+      ],
+      "validation": [
+        {
+          "action": "请求未豁免的推理接口",
+          "expected": "放行响应有 X-RateLimit-Limit/Remaining/Window；持续超额出现默认429和rate_limit_exceeded。"
+        },
+        {
+          "action": "发送受控超限请求体并检查探针",
+          "expected": "超限返回413且不耗令牌；默认 /liveness、/readiness、/metrics 继续放行。"
+        }
+      ],
+      "rollback": [
+        "将 enable_rate_limit 恢复 false 并更新 Coordinator；已装 simple 时原生热更新可关闭，但平台保存草稿不等于已热更新远端。",
+        "恢复原额度、请求体上限和豁免规则；切换 provider/olc规则目录须重启确认。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/rate_limiting.md",
+          "reason": "L31: 令牌桶/Worker范围/失败放行"
+        },
+        {
+          "path": "docs/zh/user_guide/features/rate_limiting.md",
+          "reason": "L188: 最小配置"
+        },
+        {
+          "path": "docs/zh/user_guide/features/rate_limiting.md",
+          "reason": "L275: 关闭与验证"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L713: schema及默认值"
+        },
+        {
+          "path": "motor/coordinator/api_server/inference_server.py",
+          "reason": "L503: 按启动开关装配中间件"
+        }
+      ]
+    },
+    "精度检测特性": {
+      "purpose": "抽样检测 Decode token/logprob 的重复、乱码等异常，告警并可选触发实例处置。",
+      "config_path": "motor_coordinator_config.precision_detection_config / motor_controller_config.precision_auto_recovery_enabled",
+      "prerequisites": [
+        "仅支持经 Coordinator Router 转发的 vLLM 路径，需返回对齐 token IDs 与 logprobs。",
+        "镜像内可导入 msprobe.response_anomaly.detector.ILLDetector，并有目标模型适配的token映射与配置；仅import成功不足以验收。",
+        "开启采样有额外引擎计算、网络和后台检测开销；为模型与引擎允许的 top-k 合理设置logprobs_count。"
+      ],
+      "notes": [
+        "总开关为 precision_check_enabled，非 enabled。默认关闭；Controller自动处置是独立且默认false的 precision_auto_recovery_enabled。",
+        "先只检测告警；自动处置可能终止 D，并在告警携带 P ID 时同步终止 P，不能描述成无影响自愈。",
+        "这属于在线输出异常检测，不是对完整模型精度/基准分数的证明；后台fail-open不代表检测成功。",
+        "修改该嵌套配置后应更新/重启 Coordinator Worker，不能依赖所有字段热生效。"
+      ],
+      "examples": [
+        {
+          "title": "先启用检测，保持自动处置关闭",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"precision_detection_config\": {\n      \"precision_check_enabled\": true,\n      \"interval_seconds\": 30.0,\n      \"logprobs_count\": 1,\n      \"precision_issue_threshold\": 10,\n      \"precision_clear_threshold\": 10,\n      \"probe_max_attempts\": 3,\n      \"probe_timeout_seconds\": 600.0\n    }\n  },\n  \"motor_controller_config\": {\n    \"precision_auto_recovery_enabled\": false\n  }\n}",
+          "notes": [
+            "logprobs_count=1检测重复；>=3增加乱码、>=5增加生僻字检测，前提是引擎与模型映射支持。自动处置在完成专项验收并评估业务中断后按需设true。"
+          ]
+        },
+        {
+          "title": "只读检查依赖",
+          "format": "shell",
+          "target": "Coordinator 容器内的实际 Python 环境",
+          "code": "python -c \"from msprobe.response_anomaly.detector import ILLDetector; print('ILLDetector import OK')\"",
+          "notes": []
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "先核对配套 msprobe 依赖及模型映射，再以只检测配置部署，记录额外开销。",
+        "发送正常且完整结束的真实请求，查看后台检测结果；启动日志本身不算检测生效。",
+        "若需自动终止异常实例，另行评估容量、重启策略与业务重试，单独启用 Controller开关并在隔离环境演练。"
+      ],
+      "validation": [
+        {
+          "action": "检查启动及真实请求的后台检测",
+          "expected": "启动有 Precision check(token sampling)，完整响应后出现 MsprobeChecker: result，且无依赖、映射、对齐或fail-open错误。"
+        },
+        {
+          "action": "专项异常检测演练",
+          "expected": "连续异常达到阈值后固定问答拨测与精度告警；只检测时实例不被自动终止。DEBUG下才有claimed/submit，不因INFO缺这些日志误判。"
+        }
+      ],
+      "rollback": [
+        "将 precision_check_enabled 恢复 false，并保持/恢复 precision_auto_recovery_enabled=false，按原部署方式更新相关进程。",
+        "保留真实故障证据与原模型映射；恢复用户原 logprobs 设置，验证正常请求。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/precision_detection.md",
+          "reason": "L29: 依赖和性能/客户端约束"
+        },
+        {
+          "path": "docs/zh/user_guide/features/precision_detection.md",
+          "reason": "L96: 两个独立开关及示例"
+        },
+        {
+          "path": "docs/zh/user_guide/features/precision_detection.md",
+          "reason": "L152: 不能把启动日志等同检测验收"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L551: 准确字段"
+        },
+        {
+          "path": "motor/config/controller.py",
+          "reason": "L194: 独立自动恢复默认false"
+        },
+        {
+          "path": "motor/coordinator/api_server/inference_server.py",
+          "reason": "L376: 启动时装配采样链路"
+        },
+        {
+          "path": "motor/controller/api_server/controller_api.py",
+          "reason": "L595: 自动处置开关实际消费"
+        }
+      ]
+    },
+    "Tracing能力部署": {
+      "purpose": "把 Coordinator 与支持上下文传播的引擎 Span 关联到同一 Trace，定位端到端耗时。",
+      "config_path": "motor_coordinator_config.tracer_config / engine_config.otlp-traces-endpoint / env.json OTEL_*",
+      "prerequisites": [
+        "已准备可达、协议匹配的 OTLP Collector/后端，Coordinator与需要追踪的P/D引擎均安装相应SDK/exporter。",
+        "端到端关联要求引擎支持 W3C traceparent/tracestate 传播与 OTLP 导出；只配Coordinator只能保证它自身的Span。",
+        "生产使用TLS endpoint及证书挂载，按预期请求量评估采样和存储开销。"
+      ],
+      "notes": [
+        "Coordinator 开关由非空endpoint和协议解析决定，没有 tracer_config.enable 通用键。",
+        "引擎参数是 otlp-traces-endpoint（短横线），不是 Coordinator 的 tracer_config.endpoint。",
+        "5个采样率有效范围为(0,1]；关闭用endpoint空串，不把采样率设0。",
+        "下方192.0.2.50与INSECURE=true仅限受控测试网络示例；生产保留已有CA/证书信任配置，换https并挂载对应CA。INSECURE=false不能把http变https。"
+      ],
+      "examples": [
+        {
+          "title": "OTLP/HTTP 端点与采样配置",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"tracer_config\": {\n      \"endpoint\": \"http://192.0.2.50:4318/v1/traces\",\n      \"root_sampling_rate\": 1.0,\n      \"remote_parent_sampled\": 1.0,\n      \"remote_parent_not_sampled\": 1.0,\n      \"local_parent_sampled\": 1.0,\n      \"local_parent_not_sampled\": 1.0\n    }\n  },\n  \"motor_engine_prefill_config\": {\n    \"engine_config\": {\n      \"otlp-traces-endpoint\": \"http://192.0.2.50:4318/v1/traces\"\n    }\n  },\n  \"motor_engine_decode_config\": {\n    \"engine_config\": {\n      \"otlp-traces-endpoint\": \"http://192.0.2.50:4318/v1/traces\"\n    }\n  }\n}",
+          "notes": []
+        },
+        {
+          "title": "三角色明确协议与服务名",
+          "format": "json",
+          "target": "env.json",
+          "code": "{\n  \"motor_coordinator_env\": {\n    \"OTEL_SERVICE_NAME\": \"motor-coordinator\",\n    \"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL\": \"http/protobuf\",\n    \"OTEL_EXPORTER_OTLP_TRACES_INSECURE\": \"true\"\n  },\n  \"motor_engine_prefill_env\": {\n    \"OTEL_SERVICE_NAME\": \"vllm-prefill\",\n    \"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL\": \"http/protobuf\",\n    \"OTEL_EXPORTER_OTLP_TRACES_INSECURE\": \"true\"\n  },\n  \"motor_engine_decode_env\": {\n    \"OTEL_SERVICE_NAME\": \"vllm-decode\",\n    \"OTEL_EXPORTER_OTLP_TRACES_PROTOCOL\": \"http/protobuf\",\n    \"OTEL_EXPORTER_OTLP_TRACES_INSECURE\": \"true\"\n  }\n}",
+          "notes": [
+            "此为不加密隔离示例；生产调整端点和证书，环境变量值始终使用字符串。"
+          ]
+        }
+      ],
+      "steps": [
+        "在推理服务的新建/编辑流程打开原生 JSON 配置，按对应路径合并片段；先保存草稿并执行预检，确认资源布局与变更影响后再部署。",
+        "先部署并检查OTLP接收端；分别在原生JSON及环境变量页配置所需组件。",
+        "更新服务后查看导出器初始化与错误日志，再通过真实推理产生Trace；Grafana/Jaeger属于可观测后端，不替代部署操作界面。"
+      ],
+      "validation": [
+        {
+          "action": "检查Coordinator初始化日志",
+          "expected": "TracerManager init enable:True 且endpoint/protocol正确，仅证明exporter启用。"
+        },
+        {
+          "action": "查询真实请求Trace",
+          "expected": "等待批量导出后，在同一Trace ID下看到该请求实际经过的Coordinator/P/D Span；仅三个服务名不能证明链路串联。"
+        }
+      ],
+      "rollback": [
+        "恢复Coordinator endpoint为空字符串或原值；引擎端恢复/移除本次新增的otlp-traces-endpoint和OTEL环境变量。",
+        "按原部署方式更新相关进程；保留已有可观测后端数据，不为回滚删除共享存储。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/tracing.md",
+          "reason": "L34: env字符串与协议/TLS语义"
+        },
+        {
+          "path": "docs/zh/user_guide/features/tracing.md",
+          "reason": "L75: Coordinator/engine配置与采样率"
+        },
+        {
+          "path": "docs/zh/user_guide/features/tracing.md",
+          "reason": "L207: 真实Trace验证"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L766: TracerConfig字段"
+        },
+        {
+          "path": "motor/coordinator/tracer/tracing.py",
+          "reason": "L59: 真实exporter装配与采样器"
+        }
+      ]
+    },
+    "数据混淆推理": {
+      "purpose": "配套混淆权重与同seed双向token/图像置换，使明文token/图像张量不直接进入引擎。",
+      "config_path": "motor_coordinator_config.render_config / token_obfuscation_config / engine_config.model",
+      "prerequisites": [
+        "vLLM Render token-only链路、PD分离，以及配套ai-asset-obfuscate SDK；模型与硬件组合需实测支持。",
+        "事先用同SDK版本、同seed、同白名单和模型几何生成混淆权重；不能给普通明文权重仅打开开关。",
+        "离线混淆方提供真实token_white_list与seed；白名单不能从模型目录/obf_config.json自动推断。",
+        "真实seed必须走受控秘密配置流程，不保存到共享模板、仓库、日志或截图；普通平台模板保存不等于已有专用秘密注入能力。"
+      ],
+      "notes": [
+        "下方仅Qwen3-VL原文配置形状示例，绝不可直接套用GLM等其他模型；seed占位值不能用于部署。",
+        "必须同时启用render与token-only decode；SDK或Render失败时拒绝请求，不回退明文。",
+        "只支持/v1/chat/completions与/v1/completions；其他API在混淆启用时不应按成功兼容描述。",
+        "vocab_size/视觉几何可从所服务权重目录读取，但白名单与seed必须显式正确。SDK几何不匹配可能原样返回载荷，不能仅凭启动日志声称安全已验收。"
+      ],
+      "examples": [
+        {
+          "title": "Qwen3-VL形状示例：受控配置后才能部署",
+          "format": "json",
+          "target": "user_config.json",
+          "code": "{\n  \"motor_coordinator_config\": {\n    \"render_config\": {\n      \"enable\": true,\n      \"enable_token_only_decode\": true,\n      \"timeout_ms\": 30000,\n      \"launch_args\": {\n        \"renderer_num_workers\": 4\n      }\n    },\n    \"token_obfuscation_config\": {\n      \"enable\": true,\n      \"token_white_list\": [\n        151643,\n        151644,\n        151645,\n        151646,\n        151647,\n        151648,\n        151649,\n        151650,\n        151651,\n        151652,\n        151653,\n        151654,\n        151655,\n        151656,\n        151657,\n        151658,\n        151659,\n        151660,\n        151661,\n        151662,\n        151663,\n        151664,\n        151665,\n        151666,\n        151667,\n        151668,\n        198,\n        2610,\n        525,\n        264,\n        10950,\n        17847,\n        13,\n        872,\n        77091,\n        8948,\n        271\n      ],\n      \"seed_content\": \"REPLACE_WITH_OFFLINE_SEED_VIA_CONTROLLED_CONFIGURATION\",\n      \"image_config\": {\n        \"enable\": true\n      }\n    }\n  }\n}",
+          "notes": [
+            "仅展示合法键与结构；实际seed不得以此占位值运行。白名单为原文Qwen3-VL例子，不是通用默认值。P/D engine_config.model必须同时指向对应混淆权重。"
+          ]
+        },
+        {
+          "title": "只读检查运行证据",
+          "format": "shell",
+          "target": "Kubernetes Coordinator；先设置实际NAMESPACE/COORDINATOR_POD",
+          "code": "kubectl -n \"$NAMESPACE\" logs \"$COORDINATOR_POD\" --tail=300 | grep -E \"data obfuscation|render tokenize success\"",
+          "notes": [
+            "只读取实际目标日志，不触发故障；日志出现不替代上文的真实请求验收。"
+          ]
+        }
+      ],
+      "steps": [
+        "先完成离线混淆权重、SDK版本、seed/白名单/视觉几何的受控核对，单独确认Render部署与token-only接口。",
+        "在平台准备不含真实seed的配置草稿；部署端受控注入秘密后，检查最终JSON与权重目录一致，不能将秘密写入共享模板。",
+        "使用真实文本与图像样本核对输出及日志，不在界面/截图中回显seed。SDK/混淆实现改变时重新启动引擎清理旧mm缓存，再做验收。"
+      ],
+      "validation": [
+        {
+          "action": "核对启动与请求处理日志",
+          "expected": "Token data obfuscation / Vision data obfuscation启用；图像请求render tokenize success含obfuscated_images=1，且无SDK/几何错误。"
+        },
+        {
+          "action": "核对权重一致性及真实输出",
+          "expected": "纯文本计算与已知图像内容输出正确；正常/流式均可用。不能仅凭HTTP200或obfuscated_images计数证明实际混淆正确。"
+        }
+      ],
+      "rollback": [
+        "混淆开关与权重必须配套回退：恢复明文权重时同步关闭token/image混淆并恢复原Render参数；不可只关开关仍使用混淆权重。",
+        "恢复原受控配置并重新部署；清理/重建引擎多模态缓存后验证文本与图像请求，保留秘密的保管权限。"
+      ],
+      "sources": [
+        {
+          "path": "docs/zh/user_guide/features/data_obfuscation.md",
+          "reason": "L46: Render/SDK/秘密/模型兼容性前提"
+        },
+        {
+          "path": "docs/zh/user_guide/features/data_obfuscation.md",
+          "reason": "L148: 准确JSON和参数来源"
+        },
+        {
+          "path": "docs/zh/user_guide/features/data_obfuscation.md",
+          "reason": "L237: 文本图像验证与计数边界"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L805: Render/token/image schema"
+        },
+        {
+          "path": "motor/config/coordinator.py",
+          "reason": "L1197: 启动前Render、白名单与seed校验"
+        },
+        {
+          "path": "motor/coordinator/api_server/inference_server.py",
+          "reason": "L427: token/image服务真实初始化"
+        }
+      ]
+    }
+  }
+}

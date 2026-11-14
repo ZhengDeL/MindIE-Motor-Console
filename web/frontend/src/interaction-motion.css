@@ -1,0 +1,42 @@
+/* Motion communicates state without moving controls under the pointer. */
+.modal-header {
+  padding-right: 28px;
+}
+.modal-header h2,
+.modal-header p {
+  overflow-wrap: anywhere;
+}
+.modal-header > .icon-btn {
+  width: 28px;
+  height: 28px;
+  right: -6px;
+  top: -6px;
+  text-shadow: none;
+}
+.app-shell .btn,
+.app-shell .icon-btn,
+.app-shell .row-actions > button {
+  transition: color var(--motion-fast), background-color var(--motion-fast), border-color var(--motion-fast);
+}
+.app-shell .btn:not(:disabled):focus-visible,
+.app-shell .icon-btn:not(:disabled):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.app-shell input:focus-visible,
+.app-shell select:focus-visible,
+.app-shell textarea:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.app-shell .table-wrap tbody tr { transition: background-color var(--motion-fast); }
+:root[data-motion="reduced"] .app-shell .btn,
+:root[data-motion="reduced"] .app-shell .icon-btn,
+:root[data-motion="reduced"] .app-shell .row-actions > button,
+:root[data-motion="reduced"] .app-shell .table-wrap tbody tr { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .btn,
+  .app-shell .icon-btn,
+  .app-shell .row-actions > button,
+  .app-shell .table-wrap tbody tr { transition: none; }
+}

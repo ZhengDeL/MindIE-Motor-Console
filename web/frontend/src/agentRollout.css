@@ -1,0 +1,215 @@
+.rollout-shell {
+  min-width: 0;
+}
+.rollout-shell .badge-warning {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+.rollout-inputs {
+  border: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+}
+.rollout-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 20px 0 0;
+}
+.rollout-section {
+  padding-top: 20px;
+}
+.rollout-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 14px;
+  font-size: var(--font-size-body);
+}
+.rollout-section > .info-box {
+  margin-bottom: 18px;
+}
+.rollout-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.rollout-footer-note {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+}
+.rollout-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 14px 0;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+.rollout-checkbox input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+.rollout-fingerprint-discovery {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.rollout-fingerprint-discovery > span,
+.rollout-muted {
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+  line-height: 1.7;
+}
+.rollout-observed-key {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 12px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.rollout-observed-key code,
+.rollout-summary code,
+.rollout-muted code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.rollout-key-filename {
+  margin: -6px 0 18px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.rollout-advanced {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+.rollout-advanced summary {
+  padding: 17px 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.rollout-summary {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 12px 18px;
+  margin: 0 0 20px;
+  padding: 18px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  line-height: 1.7;
+}
+.rollout-summary dt {
+  color: var(--muted);
+}
+.rollout-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.rollout-plan-heading,
+.rollout-job-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  flex-wrap: wrap;
+}
+.rollout-plan-heading h3 {
+  margin: 0;
+}
+.rollout-planned-steps {
+  padding-left: 22px;
+  line-height: 2;
+  color: var(--text-secondary);
+}
+.rollout-existing {
+  margin: 16px 0;
+}
+.rollout-existing li {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+.rollout-job-actions {
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.rollout-job-steps > div {
+  min-width: 0;
+}
+.rollout-job-steps p {
+  overflow-wrap: anywhere;
+}
+.rollout-recovery {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+.rollout-wizard-steps > div {
+  display: flex;
+  position: relative;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.rollout-wizard-steps > div > span:not(.step-dot) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.rollout-wizard-steps > div b {
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.rollout-wizard-steps > div small {
+  color: var(--muted);
+  font-size: var(--font-size-caption);
+}
+@media (max-width: 700px) {
+  .rollout-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rollout-footer-note {
+    flex-basis: 100%;
+    margin: 0 0 3px;
+  }
+  .rollout-wizard-steps {
+    gap: 10px;
+  }
+  .rollout-wizard-steps > div {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  .rollout-wizard-steps .step-line {
+    display: none;
+  }
+  .rollout-wizard-steps > div small {
+    display: none;
+  }
+  .rollout-wizard-steps > div b {
+    font-size: var(--font-size-caption);
+  }
+  .rollout-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 14px;
+  }
+  .rollout-summary dd {
+    margin-bottom: 8px;
+  }
+  .rollout-job-actions {
+    justify-content: flex-start;
+  }
+}

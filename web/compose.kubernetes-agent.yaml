@@ -1,0 +1,94 @@
+name: motor-console-kubernetes
+services:
+  agent:
+    image: ${MOTOR_CONSOLE_IMAGE:?Use a reviewed image digest}
+    runtime: runc
+    network_mode: host
+    environment:
+      MOTOR_MODE: agent
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_AGENT_DISABLED_PLUGINS:-}
+      MOTOR_AGENT_READ_ONLY: ${MOTOR_AGENT_READ_ONLY:-true}
+      MOTOR_AGENT_REQUIRE_CLIENT_CERT: ${MOTOR_AGENT_REQUIRE_CLIENT_CERT:-false}
+      MOTOR_AGENT_CLIENT_CA_FILE: ${MOTOR_AGENT_CLIENT_CA_FILE:-}
+      MOTOR_AGENT_HEALTH_CLIENT_CERT_FILE: ${MOTOR_AGENT_HEALTH_CLIENT_CERT_FILE:-}
+      MOTOR_AGENT_HEALTH_CLIENT_KEY_FILE: ${MOTOR_AGENT_HEALTH_CLIENT_KEY_FILE:-}
+      MOTOR_ENV: production
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_AGENT_TOKEN_FILE: ${MOTOR_AGENT_TOKEN_FILE:-/run/motor-secrets/agent.token}
+      MOTOR_AGENT_BIND_IP: ${MOTOR_AGENT_BIND_IP:-127.0.0.1}
+      MOTOR_AGENT_PORT: ${MOTOR_AGENT_PORT:-19083}
+      MOTOR_AGENT_NATIVE_CONCURRENCY: ${MOTOR_AGENT_NATIVE_CONCURRENCY:-1}
+      MOTOR_NPU_ADMISSION_MODE: ${MOTOR_NPU_ADMISSION_MODE:-observed}
+      MOTOR_NODE_EXPORTER_URL: ${MOTOR_NODE_EXPORTER_URL:-http://127.0.0.1:9100/metrics}
+      MOTOR_NODE_EXPORTER_ALLOWED_HOSTS: ${MOTOR_NODE_EXPORTER_ALLOWED_HOSTS:-}
+      MOTOR_NODE_EXPORTER_CA_FILE: ${MOTOR_NODE_EXPORTER_CA_FILE:-}
+      MOTOR_NODE_EXPORTER_TOKEN_FILE: ${MOTOR_NODE_EXPORTER_TOKEN_FILE:-}
+      MOTOR_NODE_EXPORTER_BASIC_AUTH_FILE: ${MOTOR_NODE_EXPORTER_BASIC_AUTH_FILE:-}
+      MOTOR_NODE_EXPORTER_CACHE_SECONDS: ${MOTOR_NODE_EXPORTER_CACHE_SECONDS:-10}
+      MOTOR_NODE_EXPORTER_TTL_SECONDS: ${MOTOR_NODE_EXPORTER_TTL_SECONDS:-45}
+      MOTOR_NPU_METRICS_URL: ${MOTOR_NPU_METRICS_URL:-}
+      MOTOR_NPU_METRICS_ALLOWED_HOSTS: ${MOTOR_NPU_METRICS_ALLOWED_HOSTS:-}
+      MOTOR_NPU_METRICS_CA_FILE: ${MOTOR_NPU_METRICS_CA_FILE:-}
+      MOTOR_NPU_METRICS_TOKEN_FILE: ${MOTOR_NPU_METRICS_TOKEN_FILE:-}
+      MOTOR_NPU_DEVICE_MAP_JSON: ${MOTOR_NPU_DEVICE_MAP_JSON:-}
+      MOTOR_NPU_PROCESS_PID_SCOPE: ${MOTOR_NPU_PROCESS_PID_SCOPE:-unknown}
+      MOTOR_NPU_SNAPSHOT_FILE: ${MOTOR_NPU_SNAPSHOT_FILE:-}
+      MOTOR_RESOURCE_CACHE_SECONDS: ${MOTOR_RESOURCE_CACHE_SECONDS:-10}
+      MOTOR_RESOURCE_TTL_SECONDS: ${MOTOR_RESOURCE_TTL_SECONDS:-45}
+      MOTOR_AGENT_SERVER_CERT_FILE: ${MOTOR_AGENT_SERVER_CERT_FILE:-}
+      MOTOR_AGENT_SERVER_KEY_FILE: ${MOTOR_AGENT_SERVER_KEY_FILE:-}
+      MOTOR_AGENT_SERVER_CA_FILE: ${MOTOR_AGENT_SERVER_CA_FILE:-}
+      KUBECONFIG: /run/motor-config/kubeconfig
+      MOTOR_UPSTREAM_DIR: ${MOTOR_AGENT_UPSTREAM_DIR:-/opt/motor/upstream}
+      MOTOR_SOURCE_MANIFEST: ${MOTOR_AGENT_SOURCE_MANIFEST:-}
+      MOTOR_SOURCE_MANIFEST_SHA256: ${MOTOR_AGENT_SOURCE_MANIFEST_SHA256:-}
+      MOTOR_CA_BUNDLE: ${MOTOR_CA_BUNDLE:-}
+      MOTOR_INFERENCE_API_KEY: ${MOTOR_INFERENCE_API_KEY:-}
+      MOTOR_MANAGEMENT_KEY_FILE: ${MOTOR_MANAGEMENT_KEY_FILE:-}
+      MOTOR_CLIENT_CERT_FILE: ${MOTOR_CLIENT_CERT_FILE:-}
+      MOTOR_CLIENT_KEY_FILE: ${MOTOR_CLIENT_KEY_FILE:-}
+      MOTOR_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_CLIENT_CRL_FILE: ${MOTOR_CLIENT_CRL_FILE:-}
+      MOTOR_CLIENT_MTLS_REQUIRED: ${MOTOR_CLIENT_MTLS_REQUIRED:-false}
+    volumes:
+      - type: bind
+        source: ${MOTOR_AGENT_DATA_DIR:?Use a private local Agent data directory}
+        target: /var/lib/motor-console
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_AGENT_CREDENTIALS_HOST_PATH:-${MOTOR_AGENT_TOKEN_HOST_FILE:-/__motor_console_credentials_not_configured__}}
+        target: ${MOTOR_AGENT_CREDENTIALS_CONTAINER_PATH:-/run/motor-secrets/agent.token}
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_AGENT_DATA_DIR}/profiles
+        target: /opt/motor-profiles
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_AGENT_DATA_DIR}/client-secrets
+        target: /run/motor-client
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_KUBECONFIG_FILE:?Configure the target cluster kubeconfig}
+        target: /run/motor-config/kubeconfig
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: ${MOTOR_AGENT_CPUS:-1}
+    mem_limit: ${MOTOR_AGENT_MEMORY_LIMIT:-1g}
+    pids_limit: ${MOTOR_AGENT_PIDS_LIMIT:-256}
+    logging:
+      driver: local
+      options: {max-size: "10m", max-file: "5"}
+    restart: unless-stopped
+    stop_grace_period: 60s

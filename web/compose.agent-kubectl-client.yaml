@@ -1,0 +1,11 @@
+# Optional per-Agent client override, after a Kubernetes-enabled Agent file.
+# This mounts one reviewed executable; it does not replace the host kubectl.
+services:
+  agent:
+    volumes:
+      - type: bind
+        source: ${MOTOR_KUBECTL_CLIENT_FILE:?Use a checksum-verified executable matching the Agent architecture}
+        target: /usr/local/bin/kubectl
+        read_only: true
+        bind:
+          create_host_path: false

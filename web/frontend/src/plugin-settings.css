@@ -1,0 +1,31 @@
+.plugin-settings { grid-column: 1 / -1; min-width: 0; }
+.plugin-settings .panel-head > div { min-width: 0; }
+.plugin-settings .panel-head p { margin: 6px 0 0; }
+.plugin-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0 14px; }
+.plugin-toolbar .search-input { flex: 1 1 240px; max-width: 420px; }
+.plugin-toolbar select { min-width: 130px; }
+.plugin-toolbar > .small-caption { margin-left: auto; }
+.plugin-table table { width: 100%; table-layout: fixed; }
+.plugin-table th:first-child { width: 44%; }
+.plugin-table th:nth-child(2) { width: 18%; }
+.plugin-table th:nth-child(3) { width: 16%; }
+.plugin-table td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.plugin-table td > code, .plugin-table td > .small-caption { display: block; margin-top: 6px; }
+.plugin-table td > code { color: var(--text-secondary, var(--muted)); font-size: 12px; }
+.plugin-table td p { font-size: 13px; line-height: 1.6; color: var(--text-secondary, var(--muted)); margin: 8px 0 0; }
+.plugin-contract { padding-top: 18px; margin-top: 14px; border-top: 1px solid var(--border); }
+.plugin-contract summary { cursor: pointer; font-size: 13px; }
+.plugin-contract .description-list { margin-top: 16px; }
+.plugin-contract dd { min-width: 0; overflow-wrap: anywhere; }
+.plugin-empty { padding: 22px; text-align: center; color: var(--text-secondary, var(--muted)); }
+@media (max-width: 760px) {
+  .plugin-table table { display: block; min-width: 0; }
+  .plugin-table thead { display: none; }
+  .plugin-table tbody { display: block; }
+  .plugin-table tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: auto; padding: 18px 0; border-bottom: 1px solid var(--border); }
+  .plugin-table td { display: block; padding: 8px 0; border: 0; min-width: 0; }
+  .plugin-table td:first-child, .plugin-table td:last-child { grid-column: 1 / -1; }
+  .plugin-table td[data-label]::before { content: attr(data-label); display: block; color: var(--text-secondary, var(--muted)); font-size: 12px; margin-bottom: 7px; }
+  .plugin-table td:last-child > code { display: inline-block; margin: 0 10px 0 0; }
+  .plugin-toolbar > .small-caption { margin-left: 0; width: 100%; }
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect Motor Console Ascend NPU observations every 15 seconds
+
+[Timer]
+OnBootSec=20s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+Unit=motor-npu-collector.service
+
+[Install]
+WantedBy=timers.target

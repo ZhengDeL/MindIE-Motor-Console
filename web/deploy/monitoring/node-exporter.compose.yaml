@@ -1,0 +1,60 @@
+name: qinghuan-host-monitoring
+
+services:
+  node-exporter:
+    # Supply a reviewed registry digest or an exact, verified offline image ID.
+    image: ${MOTOR_NODE_EXPORTER_IMAGE:?Set an immutable digest or verified local sha256 image ID}
+    pull_policy: never
+    runtime: runc
+    user: "65534:65534"
+    network_mode: host
+    pid: host
+    uts: host
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    stop_grace_period: 15s
+    labels:
+      io.motor.product: motor-console
+      io.motor.component: host-node-exporter
+      io.motor.installation: qinghuan-host-monitoring
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/host
+      - --web.listen-address=${MOTOR_NODE_EXPORTER_LISTEN_ADDRESS:-127.0.0.1:9100}
+      - --web.max-requests=2
+      - --runtime.gomaxprocs=1
+      - --collector.disable-defaults
+      - --collector.cpu
+      - --collector.meminfo
+      - --collector.os
+      - --collector.uname
+      - --collector.stat
+      - --collector.loadavg
+      - --collector.diskstats
+      - --collector.filesystem
+      - --collector.netdev
+      - --collector.netstat
+      # Compose expands $$ to a literal dollar sign in the regular expression.
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+|var/lib/kubelet/.+)($$|/)
+      - --log.level=info
+    volumes:
+      - type: bind
+        source: /
+        target: /host
+        read_only: true
+        bind:
+          propagation: rslave
+          create_host_path: false
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"

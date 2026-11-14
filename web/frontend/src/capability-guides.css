@@ -1,0 +1,204 @@
+.capability-guide {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--font-size-body-sm, 14px);
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.capability-guide p,
+.capability-guide h3,
+.capability-guide h4 {
+  margin: 0;
+}
+.capability-guide ul,
+.capability-guide ol {
+  margin: 0;
+  padding-left: 21px;
+}
+.capability-guide li + li {
+  margin-top: 7px;
+}
+.capability-guide-intro,
+.capability-guide-section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.capability-guide-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 10px;
+  font-size: var(--font-size-caption, 12px);
+  color: var(--muted);
+}
+.capability-guide-meta > span:first-child {
+  color: var(--accent);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.capability-guide-meta .guide-poc {
+  color: var(--warning);
+}
+.capability-guide-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.capability-guide-nav button {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: var(--font-size-caption, 12px);
+  cursor: pointer;
+}
+.capability-guide-nav button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface-subtle);
+}
+.capability-guide-nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.capability-guide-section {
+  scroll-margin-top: 18px;
+}
+.capability-guide-section > h3 {
+  font-size: var(--font-size-body, 15px);
+  font-weight: var(--font-weight-semibold, 600);
+}
+.capability-guide-merge-note {
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+}
+.capability-guide-path {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-subtle);
+  min-width: 0;
+}
+.capability-guide-path code {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.capability-guide-path > button {
+  flex-shrink: 0;
+}
+.capability-guide-example {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.capability-guide-example:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.capability-guide-example-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.capability-guide-example-head > div {
+  min-width: 0;
+}
+.capability-guide-example h4 {
+  font: inherit;
+  font-weight: var(--font-weight-semibold, 600);
+}
+.capability-guide-example-head small {
+  color: var(--muted);
+  font-size: var(--font-size-caption, 12px);
+  overflow-wrap: anywhere;
+}
+.capability-guide pre {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-subtle);
+  color: var(--text);
+  overflow: auto;
+  max-width: 100%;
+  max-height: 420px;
+  font-size: var(--font-size-caption, 12px);
+  line-height: 1.7;
+  tab-size: 2;
+}
+.capability-guide-example > ul {
+  color: var(--text-secondary);
+  font-size: var(--font-size-caption, 12px);
+}
+.capability-guide-validation {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.capability-guide-validation > div {
+  display: grid;
+  gap: 5px;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+}
+.capability-guide-validation dt {
+  color: var(--text);
+  font-weight: var(--font-weight-medium, 500);
+}
+.capability-guide-validation dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.capability-guide-sources {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  color: var(--text-secondary);
+}
+.capability-guide-sources summary {
+  cursor: pointer;
+  font-size: var(--font-size-caption, 12px);
+}
+.capability-guide-sources ul {
+  display: grid;
+  gap: 9px;
+  padding: 14px 0 0;
+  list-style: none;
+  font-size: var(--font-size-caption, 12px);
+}
+.capability-guide-sources li {
+  display: grid;
+  gap: 3px;
+}
+.capability-guide-sources code {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .capability-guide {
+    gap: 20px;
+  }
+  .capability-guide-nav button {
+    flex: 1 1 auto;
+    padding: 6px 8px;
+  }
+  .capability-guide pre {
+    padding: 10px;
+  }
+}

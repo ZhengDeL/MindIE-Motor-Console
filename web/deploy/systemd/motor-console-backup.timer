@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily encrypted 擎寰平台 recovery backup
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=motor-console-backup.service
+
+[Install]
+WantedBy=timers.target

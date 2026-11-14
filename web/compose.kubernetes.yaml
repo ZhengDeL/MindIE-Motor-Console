@@ -1,0 +1,12 @@
+# Add to compose.yaml only on an explicitly configured Kubernetes execution agent.
+services:
+  agent:
+    environment:
+      KUBECONFIG: /run/motor-console/kubeconfig
+    volumes:
+      - type: bind
+        source: ${MOTOR_KUBECONFIG_FILE:-./kubeconfig}
+        target: /run/motor-console/kubeconfig
+        read_only: true
+        bind:
+          create_host_path: false

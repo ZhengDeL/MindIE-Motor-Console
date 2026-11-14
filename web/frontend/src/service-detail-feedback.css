@@ -1,0 +1,39 @@
+.service-readiness-summary,
+.service-readiness-summary > div,
+.service-readiness-issues,
+.service-readiness-native,
+.inference-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.service-readiness-summary { display: flex; align-items: flex-start; gap: 14px; padding: 0 20px; }
+.service-readiness-summary p { margin-top: 6px; color: var(--muted); line-height: 1.7; }
+.service-readiness-summary small { display: block; margin-top: 8px; color: var(--muted); }
+.service-readiness-issues { margin: 14px 20px 0; padding-left: 18px; color: var(--muted); line-height: 1.8; }
+.service-readiness-capacity { display: flex; flex-wrap: wrap; gap: 9px 18px; margin-top: 16px; padding: 0 20px; }
+.service-readiness-capacity > span { display: inline-flex; align-items: baseline; gap: 8px; }
+.service-readiness-native { margin: 16px 20px 18px; padding-top: 12px; border-top: 1px solid var(--border); }
+.service-readiness-native > summary,
+.inference-reasoning > summary { cursor: pointer; color: var(--muted); }
+.service-readiness-native > p { margin-top: 10px; line-height: 1.7; color: var(--muted); }
+.service-capacity-guidance { margin: 0 0 18px; }
+.inference-result { padding: 20px; }
+.inference-result-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.inference-result .info-box { margin-bottom: 16px; }
+.inference-result .info-box p { margin-top: 6px; line-height: 1.8; }
+.inference-result .inference-answer { padding: 0; min-height: 0; }
+.inference-result .inference-meta { padding: 12px 0 0; margin-top: 16px; flex-wrap: wrap; }
+.inference-reasoning { margin-top: 18px; padding: 14px 0; border-top: 1px solid var(--border); }
+.inference-reasoning > .small-caption { margin-top: 12px; }
+.inference-reasoning-content { margin: 12px 0; white-space: pre-wrap; line-height: 1.85; overflow-wrap: anywhere; }
+.inference-token-usage { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.inference-token-usage dt { font-size: var(--font-size-caption); color: var(--muted); }
+.inference-token-usage dd { margin: 5px 0 0; font-variant-numeric: tabular-nums; }
+.job-steps > div > div { min-width: 0; overflow-wrap: anywhere; }
+.job-steps > div > .badge { flex-shrink: 0; }
+.job-steps small,
+.job-steps small code { overflow-wrap: anywhere; word-break: break-word; }
+@media (max-width: 520px) {
+  .inference-result { padding: 16px; }
+  .service-readiness-summary { gap: 10px; }
+}

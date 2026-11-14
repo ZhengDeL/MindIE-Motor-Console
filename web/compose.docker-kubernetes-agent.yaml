@@ -1,0 +1,13 @@
+# Administrator opt-in only. Apply after compose.docker-agent.yaml.
+# Default Docker preparation and Agent rollout do not enable this overlay.
+services:
+  agent:
+    environment:
+      KUBECONFIG: /run/motor-kubernetes/config
+    volumes:
+      - type: bind
+        source: ${MOTOR_KUBECONFIG_FILE:?Use one reviewed private static kubeconfig file}
+        target: /run/motor-kubernetes/config
+        read_only: true
+        bind:
+          create_host_path: false

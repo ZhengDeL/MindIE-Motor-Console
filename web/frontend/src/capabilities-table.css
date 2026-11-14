@@ -1,0 +1,114 @@
+/* Full explanations wrap within dedicated columns; actions retain their space. */
+.capabilities-panel {
+  min-width: 0;
+}
+.capabilities-panel .capabilities-scroll-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-caption);
+  color: var(--muted);
+}
+.capabilities-panel .capabilities-scroll-tools > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.capabilities-panel .capabilities-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.capabilities-panel .capabilities-table-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.capabilities-panel table.capabilities-table {
+  width: 100%;
+  min-width: 1000px;
+  table-layout: fixed;
+  white-space: normal;
+}
+.capabilities-table .capability-col-name {
+  width: 200px;
+}
+.capabilities-table .capability-col-engines {
+  width: 180px;
+}
+.capabilities-table .capability-col-runtime {
+  width: 210px;
+}
+.capabilities-table .capability-col-actions {
+  width: 124px;
+}
+.capabilities-panel table.capabilities-table th {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 10px 16px;
+  line-height: 1.6;
+}
+.capabilities-panel table.capabilities-table .feature-card > td {
+  min-width: 0;
+  max-width: none;
+  padding: 16px;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.7;
+}
+.capabilities-panel table.capabilities-table .capability-name b {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.capabilities-panel table.capabilities-table .capability-description {
+  color: var(--text-secondary);
+}
+.capabilities-panel .capabilities-table .capability-engines {
+  min-width: 0;
+  gap: 6px;
+}
+.capabilities-panel .capabilities-table .capability-engines .tag {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.capabilities-panel .capabilities-table .support-label {
+  align-items: flex-start;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.capabilities-panel .capabilities-table .support-label > svg {
+  flex: 0 0 13px;
+  margin-top: 4px;
+}
+.capabilities-panel .capabilities-table .feature-adapter-note,
+.capabilities-panel .capabilities-table .feature-adapter-status {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.capabilities-panel
+  table.capabilities-table
+  .feature-card
+  > td.capability-actions {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.capabilities-panel .capabilities-table .capability-actions .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.capabilities-panel .capabilities-table .capability-actions svg {
+  flex-shrink: 0;
+}

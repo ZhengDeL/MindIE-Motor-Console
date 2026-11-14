@@ -1,0 +1,25 @@
+[Unit]
+Description=Encrypted 擎寰平台 application recovery backup
+Documentation=file:/opt/motor-console-project/web/BACKUP_RECOVERY.md
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/mnt/motor-console-backups
+ConditionPathIsMountPoint=/mnt/motor-console-backups
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+EnvironmentFile=/etc/motor-console/backup.env
+ExecStart=/opt/motor-console-venv/bin/python /opt/motor-console-project/web/scripts/backup_console.py create --project-dir ${MOTOR_BACKUP_PROJECT_DIR} --data-dir ${MOTOR_BACKUP_DATA_DIR} --destination ${MOTOR_BACKUP_DESTINATION} --key-file ${MOTOR_BACKUP_KEY_FILE} --remote-mount ${MOTOR_BACKUP_MOUNT} --require-remote
+TimeoutStartSec=15min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/motor-console /mnt/motor-console-backups
+ProtectHome=true
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

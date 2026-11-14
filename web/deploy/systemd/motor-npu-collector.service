@@ -1,0 +1,26 @@
+[Unit]
+Description=Motor Console read-only Ascend NPU observation
+After=local-fs.target
+ConditionPathExists=/opt/motor-console/collector/host_npu_collector.py
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+StateDirectory=motor-console/npu
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 /opt/motor-console/collector/host_npu_collector.py --output /var/lib/motor-console/npu/observation.json
+TimeoutStartSec=25
+TimeoutStopSec=2
+KillMode=control-group
+SendSIGKILL=yes
+NoNewPrivileges=true
+CPUAccounting=yes
+MemoryAccounting=yes
+# Ascend 26.x checks the caller's host namespace. Mount-namespace sandboxing
+# makes its read-only driver query fail, even when /dev remains visible.
+# Keep the trusted fixed-command collector in the host namespaces.
+MemoryMax=128M
+TasksMax=16
+Nice=10

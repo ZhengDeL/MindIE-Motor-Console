@@ -1,0 +1,163 @@
+{
+  "format": "motor-console-template-v1",
+  "name": "GLM-5.3-Flash · A3 HCCS · 3P1D",
+  "description": "四台 A3：3 个 Prefill 实例（每实例 DP2/TP8）+ 1 个 Decode 实例（DP4/TP4），每台 16 个逻辑设备。HCCS、W8A8/INT8 KV、MTP3，依据 vLLM-Ascend v0.30.0 官方 A3 参数，由原生 Motor 编排。模板不绑定节点，保存不会启动模型；部署后需完成推理验收。",
+  "tags": [
+    "GLM-5.3-Flash",
+    "A3",
+    "HCCS",
+    "3P1D",
+    "vLLM-Ascend-0.30.0"
+  ],
+  "runtime": "docker",
+  "motor_profile": "motor-37d615f232a3",
+  "user_config": {
+    "version": "v2.0",
+    "motor_deploy_config": {
+      "deploy_mode": "infer_service_set",
+      "p_instances_num": 3,
+      "d_instances_num": 1,
+      "single_p_instance_pod_num": 1,
+      "single_d_instance_pod_num": 1,
+      "p_pod_npu_num": 16,
+      "d_pod_npu_num": 16,
+      "image_name": "swr.cn-south-1.myhuaweicloud.com/ascendhub/mindie-motor:3.2.0-vllm_ascend0.30.0-a3-openeuler24.03-py3.12",
+      "job_id": "glm53-flash-3p1d",
+      "hardware_type": "800I_A3",
+      "weight_mount_path": "/mnt/models/GLM-5.3-Flash-w8a8"
+    },
+    "motor_controller_config": {
+      "api_config": {
+        "controller_api_port": 19228,
+        "observability_api_port": 19229
+      }
+    },
+    "motor_coordinator_config": {
+      "api_config": {
+        "coordinator_api_infer_port": 19225,
+        "coordinator_api_mgmt_port": 19226,
+        "coordinator_obs_port": 19227
+      }
+    },
+    "motor_engine_prefill_config": {
+      "engine_type": "vllm",
+      "engine_config": {
+        "served_model_name": "glm-5.3-flash",
+        "model": "/mnt/models/GLM-5.3-Flash-w8a8",
+        "data_parallel_size": 2,
+        "tensor_parallel_size": 8,
+        "pipeline_parallel_size": 1,
+        "data_parallel_rpc_port": 9000,
+        "enable_expert_parallel": true,
+        "seed": 1024,
+        "safetensors_load_strategy": "prefetch",
+        "max_num_seqs": 64,
+        "max_model_len": 1048576,
+        "max_num_batched_tokens": 4096,
+        "trust_remote_code": true,
+        "quantization": "ascend",
+        "limit_mm_per_prompt": {
+          "image": 1,
+          "video": 0
+        },
+        "gpu_memory_utilization": 0.92,
+        "tool_call_parser": "glm47",
+        "reasoning_parser": "glm47",
+        "enable_auto_tool_choice": true,
+        "kv_cache_dtype": "int8",
+        "prefix_cache_retention_interval": "None",
+        "speculative_config": {
+          "num_speculative_tokens": 3,
+          "method": "deepseek_mtp",
+          "enforce_eager": true
+        },
+        "additional_config": {
+          "enable_flashcomm1": true,
+          "enable_dsa_cp": true,
+          "enable_prefill_mc2": true,
+          "enable_fused_mc2": 1,
+          "enable_shared_expert_dp": true,
+          "multistream_overlap_shared_expert": false
+        },
+        "kv_transfer_config": {
+          "kv_connector": "MooncakeConnectorV2",
+          "kv_role": "kv_producer",
+          "kv_port": "36680"
+        }
+      }
+    },
+    "motor_engine_decode_config": {
+      "engine_type": "vllm",
+      "engine_config": {
+        "served_model_name": "glm-5.3-flash",
+        "model": "/mnt/models/GLM-5.3-Flash-w8a8",
+        "data_parallel_size": 4,
+        "tensor_parallel_size": 4,
+        "pipeline_parallel_size": 1,
+        "data_parallel_rpc_port": 9000,
+        "enable_expert_parallel": true,
+        "seed": 1024,
+        "safetensors_load_strategy": "prefetch",
+        "max_num_seqs": 32,
+        "max_model_len": 1048576,
+        "max_num_batched_tokens": 192,
+        "trust_remote_code": true,
+        "quantization": "ascend",
+        "limit_mm_per_prompt": {
+          "image": 1,
+          "video": 0
+        },
+        "gpu_memory_utilization": 0.92,
+        "tool_call_parser": "glm47",
+        "reasoning_parser": "glm47",
+        "enable_auto_tool_choice": true,
+        "kv_cache_dtype": "int8",
+        "compilation_config": {
+          "cudagraph_mode": "FULL_DECODE_ONLY"
+        },
+        "speculative_config": {
+          "num_speculative_tokens": 3,
+          "method": "deepseek_mtp",
+          "enforce_eager": false
+        },
+        "additional_config": {
+          "multistream_overlap_shared_expert": true,
+          "recompute_scheduler_enable": true,
+          "enable_shared_expert_dp": true,
+          "enable_flashcomm1": true
+        },
+        "kv_transfer_config": {
+          "kv_connector": "MooncakeConnectorV2",
+          "kv_role": "kv_consumer",
+          "kv_port": "36580"
+        }
+      }
+    }
+  },
+  "env": {
+    "version": "2.0.0",
+    "motor_common_env": {
+      "CANN_INSTALL_PATH": "/usr/local/Ascend",
+      "MOTOR_LOG_ROOT_PATH": "/root/ascend/log"
+    },
+    "motor_controller_env": {},
+    "motor_coordinator_env": {},
+    "motor_engine_prefill_env": {
+      "ASCEND_GLOBAL_RESOURCE_CONFIG": "{\"comm_resource_config.protocol_desc\":[\"hccs:device\"]}",
+      "ASCEND_LOCAL_COMM_RES": "{\"version\":\"1.2\"}",
+      "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
+      "VLLM_USE_V2_MODEL_RUNNER": 0,
+      "HCCL_OP_EXPANSION_MODE": "AIV",
+      "HCCL_BUFFSIZE": 1024
+    },
+    "motor_engine_decode_env": {
+      "ASCEND_GLOBAL_RESOURCE_CONFIG": "{\"comm_resource_config.protocol_desc\":[\"hccs:device\"]}",
+      "ASCEND_LOCAL_COMM_RES": "{\"version\":\"1.2\"}",
+      "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
+      "VLLM_USE_V2_MODEL_RUNNER": 0,
+      "HCCL_OP_EXPANSION_MODE": "AIV",
+      "HCCL_BUFFSIZE": 1024
+    }
+  },
+  "extra_manifests": []
+}

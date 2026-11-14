@@ -1,0 +1,146 @@
+name: qinghuan-platform
+services:
+  control:
+    image: ${MOTOR_CONSOLE_IMAGE:?Use a reviewed API image digest}
+    runtime: runc
+    user: ${MOTOR_CONTROL_UID:-10001}:${MOTOR_CONTROL_GID:-10001}
+    environment:
+      MOTOR_MODE: control
+      MOTOR_PLUGIN_DIR: ${MOTOR_PLUGIN_DIR:-/var/lib/motor-console/plugin-packages}
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_CONTROL_DISABLED_PLUGINS:-}
+      MOTOR_NODE_SAMPLE_SECONDS: ${MOTOR_NODE_SAMPLE_SECONDS:-15}
+      MOTOR_NODE_SAMPLE_CONCURRENCY: ${MOTOR_NODE_SAMPLE_CONCURRENCY:-3}
+      MOTOR_ENV: production
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_SECRET_KEY_FILE: /run/motor-secrets/encryption.key
+      MOTOR_BOOTSTRAP_TOKEN_FILE: /run/motor-secrets/bootstrap.token
+      MOTOR_COOKIE_SECURE: 'true'
+      MOTOR_TRUSTED_ORIGINS: ${MOTOR_TRUSTED_ORIGINS:?Set the exact HTTPS origin}
+      MOTOR_DOCUMENTATION_URL: ${MOTOR_DOCUMENTATION_URL:-}
+      MOTOR_RELEASE_DIR: /var/lib/motor-console/releases
+      MOTOR_RELEASE_PUBLIC_KEY_FILE: /run/motor-config/release.pub
+      MOTOR_ALLOW_LEGACY_TOKEN: 'false'
+      MOTOR_OIDC_ENABLED: ${MOTOR_OIDC_ENABLED:-false}
+      MOTOR_OIDC_ISSUER: ${MOTOR_OIDC_ISSUER:-}
+      MOTOR_OIDC_CLIENT_ID: ${MOTOR_OIDC_CLIENT_ID:-}
+      MOTOR_OIDC_CLIENT_SECRET_FILE: ${MOTOR_OIDC_CLIENT_SECRET_FILE:-}
+      MOTOR_OIDC_REDIRECT_URI: ${MOTOR_OIDC_REDIRECT_URI:-}
+      MOTOR_OIDC_TOKEN_AUTH_METHOD: ${MOTOR_OIDC_TOKEN_AUTH_METHOD:-client_secret_basic}
+      MOTOR_OIDC_ROLE_CLAIM: ${MOTOR_OIDC_ROLE_CLAIM:-groups}
+      MOTOR_OIDC_ROLE_MAPPING: ${MOTOR_OIDC_ROLE_MAPPING:-}
+      MOTOR_OIDC_ENDPOINT_ORIGINS: ${MOTOR_OIDC_ENDPOINT_ORIGINS:-}
+      MOTOR_OIDC_CA_BUNDLE: ${MOTOR_OIDC_CA_BUNDLE:-}
+      MOTOR_UPSTREAM_DIR: ${MOTOR_CONTROL_UPSTREAM_DIR:-/opt/motor/upstream}
+      MOTOR_SOURCE_MANIFEST: ${MOTOR_CONTROL_SOURCE_MANIFEST:-}
+      MOTOR_SOURCE_MANIFEST_SHA256: ${MOTOR_CONTROL_SOURCE_MANIFEST_SHA256:-}
+      MOTOR_AGENT_CA_BUNDLE: ${MOTOR_AGENT_CA_BUNDLE:-}
+      MOTOR_AGENT_CLIENT_CERT_FILE: ${MOTOR_AGENT_CLIENT_CERT_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_FILE: ${MOTOR_AGENT_CLIENT_KEY_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_AGENT_MTLS_REQUIRED: ${MOTOR_AGENT_MTLS_REQUIRED:-false}
+      MOTOR_AGENT_ROLLOUT_ROOT: ${MOTOR_AGENT_ROLLOUT_ROOT:-/var/lib/motor-console/agents}
+      MOTOR_GATEWAY_ALLOWED_ORIGINS: ${MOTOR_GATEWAY_ALLOWED_ORIGINS:-}
+      MOTOR_GATEWAY_CA_BUNDLE: ${MOTOR_GATEWAY_CA_BUNDLE:-}
+      MOTOR_CA_BUNDLE: ${MOTOR_CA_BUNDLE:-}
+      MOTOR_INFERENCE_API_KEY: ${MOTOR_INFERENCE_API_KEY:-}
+      MOTOR_MANAGEMENT_KEY_FILE: ${MOTOR_MANAGEMENT_KEY_FILE:-}
+      MOTOR_CLIENT_CERT_FILE: ${MOTOR_CLIENT_CERT_FILE:-}
+      MOTOR_CLIENT_KEY_FILE: ${MOTOR_CLIENT_KEY_FILE:-}
+      MOTOR_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_CLIENT_CRL_FILE: ${MOTOR_CLIENT_CRL_FILE:-}
+      MOTOR_CLIENT_MTLS_REQUIRED: ${MOTOR_CLIENT_MTLS_REQUIRED:-false}
+      MOTOR_STATIC_ENABLED: 'false'
+      MOTOR_LOG_DIR: /var/log/motor-console
+      MOTOR_LOG_SEGMENT_BYTES: ${MOTOR_LOG_SEGMENT_BYTES:-10485760}
+      MOTOR_LOG_ROTATIONS: ${MOTOR_LOG_ROTATIONS:-7}
+      MOTOR_DATABASE_BACKEND: ${MOTOR_DATABASE_BACKEND:-sqlite}
+      MOTOR_DATABASE_URL_FILE: ${MOTOR_DATABASE_URL_FILE:-}
+      MOTOR_GRAFANA_ALLOWED_ORIGINS: ${MOTOR_GRAFANA_ALLOWED_ORIGINS:-}
+      MOTOR_GRAFANA_CA_BUNDLE: ${MOTOR_GRAFANA_CA_BUNDLE:-}
+    volumes:
+    - type: bind
+      source: ${MOTOR_CONTROL_DATA_DIR:?Use a dedicated data directory}
+      target: /var/lib/motor-console
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${MOTOR_LOG_HOST_DIR:?Use a dedicated log directory}
+      target: /var/log/motor-console
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${MOTOR_CONTROL_DATA_DIR}/secrets
+      target: /run/motor-secrets
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${MOTOR_CONTROL_DATA_DIR}/config
+      target: /run/motor-config
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${MOTOR_CONTROL_DATA_DIR}/profiles
+      target: /opt/motor-profiles
+      read_only: true
+      bind:
+        create_host_path: false
+    read_only: true
+    tmpfs:
+    - /tmp:size=64m,mode=1777
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 256
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '5'
+    restart: unless-stopped
+    stop_grace_period: 90s
+  web:
+    image: ${MOTOR_WEB_IMAGE:?Use a reviewed independent Web image digest}
+    runtime: runc
+    user: 101:101
+    group_add:
+    - ${MOTOR_CONTROL_GID:-10001}
+    depends_on:
+      control:
+        condition: service_healthy
+    ports:
+    - ${MOTOR_WEB_BIND_IP:-0.0.0.0}:${MOTOR_WEB_PORT:-19443}:8443
+    volumes:
+    - type: bind
+      source: ${MOTOR_WEB_CONFIG_FILE:?Use the reviewed TLS Web config}
+      target: /etc/nginx/conf.d/default.conf
+      read_only: true
+      bind:
+        create_host_path: false
+    - type: bind
+      source: ${MOTOR_WEB_TLS_DIR:?Use the Web certificate directory}
+      target: /run/motor-tls
+      read_only: true
+      bind:
+        create_host_path: false
+    read_only: true
+    tmpfs:
+    - /tmp:size=32m,mode=1777
+    - /var/cache/nginx:size=32m,mode=1777
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '5'
+    restart: unless-stopped

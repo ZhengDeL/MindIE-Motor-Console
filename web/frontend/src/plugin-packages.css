@@ -1,0 +1,31 @@
+.plugin-packages { grid-column: 1 / -1; min-width: 0; }
+.plugin-packages .panel-head { flex-wrap: wrap; gap: 14px; }
+.plugin-packages .panel-head p { margin: 6px 0 0; }
+.plugin-package-toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+.plugin-package-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.plugin-package-card { border: 1px solid var(--border); border-radius: var(--radius, 8px); padding: 18px; min-width: 0; }
+.plugin-package-title { display: flex; gap: 14px; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; }
+.plugin-package-title h3 { margin: 0 0 6px; font-size: 14px; }
+.plugin-package-title > div:first-child { min-width: 0; flex: 1 1 220px; overflow-wrap: anywhere; }
+.plugin-package-title code, .plugin-package-card > p { color: var(--text-secondary, var(--muted)); font-size: 12px; }
+.plugin-package-card > p { overflow-wrap: anywhere; }
+.plugin-package-badges { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
+.plugin-package-card dl { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 10px; font-size: 12px; margin: 18px 0; }
+.plugin-package-card dt { color: var(--text-secondary, var(--muted)); }
+.plugin-package-card dd { margin: 0; overflow-wrap: anywhere; }
+.plugin-package-card dd code, .plugin-digest code { overflow-wrap: anywhere; }
+.plugin-package-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.plugin-file-summary { padding: 10px 0; font-size: 13px; overflow-wrap: anywhere; }
+.plugin-trust-check { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.7; margin: 18px 0; }
+.plugin-trust-check input { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 3px; }
+.plugin-page-panel { min-width: 0; }
+.plugin-page-panel .panel-head { gap: 16px; }
+.plugin-page-panel .panel-head > div { min-width: 0; }
+.plugin-page-panel .panel-head p { margin: 6px 0 0; }
+.plugin-page-panel h2, .plugin-page-panel p { overflow-wrap: anywhere; }
+.community-page-heading > div { min-width: 0; }
+.community-page-heading h1, .community-page-heading p { white-space: normal; overflow-wrap: anywhere; }
+.plugin-page-table td { white-space: normal; overflow-wrap: anywhere; max-width: 360px; }
+.plugin-page-caption { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 14px 20px; color: var(--text-secondary, var(--muted)); font-size: 12px; border-top: 1px solid var(--border); }
+.plugin-page-caption > span { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .plugin-package-card dl { grid-template-columns: 1fr; gap: 6px; } .plugin-package-card dd { margin-bottom: 8px; } }

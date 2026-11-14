@@ -1,0 +1,41 @@
+.service-metrics-panel { min-width: 0; }
+.service-metrics-heading { flex-wrap: wrap; gap: 14px; }
+.service-metrics-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.service-metrics-controls > label { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); font-size: var(--font-size-body-sm); }
+.service-metrics-controls input { margin: 0; width: 15px; height: 15px; accent-color: var(--accent); }
+.service-metrics-freshness { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; color: var(--muted); font-size: var(--font-size-caption); margin-bottom: 18px; }
+.service-metrics-freshness .status-dot { margin-right: -9px; }
+.service-metrics-freshness strong { color: var(--warning); }
+.service-metrics-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+.service-metrics-cards .metric-card { min-width: 0; }
+.service-metrics-cards .metric-card > span { overflow-wrap: anywhere; }
+.service-metrics-cards .metric-card strong { display: flex; flex-wrap: wrap; align-items: baseline; font-size: var(--font-size-metric-sm); }
+.service-metrics-notice, .service-metrics-scope { color: var(--muted); line-height: 1.8; overflow-wrap: anywhere; }
+.service-metrics-notice { margin: 0 0 16px; font-size: var(--font-size-body-sm); }
+.service-metrics-scope { margin: 18px 0; font-size: var(--font-size-caption); }
+.service-metrics-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.service-metric-chart { min-width: 0; margin-bottom: 0; }
+.service-metric-chart svg { display: block; width: 100%; height: auto; padding: 12px 10px 0; box-sizing: border-box; overflow: visible; }
+.service-metric-chart .empty-state { min-height: 220px; padding: 28px 20px; }
+.service-metric-grid line { stroke: var(--border); stroke-dasharray: 3 4; }
+.service-metric-grid text, .service-metric-axis { fill: var(--muted); font-size: 11px; font-family: var(--font-ui); }
+.service-metric-line { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.service-metric-point { fill: var(--accent); stroke: var(--surface); stroke-width: 1; }
+.service-metric-chart-caption { padding: 0 20px 16px; color: var(--muted); font-size: var(--font-size-caption); }
+.service-metrics-reasons { margin-top: 18px; }
+.service-metrics-reasons dl { display: flex; flex-wrap: wrap; gap: 24px 36px; padding: 18px 20px; margin: 0; }
+.service-metrics-reasons dt { color: var(--muted); font-size: var(--font-size-caption); }
+.service-metrics-reasons dd { margin: 8px 0 0; font-size: var(--font-size-subtitle); font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums; }
+.service-metrics-reasons dd small { margin-left: 6px; color: var(--muted); font-size: var(--font-size-caption); font-weight: var(--font-weight-regular); }
+.service-metrics-raw details { padding: 16px 20px; min-width: 0; }
+.service-metrics-raw summary { cursor: pointer; color: var(--muted); }
+.service-metrics-raw .metrics-view { margin-top: 14px; max-height: 360px; }
+@media (max-width: 1000px) { .service-metrics-charts { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .service-metrics-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .service-metrics-cards .metric-card { padding: 14px; }
+  .service-metrics-cards .metric-card strong { font-size: var(--font-size-title); }
+  .service-metrics-controls { gap: 12px; }
+  .service-metrics-freshness { gap: 8px 12px; }
+  .service-metrics-reasons dl { gap: 18px 28px; }
+}

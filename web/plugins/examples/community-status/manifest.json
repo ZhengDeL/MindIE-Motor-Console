@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "community-status",
+  "name": "社区插件状态示例",
+  "version": "1.0.0",
+  "description": "展示控制台公共元数据，演示受信插件包、受保护 API 和声明式页面。",
+  "api_version": 1,
+  "entrypoint": "plugin:setup",
+  "license": "Apache-2.0",
+  "author": "Qinghuan Platform contributors",
+  "minimum_host_version": "0.11.0",
+  "dependencies": [],
+  "routes": [
+    { "path": "/api/plugins/community-status/status", "subtree": false }
+  ],
+  "access": "viewer",
+  "navigation": [
+    {
+      "id": "status",
+      "title": "插件状态示例",
+      "description": "查看此实例向插件公开的产品、版本和运行模式。",
+      "kind": "status-table",
+      "endpoint": "/api/plugins/community-status/status",
+      "group": "插件",
+      "access": "viewer"
+    }
+  ]
+}

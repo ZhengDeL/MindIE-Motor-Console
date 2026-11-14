@@ -1,0 +1,107 @@
+name: motor-console
+services:
+  control:
+    image: ${MOTOR_CONSOLE_IMAGE:-motor-console:local}
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+      args:
+        INSTALL_KUBECTL: ${INSTALL_KUBECTL:-true}
+        KUBECTL_VERSION: ${KUBECTL_VERSION:-v1.34.1}
+    environment:
+      MOTOR_MODE: control
+      MOTOR_PLUGIN_DIR: ${MOTOR_PLUGIN_DIR:-/var/lib/motor-console/plugin-packages}
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_CONTROL_DISABLED_PLUGINS:-}
+      MOTOR_CONSOLE_TOKEN: ${MOTOR_CONSOLE_TOKEN:-}
+      MOTOR_SECRET_KEY: ${MOTOR_SECRET_KEY:-}
+      MOTOR_BOOTSTRAP_TOKEN: ${MOTOR_BOOTSTRAP_TOKEN:-}
+      MOTOR_COOKIE_SECURE: ${MOTOR_COOKIE_SECURE:-true}
+      MOTOR_TRUSTED_ORIGINS: ${MOTOR_TRUSTED_ORIGINS:-}
+      MOTOR_DOCUMENTATION_URL: ${MOTOR_DOCUMENTATION_URL:-}
+      MOTOR_ALLOW_LEGACY_TOKEN: ${MOTOR_ALLOW_LEGACY_TOKEN:-false}
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_AGENT_CA_BUNDLE: ${MOTOR_AGENT_CA_BUNDLE:-}
+      MOTOR_AGENT_CLIENT_CERT_FILE: ${MOTOR_AGENT_CLIENT_CERT_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_FILE: ${MOTOR_AGENT_CLIENT_KEY_FILE:-}
+      MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_AGENT_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_AGENT_MTLS_REQUIRED: ${MOTOR_AGENT_MTLS_REQUIRED:-false}
+      MOTOR_AGENT_ROLLOUT_ROOT: ${MOTOR_AGENT_ROLLOUT_ROOT:-/var/lib/motor-console-agents}
+      MOTOR_CA_BUNDLE: ${MOTOR_CA_BUNDLE:-}
+      MOTOR_INFERENCE_API_KEY: ${MOTOR_INFERENCE_API_KEY:-}
+      MOTOR_MANAGEMENT_KEY_FILE: ${MOTOR_MANAGEMENT_KEY_FILE:-}
+      MOTOR_CLIENT_CERT_FILE: ${MOTOR_CLIENT_CERT_FILE:-}
+      MOTOR_CLIENT_KEY_FILE: ${MOTOR_CLIENT_KEY_FILE:-}
+      MOTOR_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_CLIENT_CRL_FILE: ${MOTOR_CLIENT_CRL_FILE:-}
+      MOTOR_CLIENT_MTLS_REQUIRED: ${MOTOR_CLIENT_MTLS_REQUIRED:-false}
+    ports:
+      - "${MOTOR_CONTROL_BIND_IP:-127.0.0.1}:${MOTOR_CONTROL_PORT:-19080}:8000"
+    volumes:
+      - control-data:/var/lib/motor-console
+    restart: unless-stopped
+  demo:
+    profiles: [demo]
+    image: ${MOTOR_CONSOLE_IMAGE:-motor-console:local}
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    environment:
+      MOTOR_MODE: demo
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_DEMO_DISABLED_PLUGINS:-}
+      MOTOR_DOCUMENTATION_URL: ${MOTOR_DOCUMENTATION_URL:-}
+      MOTOR_DATA_DIR: /var/lib/motor-console
+    ports:
+      - "127.0.0.1:${MOTOR_DEMO_PORT:-19000}:8000"
+    volumes:
+      - demo-data:/var/lib/motor-console
+  agent:
+    profiles: [agent]
+    image: ${MOTOR_CONSOLE_IMAGE:-motor-console:local}
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+    network_mode: host
+    environment:
+      MOTOR_MODE: agent
+      MOTOR_DISABLED_PLUGINS: ${MOTOR_AGENT_DISABLED_PLUGINS:-}
+      MOTOR_AGENT_READ_ONLY: ${MOTOR_AGENT_READ_ONLY:-true}
+      MOTOR_AGENT_TOKEN: ${MOTOR_AGENT_TOKEN:-}
+      MOTOR_AGENT_BIND_IP: ${MOTOR_AGENT_BIND_IP:-127.0.0.1}
+      MOTOR_AGENT_PORT: ${MOTOR_AGENT_PORT:-19082}
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_HOST_ROOT: /host
+      MOTOR_UPSTREAM_DIR: ${MOTOR_HOST_UPSTREAM_DIR:-/opt/motor/upstream}
+      MOTOR_HOST_WORKSPACE_DIR: ${MOTOR_HOST_WORKSPACE_DIR:-/opt/motor-console/workspace}
+      MOTOR_CA_BUNDLE: ${MOTOR_CA_BUNDLE:-}
+      MOTOR_INFERENCE_API_KEY: ${MOTOR_INFERENCE_API_KEY:-}
+      MOTOR_MANAGEMENT_KEY_FILE: ${MOTOR_MANAGEMENT_KEY_FILE:-}
+      MOTOR_CLIENT_CERT_FILE: ${MOTOR_CLIENT_CERT_FILE:-}
+      MOTOR_CLIENT_KEY_FILE: ${MOTOR_CLIENT_KEY_FILE:-}
+      MOTOR_CLIENT_KEY_PASSWORD_FILE: ${MOTOR_CLIENT_KEY_PASSWORD_FILE:-}
+      MOTOR_CLIENT_CRL_FILE: ${MOTOR_CLIENT_CRL_FILE:-}
+      MOTOR_CLIENT_MTLS_REQUIRED: ${MOTOR_CLIENT_MTLS_REQUIRED:-false}
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /
+        target: /host
+        read_only: true
+      - type: bind
+        source: ${MOTOR_HOST_UPSTREAM_DIR:-/opt/motor/upstream}
+        target: ${MOTOR_HOST_UPSTREAM_DIR:-/opt/motor/upstream}
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MOTOR_HOST_WORKSPACE_DIR:-/opt/motor-console/workspace}
+        target: ${MOTOR_HOST_WORKSPACE_DIR:-/opt/motor-console/workspace}
+      - agent-data:/var/lib/motor-console
+    restart: unless-stopped
+volumes:
+  control-data:
+  demo-data:
+  agent-data:

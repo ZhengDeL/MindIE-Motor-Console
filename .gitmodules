@@ -1,0 +1,3 @@
+[submodule "mindie-motor/upstream"]
+	path = mindie-motor/upstream
+	url = https://gitcode.com/Ascend/MindIE-Motor.git
