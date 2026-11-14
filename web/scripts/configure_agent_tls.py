@@ -69,7 +69,7 @@ def configure(data_dir: str, env_file: str, advertised_url: str, *, validity_day
         end = moment + timedelta(days=validity_days)
         issuer_key = ec.generate_private_key(ec.SECP256R1())
         server_key = ec.generate_private_key(ec.SECP256R1())
-        issuer_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "擎寰平台 Agent CA")])
+        issuer_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "MindIE-Motor Console Agent CA")])
         issuer = (x509.CertificateBuilder().subject_name(issuer_name).issuer_name(issuer_name)
                   .public_key(issuer_key.public_key()).serial_number(x509.random_serial_number())
                   .not_valid_before(moment - timedelta(minutes=5)).not_valid_after(end)
@@ -91,7 +91,7 @@ def configure(data_dir: str, env_file: str, advertised_url: str, *, validity_day
             except ValueError:
                 alternatives.append(x509.DNSName(host))
         server = (x509.CertificateBuilder()
-                  .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "擎寰平台 Agent")]))
+                  .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "MindIE-Motor Console Agent")]))
                   .issuer_name(issuer_name).public_key(server_key.public_key()).serial_number(x509.random_serial_number())
                   .not_valid_before(moment - timedelta(minutes=5)).not_valid_after(end)
                   .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)

@@ -1,6 +1,6 @@
 # 架构与维护边界
 
-本说明对应擎寰平台 0.11.0 正式源码。平台为 MindIE-Motor 提供可选的部署与运维控制台。系统采用单实例控制面、节点执行 Agent、独立存储适配器和受信任插件宿主；模型的实例管理与请求调度仍由原生 Motor 负责。前端为 React/TypeScript/Vite，后端为 FastAPI/Python。
+本说明对应 MindIE-Motor Console 0.11.1 源码。平台为 MindIE-Motor 提供可选的部署与运维控制台。系统采用单实例控制面、节点执行 Agent、独立存储适配器和受信任插件宿主；模型的实例管理与请求调度仍由原生 Motor 负责。前端为 React/TypeScript/Vite，后端为 FastAPI/Python。
 
 ## 部署与数据流
 

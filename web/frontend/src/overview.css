@@ -1,4 +1,4 @@
-/* Altered Qinghuan adaptation of Portainer 2.45.3 DashboardItem / Widget presentation.
+/* Altered MindIE-Motor Console adaptation of Portainer 2.45.3 DashboardItem / Widget presentation.
  * Original copyright and zlib terms: NOTICE.md, /third-party-licenses.txt. */
 .overview-page { min-width: 0; display: grid; gap: 24px; margin: 0 -4px; }
 .overview-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 -16px; }

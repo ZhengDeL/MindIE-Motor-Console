@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Qinghuan status-table-v1",
+  "title": "MindIE-Motor Console status-table-v1",
   "type": "object",
   "required": [
     "columns",

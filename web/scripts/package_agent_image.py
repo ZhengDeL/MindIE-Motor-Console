@@ -1,4 +1,4 @@
-"""Export a verified local 擎寰平台 Agent image as an offline rollout artifact.
+"""Export a verified local MindIE-Motor Console Agent image as an offline rollout artifact.
 
 Python 3.9+ standard library only. This host-side tool never installs an Agent,
 logs in to a registry, contacts a cluster or changes existing deployment files.

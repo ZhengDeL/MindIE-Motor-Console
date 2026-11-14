@@ -1,6 +1,6 @@
-# 擎寰平台独立 HTTPS 入口
+# MindIE-Motor Console 独立 HTTPS 入口
 
-本手册对应 0.11.0，用于 bundled 兼容拓扑的可选独立 TLS 代理。推荐模块化部署已包含独立 Web/TLS 入口，见[生产手册](PRODUCTION.md)，通常不再增加此代理。它是平台的 HTTPS 访问组件，不是原生 Motor 部署要求，也不转发模型推理流量。
+本手册对应 0.11.1，用于 bundled 兼容拓扑的可选独立 TLS 代理。推荐模块化部署已包含独立 Web/TLS 入口，见[生产手册](PRODUCTION.md)，通常不再增加此代理。它是平台的 HTTPS 访问组件，不是原生 Motor 部署要求，也不转发模型推理流量。
 
 [compose.ingress.host-network.yaml](compose.ingress.host-network.yaml) 使用独立 Nginx 容器，将 `https://192.0.2.10:19443` 转发到同机 `127.0.0.1:19080` 控制面。入口容器独立升级和重启，使用 host 网络、`runc`、非 root UID/GID `101:101`，无需 Docker socket。控制面需只监听 loopback，并仅信任 loopback 转发代理；`MOTOR_TRUSTED_ORIGINS` 填写包含端口的准确 HTTPS 来源。
 
@@ -12,7 +12,7 @@
 
 入口需要读取这些文件。将 TLS 目录设置为 `101:101`、权限 `0700`，三个文件设为 `101:101`、`0400`；配置目录及 `nginx.conf` 可由 root 拥有并提供 UID 101 的只读访问。使用目录挂载，证书原子替换后仍能在容器内看到新文件。不要修改其他服务正在使用的证书目录。
 
-统一部署目录可将 config/tls 设为 `/opt/motor-console/ingress/config` 和 `/opt/motor-console/tls/control`，示例见[入口环境配置](deploy/qinghuan/ingress.env.example)。以下命令从仓库根执行，先创建私有 `ingress.env`：
+统一部署目录可将 config/tls 设为 `/opt/motor-console/ingress/config` 和 `/opt/motor-console/tls/control`，示例见[入口环境配置](deploy/motor-console/ingress.env.example)。以下命令从仓库根执行，先创建私有 `ingress.env`：
 
 ```dotenv
 MOTOR_INGRESS_IMAGE=registry.example.test/library/nginx@sha256:<64位镜像摘要>

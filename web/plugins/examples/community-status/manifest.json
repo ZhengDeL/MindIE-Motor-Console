@@ -7,7 +7,7 @@
   "api_version": 1,
   "entrypoint": "plugin:setup",
   "license": "Apache-2.0",
-  "author": "Qinghuan Platform contributors",
+  "author": "MindIE-Motor Console contributors",
   "minimum_host_version": "0.11.0",
   "dependencies": [],
   "routes": [

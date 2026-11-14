@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily encrypted 擎寰平台 recovery backup
+Description=Daily encrypted MindIE-Motor Console recovery backup
 
 [Timer]
 OnCalendar=*-*-* 02:00:00

@@ -284,7 +284,7 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                 if (audit)
                   download(
                     data.items,
-                    `qinghuan-platform-audit-page-${Math.floor(offset / limit) + 1}.json`,
+                    `mindie-motor-console-audit-page-${Math.floor(offset / limit) + 1}.json`,
                   );
                 else {
                   const params = new URLSearchParams(
@@ -293,7 +293,7 @@ export default function SystemLogs({ audit = false }: { audit?: boolean }) {
                   params.delete("offset");
                   await downloadFile(
                     `/system/logs/export?${params}`,
-                    "qinghuan-platform-system-logs-filtered.jsonl",
+                    "mindie-motor-console-system-logs-filtered.jsonl",
                   );
                 }
               } catch (e) {

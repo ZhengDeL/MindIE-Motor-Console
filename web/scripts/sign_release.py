@@ -9,15 +9,18 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from backend.releases import canonical_manifest
-from backend.version import PRODUCT_ID
+from backend.releases import canonical_manifest, validate_release_manifest
 
 
 def sign(manifest_file, private_key_file, output=None):
     manifest = Path(manifest_file)
-    value = json.loads(manifest.read_text(encoding="utf-8"))
-    if not isinstance(value, dict) or value.get("product_id") != PRODUCT_ID or value.get("release_schema") != 1:
-        raise ValueError("Only a product-bound Motor Console release_schema=1 manifest may be signed")
+    if not manifest.is_file() or manifest.stat().st_size > 65536:
+        raise ValueError("Release manifest is missing or too large")
+    with manifest.open("rb") as stream:
+        raw = stream.read(65537)
+    if len(raw) > 65536:
+        raise ValueError("Release manifest is missing or too large")
+    value = validate_release_manifest(json.loads(raw.decode("utf-8")))
     key = serialization.load_pem_private_key(Path(private_key_file).read_bytes(), password=None)
     if not isinstance(key, Ed25519PrivateKey): raise ValueError("An Ed25519 publisher key is required")
     destination = Path(output) if output else manifest.with_suffix(".sig")

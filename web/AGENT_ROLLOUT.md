@@ -1,4 +1,4 @@
-# 擎寰平台 Agent 推送与离线镜像包
+# MindIE-Motor Console Agent 推送与离线镜像包
 
 Agent 是本平台的节点执行组件；Motor 模型镜像和权重另行准备。每台 Docker 执行主机通常一个 Agent，每个 Kubernetes 集群通常一个执行 Agent。Control 不挂 Docker socket。本手册的离线包是 Agent 镜像包，不是供插件管理页面导入的 `.qhplugin` 社区插件包。
 
@@ -32,7 +32,7 @@ install -d -m 0700 /srv/motor-console-agent-package
 python3 web/scripts/package_agent_image.py \
   --image 'sha256:<64位实际ImageID>' \
   --output-dir /srv/motor-console-agent-package \
-  --artifact-id motor-agent-arm64-0.11.0
+  --artifact-id motor-agent-arm64-0.11.1
 ```
 
 工具仅用本机Docker socket，不拉镜像、不登录仓库、不SSH。短命候选容器无网络、无宿主挂载/设备/socket、只读、非root、删除capability并有资源上限；按随机名称/标签/镜像核对后仅清理本次候选。
@@ -46,13 +46,13 @@ python3 web/scripts/package_agent_image.py \
 ```json
 {
   "schema": 1,
-  "id": "motor-agent-arm64-0.11.0",
-  "filename": "motor-agent-arm64-0.11.0.tar.gz",
+  "id": "motor-agent-arm64-0.11.1",
+  "filename": "motor-agent-arm64-0.11.1.tar.gz",
   "sha256": "<成品SHA256>",
   "size_bytes": 123456789,
   "image_id": "sha256:<实际ImageID>",
   "architecture": "arm64",
-  "console_version": "0.11.0",
+  "console_version": "0.11.1",
   "agent_protocol": 1,
   "motor_commit": "37d615f232a36b8dba8630ffc3a01a20d289c65e",
   "product_id": "motor-console"

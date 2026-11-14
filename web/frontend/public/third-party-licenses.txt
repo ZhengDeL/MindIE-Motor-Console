@@ -1,4 +1,4 @@
-Qinghuan Platform browser assets - third-party notices
+MindIE-Motor Console browser assets - third-party notices
 
 Lucide React
 Package: lucide-react 0.577.0
@@ -72,7 +72,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-Portainer Community Edition 2.45.3 - adapted Qinghuan interface presentation (zlib)
+Portainer Community Edition 2.45.3 - adapted MindIE-Motor Console interface presentation (zlib)
 Source: https://github.com/portainer/portainer/tree/0fa764dc81c76bb7914d65d8e62b026d7c746899
 
 Copyright (c) 2018 Portainer.io

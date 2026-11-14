@@ -352,7 +352,7 @@ def _assemble_app(*, mode: str | None, data_dir: str | Path | None,
                     body = await request.json()
                     if not isinstance(body, dict): raise HTTPException(422, "Agent 操作请求必须是 JSON 对象")
                     if request.headers.get(PRODUCT_HEADER) != PRODUCT_ID:
-                        raise HTTPException(409, "Agent write requires a matching Motor Console product identity")
+                        raise HTTPException(409, "Agent write requires a matching MindIE-Motor Console product identity")
                     if request.url.path in {"/agent/images/pull", "/agent/images/remove"}:
                         if request.headers.get(CONSOLE_PROTOCOL_HEADER) != str(AGENT_PROTOCOL_VERSION):
                             raise HTTPException(409, "镜像管理协议不兼容")

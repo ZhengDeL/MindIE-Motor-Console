@@ -1784,7 +1784,7 @@ function LogsPage({ services, nodes, servicesRead }: { services: Service[]; node
           刷新
         </Button>
         <Button
-          onClick={() => download(logs, "qinghuan-platform-runtime-logs.json")}
+          onClick={() => download(logs, "mindie-motor-console-runtime-logs.json")}
           disabled={!runtimeAccess.enabled || !hasSuccess || !logs.length || unsubmitted}
         >
           <Download size={14} />

@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.releases import _IMAGE
 from backend.agent_rollout_models import validate_install_root
 from scripts.product_paths import require_product_path
+from scripts.tls_material import validate_server_identity
 
 
 def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, agent_rollout_root="/var/lib/motor-console-agents",
@@ -46,18 +47,9 @@ def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, age
         tls_files = [tls_source / "server.crt", tls_source / "server.key"]
         if any(not p.is_file() or p.is_symlink() or p.stat().st_size > 65536 for p in tls_files):
             raise ValueError("TLS directory must contain bounded regular server.crt and server.key files")
-        from cryptography import x509
-        certificate = x509.load_pem_x509_certificate(tls_files[0].read_bytes())
-        private_key = serialization.load_pem_private_key(tls_files[1].read_bytes(), password=None)
-        form = (serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
-        if certificate.public_key().public_bytes(*form) != private_key.public_key().public_bytes(*form):
-            raise ValueError("Web TLS certificate and private key do not match")
-        from datetime import datetime, timezone
-        instant = datetime.now(timezone.utc)
-        if not certificate.not_valid_before_utc <= instant < certificate.not_valid_after_utc:
-            raise ValueError("Web TLS certificate is outside its validity period")
     parsed = urlsplit(origin)
-    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.username is not None or parsed.password is not None
+            or parsed.path or parsed.query or parsed.fragment or any(character.isspace() for character in origin)):
         raise ValueError("Use the exact public HTTPS origin without a path")
     try:
         if parsed.port is not None and not 1 <= parsed.port <= 65535:
@@ -65,19 +57,7 @@ def prepare(project_dir, data_dir, image, origin, public_key, *, port=19080, age
     except ValueError as exc:
         raise ValueError("Invalid HTTPS origin port") from exc
     if tls_files:
-        import ipaddress
-        try:
-            names = certificate.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-        except x509.ExtensionNotFound as exc:
-            raise ValueError("Web TLS certificate must contain a subjectAltName extension") from exc
-        try:
-            address = ipaddress.ip_address(parsed.hostname)
-            matches = address in names.get_values_for_type(x509.IPAddress)
-        except ValueError:
-            hostname = parsed.hostname.encode("idna").decode().lower()
-            matches = any(hostname == item.lower() or item.startswith("*.") and hostname.endswith(item[1:].lower())
-                          and hostname.count(".") == item.count(".") for item in names.get_values_for_type(x509.DNSName))
-        if not matches: raise ValueError("Web TLS certificate SAN does not cover the public origin")
+        validate_server_identity(tls_files[0], tls_files[1], parsed.hostname)
     if not 1 <= int(port) <= 65535: raise ValueError("Invalid control port")
     if env.exists(): raise ValueError("Production environment already exists; nothing was overwritten")
     if data.exists() and any(data.iterdir()): raise ValueError("New production setup requires an empty data directory; do not import another product database or credentials")

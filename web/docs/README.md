@@ -4,14 +4,14 @@
 
 ## 先选择版本与使用方式
 
-- 当前正式源码为 `v0.11.0`，使用[该版本部署说明](DEPLOYMENT_0.11.0.md)及[发布说明](RELEASE_0.11.0.md)。
+- 本文档集对应 0.11.1 源码，固定 `v0.11.1` 标签在正式发布后使用，使用[该版本部署说明](DEPLOYMENT_0.11.1.md)及[发布说明](RELEASE_0.11.1.md)。
 - 0.11.0 正式提供社区插件导入。使用插件前，登录目标控制面并确认 `/api/plugin-sdk` 返回 `community-import-v1` 等所需能力。
 - 首次部署从[安装入口](../DEPLOYMENT.md)开始；仅查看界面或开发应用使用[本地开发指南](../README.md)。
 
-在源码获取命令中，`SOURCE_REF` 表示要取得的发行标签。稳定部署和插件贡献均从 `v0.11.0` 开始。对已取得的审核提交工作时，先核对其文档和能力，再初始化固定子模块，不自动更新到上游最新提交。
+在源码获取命令中，`SOURCE_REF` 表示要取得的发行标签。正式发布后，部署和插件贡献可从 `v0.11.1` 开始；候选验证使用已审核的源码提交。对已取得的审核提交工作时，先核对其文档和能力，再初始化固定子模块，不自动更新到上游最新提交。
 
 ```bash
-SOURCE_REF=v0.11.0
+SOURCE_REF=v0.11.1
 git clone --recurse-submodules --branch "$SOURCE_REF" \
   https://github.com/ZhengDeL/MindIE-Motor-Console.git motor-console
 cd motor-console
@@ -37,8 +37,8 @@ git submodule update --init --recursive
 | --- | --- |
 | [安装入口](../DEPLOYMENT.md) | 运行模式、部署选择及手册顺序。 |
 | [生产部署](../PRODUCTION.md) | 镜像、目录、密钥、HTTPS、权限、启动与检查。 |
-| [0.11.0 安装与升级](DEPLOYMENT_0.11.0.md) | 正式源码构建、社区插件兼容检查和组件升级。 |
-| [部署目录示例](../deploy/qinghuan/README.md) | 环境文件、采集 unit 和受控目录。 |
+| [0.11.1 安装与升级](DEPLOYMENT_0.11.1.md) | 正式源码构建、社区插件兼容检查和组件升级。 |
+| [部署目录示例](../deploy/motor-console/README.md) | 环境文件、采集 unit 和受控目录。 |
 | [HTTPS 入口](../INGRESS.md) | 独立入口、TLS 文件及网络前提。 |
 | [存储](../STORAGE.md) | SQLite/PostgreSQL、事务与存储驱动。 |
 | [备份与恢复](../BACKUP_RECOVERY.md) | 数据库、密钥、配置、Agent 账本及插件目录的独立备份。 |
@@ -73,4 +73,4 @@ git submodule update --init --recursive
 - [完整示例](../plugins/examples/community-status/README.md)、[离线 Schema](../plugins/sdk/README.md)。
 - [贡献指南](../../CONTRIBUTING.md)、[安全报告](../../SECURITY.md)、[许可来源](../../NOTICE.md)。
 
-本仓库以 0.11.0 为首个公开发布基线，版本变化见[0.11.0 发布说明](RELEASE_0.11.0.md)。内部研究笔记、部署日记、账号及测试产物不属于此文档集。
+本仓库的首个公开发行版为 0.11.0；当前源码变化见[0.11.1 发布说明](RELEASE_0.11.1.md)，旧版事实保存在[0.11.0 发布说明](RELEASE_0.11.0.md)。内部研究笔记、部署日记、账号及测试产物不属于此文档集。

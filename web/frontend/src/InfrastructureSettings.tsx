@@ -273,14 +273,14 @@ export default function InfrastructureSettings({ canAdminister }: { canAdministe
         const identifier = value.operation_id;
         if (typeof identifier === "string" && /^grafana_[0-9a-f]{32}$/.test(identifier) &&
             value.download_path === `/extensions/grafana/provisions/${identifier}/download`) {
-          const artifact = { path: value.download_path as string, filename: `qinghuan-grafana-${identifier.slice(8)}.zip` };
+          const artifact = { path: value.download_path as string, filename: `mindie-motor-console-grafana-${identifier.slice(8)}.zip` };
           setLastProvision(artifact);
           packageCreated = true;
           setFeedback("配置已生成，正在下载 ZIP 配置包；未执行安装。");
           await downloadProvision(artifact);
           if (mounted.current) setFeedback(downloadFeedback);
         } else if (value.operation_id === undefined && value.download_path === undefined) {
-          download(value, "qinghuan-grafana-provisioning-manifest.json");
+          download(value, "mindie-motor-console-grafana-provisioning-manifest.json");
           setFeedback("当前后端仅提供 JSON 生成清单，实际文件仍在控制数据目录 plugins/grafana；尚未下载 ZIP 配置包或执行安装。");
         } else {
           throw Error("配置已生成，但下载入口无法确认。请核对后端版本，未自动重试生成。");

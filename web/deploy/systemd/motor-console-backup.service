@@ -1,5 +1,5 @@
 [Unit]
-Description=Encrypted 擎寰平台 application recovery backup
+Description=Encrypted MindIE-Motor Console application recovery backup
 Documentation=file:/opt/motor-console-project/web/BACKUP_RECOVERY.md
 After=network-online.target
 Wants=network-online.target

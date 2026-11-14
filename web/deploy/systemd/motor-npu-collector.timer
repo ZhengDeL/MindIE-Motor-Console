@@ -1,5 +1,5 @@
 [Unit]
-Description=Collect Motor Console Ascend NPU observations every 15 seconds
+Description=Collect MindIE-Motor Console Ascend NPU observations every 15 seconds
 
 [Timer]
 OnBootSec=20s

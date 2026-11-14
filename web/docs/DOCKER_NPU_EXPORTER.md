@@ -1,6 +1,6 @@
 # Docker 节点 NPU 采集与官方 Exporter 离线安装
 
-适用范围：擎寰平台 0.11.0 的 NPU 观测接口。命令均在 **Linux Bash** 中执行，安装目录示例为 `/opt/qinghuan-monitoring`；不要直接粘贴到 Windows CMD。已有可用采集器优先复用，不因为升级平台重复安装 Exporter、驱动或容器运行时。
+适用范围：MindIE-Motor Console 0.11.1 的 NPU 观测接口。命令均在 **Linux Bash** 中执行，安装目录示例为 `/opt/motor-console/monitoring`；不要直接粘贴到 Windows CMD。已有可用采集器优先复用，不因为升级平台重复安装 Exporter、驱动或容器运行时。
 
 平台需要可信的设备观测，并不要求每台 Docker 节点安装一套 Prometheus。以下两条路径可独立选择：
 
@@ -38,7 +38,7 @@ systemctl list-unit-files --no-pager | grep -Ei 'npu.*(collector|exporter)|(coll
 
 ```bash
 umask 077
-npu_metrics_file=$(mktemp /tmp/qinghuan-npu-metrics.XXXXXX)
+npu_metrics_file=$(mktemp /tmp/motor-console-npu-metrics.XXXXXX)
 curl --noproxy 127.0.0.1 --fail --silent --show-error \
   --connect-timeout 2 --max-time 5 \
   http://127.0.0.1:8082/metrics --output "$npu_metrics_file"
@@ -58,7 +58,7 @@ HTTP 200 仅证明端点可访问。还应核对卡数、型号、PCI/设备 ID 
 
 ```bash
 set -eu
-qhmon_root=/opt/qinghuan-monitoring
+qhmon_root=/opt/motor-console/monitoring
 test ! -e "$qhmon_root/collector/host_npu_collector.py"
 test ! -e /etc/systemd/system/motor-npu-collector.service
 test ! -e /etc/systemd/system/motor-npu-collector.timer
@@ -73,17 +73,17 @@ install -o root -g root -m 0500 web/backend/host_npu_collector.py \
 
 ```ini
 [Unit]
-Description=Qinghuan read-only Ascend NPU observation
+Description=MindIE-Motor Console read-only Ascend NPU observation
 After=local-fs.target
-RequiresMountsFor=/opt/qinghuan-monitoring
-ConditionPathExists=/opt/qinghuan-monitoring/collector/host_npu_collector.py
+RequiresMountsFor=/opt/motor-console/monitoring
+ConditionPathExists=/opt/motor-console/monitoring/collector/host_npu_collector.py
 
 [Service]
 Type=oneshot
 User=root
 Group=root
 UMask=0077
-ExecStart=/usr/bin/python3 /opt/qinghuan-monitoring/collector/host_npu_collector.py --output /opt/qinghuan-monitoring/npu/observation.json --ttl-seconds 45
+ExecStart=/usr/bin/python3 /opt/motor-console/monitoring/collector/host_npu_collector.py --output /opt/motor-console/monitoring/npu/observation.json --ttl-seconds 45
 TimeoutStartSec=25
 TimeoutStopSec=2
 KillMode=control-group
@@ -99,7 +99,7 @@ Nice=10
 
 ```ini
 [Unit]
-Description=Qinghuan NPU observation timer
+Description=MindIE-Motor Console NPU observation timer
 
 [Timer]
 OnBootSec=20s
@@ -125,7 +125,7 @@ journalctl -u motor-npu-collector.service -n 30 --no-pager
 查看首个自然周期的输出，并确认后续周期的 `collected_at` 持续变化。成功时要逐卡核对 `mapping_status=verified`、健康和 `processes_status`，并核对 `host_identity`、`sample_clock`、`expires_at`。采样失败写入 error/unknown，不会借文件 mtime 或旧数值伪造成功。
 
 ```bash
-python3 -m json.tool /opt/qinghuan-monitoring/npu/observation.json
+python3 -m json.tool /opt/motor-console/monitoring/npu/observation.json
 systemctl show motor-npu-collector.service \
   -p Result -p ExecMainStatus -p CPUUsageNSec -p MemoryCurrent -p MemoryPeak
 ```
@@ -135,7 +135,7 @@ systemctl show motor-npu-collector.service \
 Agent Compose 已将宿主 `/` 只读挂载到 `/host`。在该 Agent 自己的受控环境文件中配置：
 
 ```dotenv
-MOTOR_NPU_SNAPSHOT_FILE=/host/opt/qinghuan-monitoring/npu/observation.json
+MOTOR_NPU_SNAPSHOT_FILE=/host/opt/motor-console/monitoring/npu/observation.json
 MOTOR_NPU_METRICS_URL=
 MOTOR_NPU_ADMISSION_MODE=observed
 MOTOR_RESOURCE_CACHE_SECONDS=10
@@ -216,7 +216,7 @@ docker run --rm --pull never --runtime runc --user 0:0 --network none --read-onl
 
 ```bash
 set -eu
-qhmon_root=/opt/qinghuan-monitoring
+qhmon_root=/opt/motor-console/monitoring
 test -n "${qhmon_image_id:-}"
 test -d /usr/local/Ascend/driver
 test -d /usr/local/dcmi
@@ -263,10 +263,10 @@ host-network 下监听回环地址，适用于同宿主 host-network Agent。桥
 ```bash
 docker inspect --format '{{.State.Status}} {{.State.ExitCode}} {{.Image}}' qinghuan-npu-exporter
 docker logs --tail 30 qinghuan-npu-exporter
-tail -n 50 /opt/qinghuan-monitoring/exporter/logs/npu-exporter.log
+tail -n 50 /opt/motor-console/monitoring/exporter/logs/npu-exporter.log
 docker stats --no-stream qinghuan-npu-exporter
 umask 077
-npu_metrics_file=$(mktemp /tmp/qinghuan-npu-metrics.XXXXXX)
+npu_metrics_file=$(mktemp /tmp/motor-console-npu-metrics.XXXXXX)
 curl --noproxy 127.0.0.1 --fail --silent --show-error \
   --connect-timeout 2 --max-time 5 http://127.0.0.1:8082/metrics \
   --output "$npu_metrics_file"
@@ -313,7 +313,7 @@ Exporter 安装命令用独立名称、标签和 `container.id` 记录身份。�
 
 ```bash
 set -eu
-qhmon_root=/opt/qinghuan-monitoring
+qhmon_root=/opt/motor-console/monitoring
 qhmon_container_id=$(cat "$qhmon_root/exporter/container.id")
 test "$(docker inspect --format '{{.Id}}' "$qhmon_container_id")" = "$qhmon_container_id"
 test "$(docker inspect --format '{{index .Config.Labels "io.motor.managed-by"}}' "$qhmon_container_id")" = manual-offline-guide

@@ -1,6 +1,6 @@
 # MindIE-Motor 原生集成
 
-本说明对应平台 0.11.0 的原生适配合同。平台是附加的管理控制面，复用 Motor 原生部署与运行逻辑。它不需要把 Web 代码合入 Motor 仓库，也没有取代 Controller、Coordinator、NodeManager、推理引擎或 Kubernetes 调度器。本说明解释配置从控制台到模型的实际执行链；各项特性范围见 [能力矩阵](NATIVE_CAPABILITY_MATRIX.md)。
+本说明对应平台 0.11.1 的原生适配合同。平台是附加的管理控制面，复用 Motor 原生部署与运行逻辑。它不需要把 Web 代码合入 Motor 仓库，也没有取代 Controller、Coordinator、NodeManager、推理引擎或 Kubernetes 调度器。本说明解释配置从控制台到模型的实际执行链；各项特性范围见 [能力矩阵](NATIVE_CAPABILITY_MATRIX.md)。
 
 ## 四类版本身份
 

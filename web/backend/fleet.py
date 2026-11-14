@@ -246,7 +246,7 @@ class Fleet:
             options["timeout"] = min(timeout, remaining)
             async with client.stream(operation, base + target, json=payload, headers=headers, **options) as streamed:
                 if streamed.headers.get(PRODUCT_HEADER) != PRODUCT_ID:
-                    raise FleetError("Agent response has no matching Qinghuan platform product identity", outcome_unknown=operation.upper() == "POST")
+                    raise FleetError("Agent response has no matching MindIE-Motor Console product identity", outcome_unknown=operation.upper() == "POST")
                 if streamed.headers.get("content-encoding", "identity").strip().lower() not in {"", "identity"}:
                     raise FleetError("Agent responses must use identity encoding for bounded reads", outcome_unknown=operation.upper() == "POST")
                 chunks, size = [], 0

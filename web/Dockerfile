@@ -27,9 +27,9 @@ RUN curl -fL --retry 3 "https://www.sqlite.org/2026/${SQLITE_ARCHIVE}.tar.gz" -o
 
 FROM ${PYTHON_BUILD_IMAGE} AS runtime
 ARG ASCEND_VISIBLE_DEVICES=void
-ARG CONSOLE_VERSION=0.11.0
+ARG CONSOLE_VERSION=0.11.1
 ARG VCS_REF=""
-LABEL org.opencontainers.image.title="擎寰平台" \
+LABEL org.opencontainers.image.title="MindIE-Motor Console" \
     io.motor.product="motor-console" \
     org.opencontainers.image.version="${CONSOLE_VERSION}" \
     org.opencontainers.image.revision="${VCS_REF}" \
@@ -77,9 +77,9 @@ ENV MOTOR_STATIC_ENABLED=false
 
 FROM ${NGINX_BUILD_IMAGE} AS web
 ARG ASCEND_VISIBLE_DEVICES=void
-ARG CONSOLE_VERSION=0.11.0
+ARG CONSOLE_VERSION=0.11.1
 ARG VCS_REF=""
-LABEL org.opencontainers.image.title="擎寰平台 Web" \
+LABEL org.opencontainers.image.title="MindIE-Motor Console Web" \
     io.motor.product="motor-console" \
     org.opencontainers.image.version="${CONSOLE_VERSION}" \
     org.opencontainers.image.revision="${VCS_REF}" \

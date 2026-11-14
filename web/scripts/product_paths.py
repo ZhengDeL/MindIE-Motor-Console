@@ -1,4 +1,4 @@
-"""Writable deployment paths must belong to this independent Qinghuan installation."""
+"""Writable deployment paths must belong to this MindIE-Motor Console installation."""
 from pathlib import Path
 
 

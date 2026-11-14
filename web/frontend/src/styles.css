@@ -216,7 +216,7 @@ small {
 .chart-dot.blue {
   background: var(--series-latency);
 }
-/* Qinghuan adaptation of Portainer 2.45.3 Button rules; see NOTICE.md and public/third-party-licenses.txt. */
+/* MindIE-Motor Console adaptation of Portainer 2.45.3 Button rules; see NOTICE.md and public/third-party-licenses.txt. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -1695,7 +1695,7 @@ td strong {
 .settings-help p.small-caption {
   font-size: var(--font-size-caption);
 }
-/* Qinghuan adaptation of Portainer 2.45.3 Modal and FormControl dimensions. */
+/* MindIE-Motor Console adaptation of Portainer 2.45.3 Modal and FormControl dimensions. */
 .modal-overlay {
   position: fixed;
   inset: 0;

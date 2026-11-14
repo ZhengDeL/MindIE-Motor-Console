@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:qinghuan:plugin-manifest:1",
-  "title": "Qinghuan source plugin manifest",
+  "title": "MindIE-Motor Console source plugin manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [

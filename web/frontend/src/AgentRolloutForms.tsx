@@ -369,7 +369,7 @@ export function ConfigurationFields({
             className="mono"
             value={spec.image}
             onChange={(event) => changeSpec("image", event.target.value.trim())}
-            placeholder="registry.example.com/qinghuan-platform@sha256:…"
+            placeholder="registry.example.com/motor-console@sha256:…"
           />
         </Field>
       )}
@@ -390,7 +390,7 @@ export function ConfigurationFields({
             onChange={(event) =>
               changeSpec("kubeconfig_path", event.target.value)
             }
-            placeholder="/etc/qinghuan-platform/agent.kubeconfig"
+            placeholder="/etc/motor-console/agent.kubeconfig"
           />
         </Field>
       )}

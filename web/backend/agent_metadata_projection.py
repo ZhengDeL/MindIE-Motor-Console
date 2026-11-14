@@ -41,7 +41,7 @@ def project_agent_metadata(value) -> dict:
     version = value.get("agent_version")
     if (not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
             or tuple(map(int, version.split("."))) < MIN_AGENT_VERSION):
-        raise AgentMetadataError("Agent version is unsupported by this Qinghuan platform build")
+        raise AgentMetadataError("Agent version is unsupported by this MindIE-Motor Console build")
     result = {"product_id": PRODUCT_ID, "agent_protocol": integer(value.get("agent_protocol"))}
     if "transport_security" in value:
         security = value["transport_security"]

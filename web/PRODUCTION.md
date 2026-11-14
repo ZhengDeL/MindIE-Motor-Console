@@ -1,12 +1,14 @@
-# 擎寰平台生产运行手册
+# MindIE-Motor Console 生产运行手册
 
-本手册面向部署和维护人员，适用于单实例控制面。正式部署基线见 [0.11.0 部署与升级](docs/DEPLOYMENT_0.11.0.md)。0.11.0 正式包含社区插件包；仍须核对实际构建修订、SDK features 和发布清单。插件导入、信任选择、启动加载是独立步骤，页面版本号不足以证明包已加载。
+本手册面向部署和维护人员，适用于单实例控制面。本手册随 0.11.1 源码维护，部署步骤见 [0.11.1 部署与升级](docs/DEPLOYMENT_0.11.1.md)。0.11.0 正式包含社区插件包；仍须核对实际构建修订、SDK features 和发布清单。插件导入、信任选择、启动加载是独立步骤，页面版本号不足以证明包已加载。
 
 下列命令在 Linux Bash 和仓库根目录执行；域名、目录、镜像摘要均为示例。没有通用默认密码，首个管理员通过部署时生成的一次性 bootstrap token 创建。
 
 ## 拓扑与运行前提
 
 推荐 `compose.modular.yaml`：HTTPS Web 与 Control API 分容器部署，API 不公开宿主端口；Web 不持有数据库或 Agent 凭据。数据库可选本地 SQLite 或独立 PostgreSQL，始终只有一个控制写者。Docker 每台执行宿主通常一个 Agent；Kubernetes 每个集群通常一个执行 Agent。Agent 不承载客户端正常推理流量。
+
+显示名称统一为 MindIE-Motor Console，已有安装仍应沿用原 Compose 项目名、环境、持久目录和凭据。项目名属于运行资源身份，不因显示名称变化自动迁移；兼容配置中的既有标识及处理方式见[名称与技术身份](docs/BRANDING.md#显示品牌与技术身份)。维护时记录实际 Compose 项目名，并对同一文件栈进行检查、升级和回退。
 
 需要 Linux、Docker Engine、Compose V2、可信镜像来源及覆盖浏览器实际地址的 HTTPS 证书。准备工具和维护 CLI 使用 Python 3.11+ 及项目锁定依赖，建议与所用 API 镜像保持相同环境。SQLite 必须通过代码中的 WAL-reset 修复版本门禁；升级 Python 本身不能替代检查其链接的 SQLite。
 
@@ -16,18 +18,20 @@ SQLite 必须使用可靠本地持久存储，不能放在共享文件系统由�
 
 ## 构建固定版本
 
+下方标签命令用于 `v0.11.1` 发布后；候选验证应使用已审核的源码提交，不能把本地构建参数当作发布凭据。
+
 ```bash
-git clone --recurse-submodules --branch v0.11.0 \
+git clone --recurse-submodules --branch v0.11.1 \
   https://github.com/ZhengDeL/MindIE-Motor-Console.git /opt/motor-console/source
 cd /opt/motor-console/source
 git submodule update --init --recursive
 git submodule status mindie-motor/upstream
 docker build -f web/Dockerfile --target api \
-  --build-arg CONSOLE_VERSION=0.11.0 --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/qinghuan/api:0.11.0 .
+  --build-arg CONSOLE_VERSION=0.11.1 --build-arg VCS_REF="$(git rev-parse HEAD)" \
+  -t registry.example.test/motor-console/api:0.11.1 .
 docker build -f web/Dockerfile --target web \
-  --build-arg CONSOLE_VERSION=0.11.0 --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/qinghuan/web:0.11.0 .
+  --build-arg CONSOLE_VERSION=0.11.1 --build-arg VCS_REF="$(git rev-parse HEAD)" \
+  -t registry.example.test/motor-console/web:0.11.1 .
 ```
 
 原生提交应为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。不要在安装时跟随原生 master；GitHub 自动源码归档不含子模块内容，离线构建必须另备完整固定源码。分别为目标架构构建、验证并记录真实 Image ID 和仓库摘要。示例标签不表示项目提供对应预构建镜像。
@@ -38,15 +42,15 @@ docker build -f web/Dockerfile --target web \
 
 先确认数据盘和 Docker 存储的可用容量、inode、架构、时间、端口及管理网络来源。容量检查使用容器用户可用空间，不能以 root 保留空间代替。日志、镜像、模型权重和恢复材料分别预留容量。
 
-准备受信发布者的 Ed25519 公钥 PEM，以及包含 `server.crt`、`server.key` 的私有 TLS 目录。证书 SAN、访问端口与 origin 必须匹配；签名私钥留在受控发布环境。对新独立空目录运行：
+准备受信发布者的 Ed25519 公钥 PEM，以及包含 `server.crt`、`server.key` 的私有 TLS 目录。自行发布时按[部署指南](docs/DEPLOYMENT_0.11.1.md#3-安全初始化)在受控离线环境生成独立发布密钥，仅传递公钥。证书 SAN、访问端口与 origin 必须匹配；签名私钥留在受控发布环境。对新独立空目录运行：
 
 ```bash
 python3 web/scripts/prepare_production.py \
   --project-dir /opt/motor-console/source \
   --data-dir /opt/motor-console/control-data \
   --agent-rollout-root /opt/motor-console/agents \
-  --image 'registry.example.test/qinghuan/api@sha256:<reviewed-api-digest>' \
-  --web-image 'registry.example.test/qinghuan/web@sha256:<reviewed-web-digest>' \
+  --image 'registry.example.test/motor-console/api@sha256:<reviewed-api-digest>' \
+  --web-image 'registry.example.test/motor-console/web@sha256:<reviewed-web-digest>' \
   --web-tls-dir /opt/motor-console/tls \
   --origin https://console.example.test:19443 \
   --release-public-key /opt/motor-console/publisher/release.pub \

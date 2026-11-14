@@ -1,6 +1,6 @@
 # 贡献与发布流程
 
-擎寰平台接受缺陷修复、文档、运行时适配和社区插件贡献。提交前先阅读[项目文档](web/docs/README.md)，确认目标版本、组件边界及相关接口；安全问题按 [SECURITY.md](SECURITY.md) 私密报告。
+MindIE-Motor Console 接受缺陷修复、文档、运行时适配和社区插件贡献。提交前先阅读[项目文档](web/docs/README.md)，确认目标版本、组件边界及相关接口；安全问题按 [SECURITY.md](SECURITY.md) 私密报告。
 
 ## 正式主线与本地任务分支
 
@@ -32,13 +32,24 @@ git switch -c feat/YYYYMMDD-topic upstream/main
 git submodule update --init --recursive
 ```
 
-提交前确认 `origin` 指向自己的 Fork，`upstream` 指向主仓库。完成本地修改和验证后，显式暂存相关文件、创建提交，再将工作分支推送到自己的 Fork：
+提交前确认 `origin` 指向自己的 Fork，`upstream` 指向主仓库。完成本地修改和验证后，只暂存本次需要的文件。以下以修改 `README.md` 为例；代码或插件贡献应将它替换为实际修改的具体路径，不能把测试、密钥或运行数据一起加入：
+
+```bash
+git status --short
+git diff -- README.md
+git add -- README.md
+git diff --cached --check
+git diff --cached --stat
+git commit -m "docs: clarify setup instructions"
+```
+
+确认提交内容后，将工作分支推送到自己的 Fork：
 
 ```bash
 git push --set-upstream origin feat/YYYYMMDD-topic
 ```
 
-在 GitHub 创建目标为主仓库 `main` 的 PR。固定标签与 `main` 可能具有不同能力，不能只凭版本字符串判断接口；社区包开发还应核对目标宿主的 `/api/plugin-sdk`，详见[插件开发指南](web/PLUGIN_DEVELOPMENT.md)。
+打开自己的 Fork，选择 **Contribute → Open pull request**。核对 base repository 为 `ZhengDeL/MindIE-Motor-Console`、base 为 `main`，head 为自己的 Fork 和本次工作分支；按 PR 模板填写问题、修改、验证与未覆盖范围，再提交。固定标签与 `main` 可能具有不同能力，不能只凭版本字符串判断接口；社区包开发还应核对目标宿主的 `/api/plugin-sdk`，详见[插件开发指南](web/PLUGIN_DEVELOPMENT.md)。
 
 ## 实现合同
 

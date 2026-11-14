@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from scripts.product_paths import require_product_path
+from scripts.tls_material import validate_server_identity
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -34,7 +35,8 @@ def main() -> None:
     if any(p.is_symlink() for p in root.parents):
         raise SystemExit('Refuse symlinked installation parents')
     origin=urlsplit(args.origin)
-    if origin.scheme!='https' or not origin.hostname or origin.username or origin.password or origin.path not in ('','/') or origin.query or origin.fragment:
+    if (origin.scheme!='https' or not origin.hostname or origin.username is not None or origin.password is not None
+            or origin.path not in ('','/') or origin.query or origin.fragment or any(character.isspace() for character in args.origin)):
         raise SystemExit('--origin must be an exact HTTPS origin')
     if not 1024<=args.port<=65535 or (origin.port or 443)!=args.port:
         raise SystemExit('HTTPS origin and published port must match')
@@ -45,13 +47,14 @@ def main() -> None:
     for path in (args.server_cert,args.server_key):
         if not path.is_file() or any(p.is_symlink() for p in (path,*path.parents)):
             raise SystemExit('Server TLS files must be regular files without symlink parents')
-    if 'PRIVATE KEY' not in args.server_key.read_text(encoding='ascii'):
-        raise SystemExit('Invalid server private-key PEM')
-    if re.search(r'(^|[-_.])ca([-_.]|$)',args.server_key.stem,re.I):
-        raise SystemExit('Use only the server key; never a CA private key')
-    # Validate the certificate/key pair before creating any installation files.
-    tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    tls.load_cert_chain(str(args.server_cert),str(args.server_key))
+    # Validate leaf identity before creating installation files. Filename
+    # guesses cannot establish whether a private key belongs to a CA.
+    try:
+        validate_server_identity(args.server_cert,args.server_key,origin.hostname)
+        tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        tls.load_cert_chain(str(args.server_cert),str(args.server_key))
+    except (OSError,ValueError,ssl.SSLError) as exc:
+        raise SystemExit("Server TLS validation failed: "+str(exc)) from None
     web=Path(__file__).resolve().parents[1]
     native=web.parent/'mindie-motor/upstream/examples/features/observability/stack/grafana/dashboards/motor-all-metrics.json'
     if not native.is_file():
@@ -68,7 +71,7 @@ def main() -> None:
             if any(ord(c)<32 for c in raw):
                 raise SystemExit('Exporter target contains control characters')
             parsed=urlsplit('//'+raw)
-            if not parsed.hostname or not parsed.port or parsed.path or parsed.username or parsed.password or parsed.query or parsed.fragment:
+            if not parsed.hostname or not parsed.port or parsed.path or parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
                 raise SystemExit('Exporter target must be HOST:PORT')
             host=parsed.hostname
             if not re.fullmatch(r'[A-Za-z0-9.-]+',host) or not 1<=parsed.port<=65535:
@@ -95,7 +98,7 @@ def main() -> None:
             if not isinstance(target,str) or any(ord(c)<32 for c in target):
                 raise SystemExit('Invalid native target value')
             parsed=urlsplit('//'+target)
-            if not parsed.hostname or not parsed.port or parsed.path or parsed.username or parsed.password:
+            if not parsed.hostname or not parsed.port or parsed.path or parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment:
                 raise SystemExit('Invalid native metrics target')
     root.mkdir(parents=True,mode=0o750)
     os.chmod(root,0o750)
@@ -139,7 +142,7 @@ def main() -> None:
     write('config/prometheus/rules/host-npu.rules.yaml',(web/'observability/rules/host-npu.rules.yaml').read_bytes())
     write('config/prometheus/prometheus.yml',asjson({'global':{'scrape_interval':'30s','scrape_timeout':'10s','evaluation_interval':'30s'},'rule_files':['/etc/prometheus/rules/host-npu.rules.yaml'],'scrape_configs':scrape}))
     write('config/grafana/provisioning/datasources/prometheus.yaml',asjson({'apiVersion':1,'datasources':[{'name':'Prometheus','type':'prometheus','uid':'prometheus','access':'proxy','url':'http://prometheus:9090','isDefault':True,'editable':False,'jsonData':{'timeInterval':'30s','httpMethod':'POST','queryTimeout':'30s'}}]}))
-    write('config/grafana/provisioning/dashboards/dashboards.yaml',asjson({'apiVersion':1,'providers':[{'name':'qinghuan-observability','orgId':1,'folder':'擎寰运行观测','type':'file','disableDeletion':False,'editable':False,'updateIntervalSeconds':60,'allowUiUpdates':False,'options':{'path':'/opt/qinghuan/dashboards','foldersFromFilesStructure':False}}]}))
+    write('config/grafana/provisioning/dashboards/dashboards.yaml',asjson({'apiVersion':1,'providers':[{'name':'qinghuan-observability','orgId':1,'folder':'MindIE-Motor Console','type':'file','disableDeletion':False,'editable':False,'updateIntervalSeconds':60,'allowUiUpdates':False,'options':{'path':'/opt/qinghuan/dashboards','foldersFromFilesStructure':False}}]}))
     write('config/grafana/dashboards/motor-all-metrics.json',native.read_bytes())
     write('config/grafana/dashboards/host-npu.json',(web/'observability/dashboards/host-npu.json').read_bytes())
     write('config/grafana/dashboards/host-npu-node.json',(web/'observability/dashboards/host-npu-node.json').read_bytes())

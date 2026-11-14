@@ -1,6 +1,6 @@
 # Docker 裸机 Node Exporter 离线安装
 
-适用范围：擎寰平台 0.11.0 的 Docker 主机观测接口。下面的命令在 **Linux Bash** 中执行。示例目录为 `/opt/motor-console/monitoring/node-exporter`，示例地址为文档专用地址，需替换为实际管理网地址。Kubernetes 节点复用集群侧已有监控，不执行本手册重复安装。
+适用范围：MindIE-Motor Console 0.11.1 的 Docker 主机观测接口。下面的命令在 **Linux Bash** 中执行。示例目录为 `/opt/motor-console/monitoring/node-exporter`，示例地址为文档专用地址，需替换为实际管理网地址。Kubernetes 节点复用集群侧已有监控，不执行本手册重复安装。
 
 Node Exporter 提供宿主 CPU、内存、系统版本、磁盘、文件系统和网络指标；NPU 使用 [NPU 采集与 Exporter 手册](DOCKER_NPU_EXPORTER.md)。本版主机观测统一采用 **Node Exporter → Agent → 控制台**：CPU、内存和操作系统来自同一采集源，Agent 不再自行读取宿主 `/proc/stat`、`/proc/meminfo` 或 `os-release` 采集这些指标，也不以 Docker 信息回退为宿主系统。用于宿主身份绑定和 NPU 快照时效校验的只读信息独立保留。采集缺失时保留不可用状态，不能补零或混入另一来源。
 
@@ -168,7 +168,7 @@ HTTPS 采集可通过 `MOTOR_NODE_EXPORTER_CA_FILE` 指定受信 CA；`MOTOR_NOD
 
 ```bash
 umask 077
-metrics_file=$(mktemp /tmp/qinghuan-node-metrics.XXXXXX)
+metrics_file=$(mktemp /tmp/motor-console-node-metrics.XXXXXX)
 curl --noproxy '*' --fail --silent --show-error \
   --connect-timeout 3 --max-time 10 --max-filesize 5242880 \
   http://127.0.0.1:9100/metrics --output "$metrics_file"

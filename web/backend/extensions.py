@@ -687,7 +687,7 @@ class GrafanaIntegration:
         body = buffer.getvalue()
         if len(body) > _PACKAGE_MAX_BYTES + _PACKAGE_MAX_FILES * 1024:
             raise _package_error()
-        filename = "qinghuan-grafana-" + operation.removeprefix("grafana_") + ".zip"
+        filename = "mindie-motor-console-grafana-" + operation.removeprefix("grafana_") + ".zip"
         return Response(body, media_type="application/zip", headers={
             "Content-Disposition": 'attachment; filename="' + filename + '"',
             "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",

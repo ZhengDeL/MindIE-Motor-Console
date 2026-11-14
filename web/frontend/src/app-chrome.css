@@ -1,4 +1,4 @@
-/* Qinghuan adaptation of Portainer CE 2.45.3 shell geometry; see NOTICE.md. */
+/* MindIE-Motor Console adaptation of Portainer CE 2.45.3 shell geometry; see NOTICE.md. */
 @property --rail-width { syntax: "<length>"; inherits: true; initial-value: 240px; }
 .app-shell { display: grid; grid-template-columns: var(--rail-width) minmax(0, 1fr); min-height: 100dvh; background: var(--canvas); --rail-width: var(--sidebar-width); --sidebar: #2e2f33; --sidebar-text: #f2f4f7; --sidebar-muted: #d0d5dd; --sidebar-hover: #484a4e; --sidebar-border: transparent; --sidebar-active-text: #f2f4f7; --sidebar-icon: #f2f4f7; --nav-selected-bg: #484a4e; transition: --rail-width 200ms ease; }
 .app-shell.sidebar-collapsed { --rail-width: 72px; }

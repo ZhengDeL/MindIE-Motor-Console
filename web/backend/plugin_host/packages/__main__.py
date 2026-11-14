@@ -14,7 +14,7 @@ from .store import PackageStore
 
 
 def parser():
-    result = argparse.ArgumentParser(description="Build and explicitly select reviewed Qinghuan source plugins; selection takes effect after host restart")
+    result = argparse.ArgumentParser(description="Build and explicitly select reviewed MindIE-Motor Console source plugins; selection takes effect after host restart")
     commands = result.add_subparsers(dest="command", required=True)
     build = commands.add_parser("build", help="Build a deterministic .qhplugin source archive without running its code")
     build.add_argument("source")

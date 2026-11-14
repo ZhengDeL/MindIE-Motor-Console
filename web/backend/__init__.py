@@ -1,1 +1,1 @@
-"""Motor Console control plane and runtime adapters."""
+"""MindIE-Motor Console control plane and runtime adapters."""

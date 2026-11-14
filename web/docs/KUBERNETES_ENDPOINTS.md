@@ -1,6 +1,6 @@
 # Kubernetes 服务访问入口
 
-本手册对应 0.11.0，仅适用于 Kubernetes 服务；Docker 端口仍由对应原生部署布局决定。平台通过只读接口 `GET /api/services/{id}/endpoints` 发现实际已发布的入口。需要登录；接口不接受用户指定 URL、路径或查询参数，也不会修改原生 Motor JSON、Service 或平台数据库。
+本手册对应 0.11.1，仅适用于 Kubernetes 服务；Docker 端口仍由对应原生部署布局决定。平台通过只读接口 `GET /api/services/{id}/endpoints` 发现实际已发布的入口。需要登录；接口不接受用户指定 URL、路径或查询参数，也不会修改原生 Motor JSON、Service 或平台数据库。
 
 ## 地址从哪里来
 

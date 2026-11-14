@@ -4,7 +4,9 @@
 
 ## 报告方式
 
-优先使用仓库 **Security → Advisories → Report a vulnerability** 的私密报告入口。如果页面没有该按钮，请通过不含漏洞细节的 Issue 请求维护者提供私密联系渠道，再提交材料。不要把可利用细节或秘密粘贴到公开讨论中。
+本仓库已启用 GitHub 私密漏洞报告。请登录 GitHub，使用 [Report a vulnerability](https://github.com/ZhengDeL/MindIE-Motor-Console/security/advisories/new) 提交；也可从仓库 **Security → Advisories → Report a vulnerability** 进入。报告仅向维护者和获邀协作者开放，不需要先创建公开 Issue。
+
+若入口不可用，请通过不含漏洞细节的 Issue 请求维护者提供私密联系渠道，再提交材料。不要把可利用细节或秘密粘贴到公开讨论中。
 
 报告至少包含受影响提交/版本、部署模式、插件 ID/版本及 SHA-256、必要的脱敏复现、实际影响和建议缓解方式。区分代码推断、本地复现和真实环境证据；不要在未授权的第三方节点验证漏洞。
 

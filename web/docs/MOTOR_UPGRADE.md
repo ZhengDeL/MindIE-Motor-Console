@@ -126,7 +126,7 @@ python web/scripts/package_motor_profile.py \
   --upstream-dir /srv/review/motor-3.2.0 \
   --commit FULL_40_CHARACTER_COMMIT \
   --profile-id motor-reviewed-FULL_40_CHARACTER_COMMIT \
-  --output-dir /srv/qinghuan/native-profiles/new-profile \
+  --output-dir /opt/motor-console/native-profiles/new-profile \
   --contract-evidence /srv/review/evidence/reviewed-runtime-contracts.json \
   --omit-documentation-sources
 ```

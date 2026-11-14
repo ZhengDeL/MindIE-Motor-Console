@@ -1,6 +1,6 @@
-# 擎寰平台资源管理
+# MindIE-Motor Console 资源管理
 
-本手册对应 0.11.0。平台将 Docker 设备声明、硬件观测和受管分配账本分开。设备声明不是利用率，健康不等于资源可分配，Kubernetes allocatable 不是实时空闲。原生 Motor 的启动配置、实例注册和推理路由保持原有语义；本文说明平台的观测与执行边界，设备配套和性能须在目标环境验证。
+本手册对应 0.11.1。平台将 Docker 设备声明、硬件观测和受管分配账本分开。设备声明不是利用率，健康不等于资源可分配，Kubernetes allocatable 不是实时空闲。原生 Motor 的启动配置、实例注册和推理路由保持原有语义；本文说明平台的观测与执行边界，设备配套和性能须在目标环境验证。
 
 ## 独立安装与后续升级
 
@@ -27,7 +27,7 @@ sudo systemctl enable --now motor-npu-collector.timer
 
 从已有同用途的采集 timer/service 迁移时，先确认其归属和用途，备份原脚本/unit，停止并禁用旧 timer，等待旧 oneshot 及其查询子进程退出后再安装新配置。名字不同的两套采集器不共享 systemd 单实例保护；不要同时启用。若新采集失败，先停新 timer，再按保留的旧配置恢复，不能让两份交替写快照。不要按通配符停止其他 Exporter。
 
-需要将所有平台材料放在 `/opt/motor-console` 时，改用[统一目录采集 unit](deploy/qinghuan/motor-npu-collector.service)，脚本在 `/opt/motor-console/collector`，快照在 `/opt/motor-console/npu/observation.json`。这是默认 unit 的替代配置，不是第二套采集；两者使用同一正式 unit 名并择一安装到 `/etc/systemd/system`。
+需要将所有平台材料放在 `/opt/motor-console` 时，改用[统一目录采集 unit](deploy/motor-console/motor-npu-collector.service)，脚本在 `/opt/motor-console/collector`，快照在 `/opt/motor-console/npu/observation.json`。这是默认 unit 的替代配置，不是第二套采集；两者使用同一正式 unit 名并择一安装到 `/etc/systemd/system`。
 
 在 Agent 环境文件设置后，只更新 Agent 容器；使用上述专用目录时，将下面快照改为`/host/opt/motor-console/npu/observation.json`：
 

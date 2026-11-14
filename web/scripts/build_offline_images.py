@@ -266,7 +266,7 @@ def main(argv=None):
     parser.add_argument('--nginx-receipt', required=True)
     parser.add_argument('--dependency-image', required=True)
     parser.add_argument('--sqlite-version', required=True)
-    parser.add_argument('--version', default='0.11.0')
+    parser.add_argument('--version', default='0.11.1')
     parser.add_argument('--include-kubectl', action='store_true')
     arguments = parser.parse_args(argv)
     try:

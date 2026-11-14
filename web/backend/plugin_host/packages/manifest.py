@@ -255,7 +255,7 @@ def manifest_schema() -> dict:
                          "items": {"type": "string", "pattern": r"^[a-z][a-z0-9.:_-]{0,95}$"}}}
     properties["license"]["pattern"] = r"^[A-Za-z0-9.+() -]+$"
     return {"$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "urn:qinghuan:plugin-manifest:1",
-        "title": "Qinghuan source plugin manifest", "type": "object", "additionalProperties": False,
+        "title": "MindIE-Motor Console source plugin manifest", "type": "object", "additionalProperties": False,
         "required": ["schemaVersion", "id", "name", "version", "description", "api_version", "entrypoint",
                      "license", "author", "minimum_host_version", "access"], "properties": properties,
         "x-runtime-rules": ["IDs must not replace host or bundled plugins", "Every route stays in /api/plugins/<manifest.id>",

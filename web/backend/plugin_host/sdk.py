@@ -41,7 +41,7 @@ def status_table_schema() -> dict:
     ]}
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "title": "Qinghuan status-table-v1", "type": "object", "required": ["columns", "rows"],
+        "title": "MindIE-Motor Console status-table-v1", "type": "object", "required": ["columns", "rows"],
         "properties": {
             "title": {"type": "string", "maxLength": 200},
             "summary": {"type": "string", "maxLength": 2000},

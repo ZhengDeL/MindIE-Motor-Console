@@ -115,7 +115,7 @@ def _public_endpoint(bind_ip: str, port: int, public_url: str | None,
     except ValueError:
         valid_port = False
     if (parsed.scheme not in {"https", "http"} or not parsed.hostname or not valid_port
-            or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment):
+            or parsed.username is not None or parsed.password is not None or parsed.path or parsed.query or parsed.fragment):
         raise ValueError("Agent public URL must be an HTTP(S) origin without credentials or a path")
     try:
         public_address = ipaddress.ip_address(parsed.hostname)
@@ -356,7 +356,7 @@ def _kubeconfig(value) -> tuple[Path, bytes]:
     try:
         parsed = urlsplit(server) if isinstance(server, str) else None
         valid_server = (parsed and parsed.scheme == "https" and parsed.hostname
-                        and not parsed.username and not parsed.password and not parsed.query and not parsed.fragment
+                        and parsed.username is None and parsed.password is None and not parsed.query and not parsed.fragment
                         and (parsed.port is None or 1 <= parsed.port <= 65535))
     except ValueError:
         valid_server = False

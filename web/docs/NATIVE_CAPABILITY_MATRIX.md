@@ -1,6 +1,6 @@
 # 原生 Motor 能力、平台入口与验证矩阵
 
-本矩阵说明平台 0.11.0 的入口范围，以固定原生提交 `37d615f232a36b8dba8630ffc3a01a20d289c65e` 为依据，核对官方声明、实际执行入口、平台操作和验收边界。入口说明以仓库中的运行时适配器为准；插件停用后，对应入口不可用。不同引擎、镜像、硬件和外部系统需要独立验证，不能从单一部署结果外推全部能力。
+本矩阵说明平台 0.11.1 的入口范围，以固定原生提交 `37d615f232a36b8dba8630ffc3a01a20d289c65e` 为依据，核对官方声明、实际执行入口、平台操作和验收边界。入口说明以仓库中的运行时适配器为准；插件停用后，对应入口不可用。不同引擎、镜像、硬件和外部系统需要独立验证，不能从单一部署结果外推全部能力。
 
 ## 固定源码与镜像版本
 
@@ -16,7 +16,7 @@
 - **部署验证要求**：应绑定精确版本、引擎、模型、硬件、拓扑和原始请求结果。配置解析、清单生成、容器健康和真实业务验证分别记录；P/D 主链成功不能替代某项特性的负载、故障或外部系统验收。
 - **JSON/env 通道**：配置按原生格式保存并交付，原生进程消费。本版没有把所有字段转换成专用表单，也没有专用原生热更新执行入口；保存配置修订不会自动调用 `deploy.py --update_config`。原生支持的热更新范围仍以固定版本白名单、实际 watcher 和运行进程为准。
 
-平台 `catalog.capabilities()` 保留 `validation: native_declared`，并为 EPD 单列 `execution_supported`；不能将 `docker_supported` 等官方声明字段解释为当前入口已经执行成功。源码位置：[`catalog.py`](../backend/catalog.py)、[`catalog.py`](../backend/catalog.py)。功能配置页提供离线说明、增量示例和本地源码定位；复制示例不会自动保存或部署。
+平台 `catalog.capabilities()` 保留 `validation: native_declared`，并为 EPD 单列 `execution_supported`；不能将 `docker_supported` 等官方声明字段解释为当前入口已经执行成功。源码位置：[`catalog.py`](../backend/catalog.py)。功能配置页提供离线说明、增量示例和本地源码定位；复制示例不会自动保存或部署。
 
 ## 21 项官方能力
 
@@ -52,7 +52,7 @@ Docker 适配器调用固定 deployer 的设备、绑定、端口和启动 helpe
 
 平台负责资源布局建议、准入和执行结果管理；Docker 有持久操作回执，K8s 采用资源所有权与 UID 记录。Controller/NodeManager负责实例生命周期；Coordinator负责请求选路；引擎负责批次、并行和KV。外部客户端通常直接访问 Coordinator/网关，不经过平台 Agent 或控制数据库；平台内 K8s 推理调试通过受控 Agent 接口访问服务。Docker容器依赖原生注册协议协作，不依赖Docker自身提供K8s式调度器。资源建议不是已经证明的全局拓扑最优调度。
 
-依据：[`motor_adapter.py`](../backend/motor_adapter.py)、[`motor_adapter.py`](../backend/motor_adapter.py)、[`kubernetes_runtime.py`](../backend/kubernetes_runtime.py)；[原生P/D说明][pd]。完整配置、不同引擎、网络/Connector、生命周期与原生请求路由分别验收，不从单一成功请求外推全部并发/故障路径。
+依据：[`motor_adapter.py`](../backend/motor_adapter.py)、[`kubernetes_runtime.py`](../backend/kubernetes_runtime.py)；[原生P/D说明][pd]。完整配置、不同引擎、网络/Connector、生命周期与原生请求路由分别验收，不从单一成功请求外推全部并发/故障路径。
 
 ## F02 EPD声明与入口差异
 
@@ -122,7 +122,7 @@ F04需要区分亲和索引与实际KV存储。Docker本版没有Conductor布局
 | 已有 OpenAI 兼容网关 | 连接 CRUD、模型绑定、列表检查和连接描述导出 | 管理平台连接记录，不安装网关或修改外部路由 | 没有随产品交付的官方 Motor AIGW 制品/安装合同；`deploy/stop/upgrade` 明确返回 `artifact_not_configured`。不可将同名软件或连接描述当成可部署 AIGW |
 | Node/NPU Exporter | Docker 手册和部署示例；K8s 复用集群侧采集；Agent 有界读取已有来源 | Node Exporter 提供 CPU/内存/OS；裸 Docker NPU 可用宿主只读快照或经核验的 Exporter | 无通用网页一键安装器；NPU Exporter 容器归属依赖 CRI/containerd，不是挂 docker.sock 即完成。磁盘/网络历史需 Prometheus；原生虚推 AI Cube 是另一条采样链 |
 
-CCAE源码定位：[`extensions.py`](../backend/extensions.py)、[`extensions.py`](../backend/extensions.py)、[`InfrastructureSettings.tsx`](../frontend/src/InfrastructureSettings.tsx)；原生[启动与等待][ccae-run]、[注册/上传][ccae-reporter]、[Kafka/TLS与角色差异][ccae-base]。Reporter显式使用HTTPS，关闭`enable_tls`不代表自动变明文HTTP；注册成功也不证明Kafka的SSL和消费正常。Reporter helper退出与模型业务就绪是不同状态，不从Motor容器Running推断Reporter健康。
+CCAE源码定位：[`extensions.py`](../backend/extensions.py)、[`InfrastructureSettings.tsx`](../frontend/src/InfrastructureSettings.tsx)；原生[启动与等待][ccae-run]、[注册/上传][ccae-reporter]、[Kafka/TLS与角色差异][ccae-base]。Reporter显式使用HTTPS，关闭`enable_tls`不代表自动变明文HTTP；注册成功也不证明Kafka的SSL和消费正常。Reporter helper退出与模型业务就绪是不同状态，不从Motor容器Running推断Reporter健康。
 
 Grafana源码定位：[GrafanaIntegration](../backend/extensions.py) 的 `settings`、`probe`、`provision` 与 `download` 分别处理保存回执投影、显式检查、配置生成和管理员ZIP下载；[原生Grafana指南][grafana-guide]提供案例。过期状态更新不自动发起外部探测，空目标不代表已采集模型数据；ZIP仅包含该次生成并校验的文件。独立[Docker观测模块](../compose.observability.yaml)复用已有Exporter，持久指标与平台数据库分开维护。原生观测栈的K8s目标发现不等于登记 Docker 宿主的自动发现。
 

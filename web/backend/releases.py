@@ -26,6 +26,39 @@ def canonical_manifest(document: dict) -> bytes:
     return json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()
 
 
+def validate_release_manifest(document: object, release_id: str | None = None) -> dict:
+    """Validate a manifest before signing and after signature verification.
+
+    A syntactically valid SHA256 of all zeroes is a documentation placeholder,
+    never an installable image identity. Extra metadata remains signed without
+    changing the existing release schema.
+    """
+    if not isinstance(document, dict):
+        raise ValueError("Invalid release manifest object")
+    identifier = document.get("id")
+    if (type(document.get("release_schema")) is not int or document["release_schema"] != 1
+            or not isinstance(identifier, str) or not _RELEASE.fullmatch(identifier)
+            or release_id is not None and identifier != release_id):
+        raise ValueError("Unsupported release schema or mismatched identity")
+    if document.get("product_id") != PRODUCT_ID:
+        raise ValueError("Release manifest belongs to another product or has no MindIE-Motor Console identity")
+    version_tuple(document.get("version"))
+    for field, label in (("image", "Release"), ("web_image", "Independent Web release")):
+        if field == "web_image" and field not in document:
+            continue
+        value = document.get(field)
+        if not isinstance(value, str) or not _IMAGE.fullmatch(value):
+            raise ValueError(label + " image must be pinned by SHA256 digest")
+        if value.rsplit(":", 1)[-1] == "0" * 64:
+            raise ValueError(label + " image contains an all-zero placeholder digest; use a reviewed image identity")
+    for field in ("agent_protocol", "db_schema_min", "db_schema_max"):
+        if type(document.get(field)) is not int or document[field] < 0:
+            raise ValueError("Invalid release compatibility range")
+    if document["db_schema_min"] > document["db_schema_max"]:
+        raise ValueError("Invalid database compatibility range")
+    return document
+
+
 def read_release(directory: Path, release_id: str, key_file: str | Path | None) -> dict:
     if not _RELEASE.fullmatch(release_id): raise ValueError("Invalid release ID")
     root = directory.resolve()
@@ -43,16 +76,5 @@ def read_release(directory: Path, release_id: str, key_file: str | Path | None) 
         public_key.verify(signature, canonical_manifest(document))
     except (OSError, InvalidSignature, ValueError, TypeError) as exc:
         raise ValueError("Release signature verification failed") from exc
-    if type(document.get("release_schema")) is not int or document["release_schema"] != 1 or document.get("id") != release_id:
-        raise ValueError("Unsupported release schema or mismatched identity")
-    if document.get("product_id") != PRODUCT_ID:
-        raise ValueError("Release manifest belongs to another product or has no Motor Console identity")
-    version_tuple(document.get("version"))
-    if not isinstance(document.get("image"), str) or not _IMAGE.fullmatch(document["image"]):
-        raise ValueError("Release image must be pinned by SHA256 digest")
-    if "web_image" in document and (not isinstance(document["web_image"], str) or not _IMAGE.fullmatch(document["web_image"])):
-        raise ValueError("Independent Web release image must be pinned by SHA256 digest")
-    for field in ("agent_protocol", "db_schema_min", "db_schema_max"):
-        if type(document.get(field)) is not int or document[field] < 0: raise ValueError("Invalid release compatibility range")
-    if document["db_schema_min"] > document["db_schema_max"]: raise ValueError("Invalid database compatibility range")
+    validate_release_manifest(document, release_id)
     return {**document, "manifest_sha256": hashlib.sha256(canonical_manifest(document)).hexdigest()}

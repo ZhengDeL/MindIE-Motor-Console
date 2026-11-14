@@ -2,6 +2,8 @@
 .platform-brand-icon { display: block; width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; }
 .platform-brand .platform-brand-wordmark { min-width: 0; width: auto; flex: 0 1 auto; max-width: 100%; }
 .platform-brand .platform-brand-wordmark b, .platform-brand .platform-brand-wordmark small { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.platform-brand:not(.compact) .platform-brand-wordmark b { white-space: normal; overflow-wrap: anywhere; }
+.platform-brand-sidebar:not(.compact) .platform-brand-wordmark b { font-size: var(--font-size-title); line-height: 24px; }
 .platform-brand.compact { justify-content: center; gap: 0; }
 .platform-brand.compact .platform-brand-wordmark b { font-size: 18px; line-height: 28px; }
 .platform-brand-login { justify-content: center; }

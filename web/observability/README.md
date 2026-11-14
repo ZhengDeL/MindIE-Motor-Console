@@ -2,9 +2,13 @@
 
 此模块独立运行 Grafana OSS、Prometheus 和 HTTPS 入口，复用已经安装的 Node Exporter、Ascend NPU Exporter。它不修改 Motor 原生调度逻辑，不挂载 NPU 或 Docker socket，也不参与推理流量。平台、数据库、Agent 与模型服务可以分别维护。这里的独立部署模块不是 Grafana 插件市场安装包；平台 Grafana 插件只管理连接、只读检查和可选导航入口，Grafana 自身仍使用独立登录。
 
+本项目显示名称为 **MindIE-Motor Console**。看板 UID、跳转路径及预计算序列保持现有接口标识，便于已有安装继续读取历史数据；不要为了修改页面名称而单独改写这些标识。对应关系见[显示品牌与技术身份](../docs/BRANDING.md#显示品牌与技术身份)。
+
 本文配置示例使用 Grafana OSS 13.3.1、Prometheus 3.13.5 LTS；准备脚本接收显式镜像 ID，不会自动下载或验证某个版本。镜像来源分别是官方 `grafana/grafana` 和 `prom/prometheus`；安装时必须核验所需架构并固定镜像 ID，禁止使用 `latest` 或来源不明的镜像代理。Grafana 的独立账号与平台账号分别管理，平台对接使用 Viewer 服务账号令牌。
 
 ## 准备与启动
+
+准备工具需要 Python 3.11+ 及 [项目锁定依赖](../requirements.lock)，包括用于证书检查的 `cryptography`；建议在与已验证 API 镜像一致的环境中运行。离线机器应预先准备经过核验的依赖制品，不能只复制单个脚本运行。
 
 1. 在目标 Docker 主机准备三个已核验的 arm64/amd64 官方镜像，包括 nginx。离线场景先传入镜像归档，校验 SHA256 后 `docker load`，再核对导入后的完整 image ID、架构和来源收据。
 2. 准备受信任的 HTTPS 服务端证书及匹配私钥。证书 SAN 必须覆盖访问主机。只能使用服务端私钥，不得复制 CA 私钥。
@@ -13,7 +17,7 @@
 
 ```sh
 python3 web/scripts/prepare_observability.py \
-  --root /srv/qinghuan/observability \
+  --root /opt/motor-console/observability \
   --origin https://monitor.example.com:19444 \
   --bind-ip 0.0.0.0 --port 19444 \
   --grafana-image 'sha256:<verified-grafana-image-id>' \
@@ -24,10 +28,10 @@ python3 web/scripts/prepare_observability.py \
   --npu-exporter worker.example.com:8082
 ```
 
-每个目标可重复传入相应参数。工具仅创建新目录、配置和随机凭据，不安装 Exporter、不启动容器、不重启其他服务。重复执行会拒绝覆盖现有目录。准备后先核验：
+每个目标可重复传入相应参数。工具在写入前检查证书与私钥匹配、有效期、SAN 覆盖访问域名/IP、证书非 CA，以及已声明扩展用途是否允许服务端认证。这些本地检查不建立客户端 CA 信任，也不证明 HTTPS 实际可达。工具仅创建新目录、配置和随机凭据，不安装 Exporter、不启动容器、不重启其他服务。重复执行会拒绝覆盖现有目录。准备后先核验：
 
 ```sh
-cd /srv/qinghuan/observability
+cd /opt/motor-console/observability
 docker compose --env-file .env.observability -f compose.yaml config --quiet
 docker compose --env-file .env.observability -f compose.yaml run --rm --no-deps \
   --entrypoint /bin/promtool prometheus check config /etc/prometheus/prometheus.yml

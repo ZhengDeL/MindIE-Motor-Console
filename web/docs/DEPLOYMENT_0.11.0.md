@@ -1,4 +1,6 @@
-# 擎寰平台 0.11.0 部署与升级
+# MindIE-Motor Console 0.11.0 部署与升级（历史版本）
+
+本页保留 0.11.0 的部署事实，供既有安装核对。固定标签 `v0.11.0` 保留首发时的默认显示名称；统一为 MindIE-Motor Console 的默认名称从 0.11.1 源码开始提供。当前源码的安装和更名兼容说明见[0.11.1 部署与升级](DEPLOYMENT_0.11.1.md)，不要移动旧标签或用新构建参数冒充旧制品。
 
 0.11.0 是首次正式包含社区插件包导入、受保护 HTTP 扩展和声明式状态页面的版本。平台继续使用独立 Web/API、数据库插件和执行 Agent；原生 Motor 固定适配基线为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`，不随平台版本自动更新。
 
@@ -41,11 +43,11 @@ git rev-parse HEAD
 docker build -f web/Dockerfile --target api \
   --build-arg CONSOLE_VERSION=0.11.0 \
   --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/qinghuan/api:0.11.0 .
+  -t registry.example.test/motor-console/api:0.11.0 .
 docker build -f web/Dockerfile --target web \
   --build-arg CONSOLE_VERSION=0.11.0 \
   --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/qinghuan/web:0.11.0 .
+  -t registry.example.test/motor-console/web:0.11.0 .
 ```
 
 Dockerfile 前端构建基线为 Node22，API 基线为 Python3.12。目标 ARM64/AMD64 各自构建和验证，不能将本机可用推定为另一架构可用。安装使用审核过的 `image@sha256:...`；可变标签和全零摘要不能作为升级凭据。Agent 使用包含运行时适配的 API 制品，不使用纯 Web 镜像。
@@ -61,8 +63,8 @@ python3 web/scripts/prepare_production.py \
   --project-dir /opt/motor-console/source-0.11.0 \
   --data-dir /opt/motor-console/control-data \
   --agent-rollout-root /opt/motor-console/agents \
-  --image 'registry.example.test/qinghuan/api@sha256:<reviewed-api-digest>' \
-  --web-image 'registry.example.test/qinghuan/web@sha256:<reviewed-web-digest>' \
+  --image 'registry.example.test/motor-console/api@sha256:<reviewed-api-digest>' \
+  --web-image 'registry.example.test/motor-console/web@sha256:<reviewed-web-digest>' \
   --web-tls-dir /opt/motor-console/tls \
   --origin https://console.example.test:19443 \
   --release-public-key /opt/motor-console/publisher/release.pub \
@@ -98,7 +100,7 @@ CPU/内存/OS 来自 [Node Exporter](DOCKER_NODE_EXPORTER.md)，NPU 来自[受�
 
 1. 核对实际产品身份、源提交、API/Web 镜像、数据库后端/schema、完整 Compose 栈和 Agent 合同。0.11.0 保持 schema2、协议1、最低 Agent0.10.1，不因平台升级强制重启模型或所有 Agent。
 2. 等待并审查执行中/结果未明的管理操作；生成一致数据库快照和加密应用归档，验证外部恢复密钥。另留 Agent 状态、TLS、环境、旧镜像及插件目录（如果旧开发安装已使用它）。不能复制运行中的单个 SQLite 文件作为完整备份。
-3. 构建并核验目标架构的0.11.0 API/Web 制品。使用真实镜像摘要、数据库兼容范围和受信发布者签名制作清单；结构参考 [release.example.json](../releases/release.example.json)，示例全零摘要不可应用。
+3. 构建并核验目标架构的0.11.0 API/Web 制品。使用真实镜像摘要、数据库兼容范围和受信发布者签名制作清单；结构参考 [release.example.json](../releases/release.example.json)，示例全零摘要必须替换，不得用于实际安装或升级。
 4. 在系统维护页审查计划，由[生产维护 CLI](../PRODUCTION.md#升级与失败恢复)按实际 Compose 拓扑应用，仅更新平台组件并保留持久目录。已有安装不重新运行首次初始化，也不生成新的应用密钥覆盖旧密钥。
 5. 升级后验证实际0.11.0版本、构建修订、SDK features、三角色、节点连接、日志、备份和原操作回执。此前固定发布的0.10.x没有正式社区包能力；不要预设其数据库包含已启用包。
 6. 需要升级 Agent 时作为独立维护项，保留原账本、凭据和工作区，先排空任务再更新；不能用全新 Agent 安装替代原账本交接。

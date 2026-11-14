@@ -1,5 +1,5 @@
 [Unit]
-Description=Qinghuan read-only Ascend NPU observation
+Description=MindIE-Motor Console read-only Ascend NPU observation
 After=local-fs.target
 RequiresMountsFor=/opt/motor-console
 ConditionPathExists=/opt/motor-console/collector/host_npu_collector.py

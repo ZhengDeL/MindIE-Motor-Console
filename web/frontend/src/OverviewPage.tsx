@@ -193,7 +193,7 @@ export default function OverviewPage({
       return "查看完整操作审计";
     return item.detail;
   };
-  // Altered Qinghuan presentation adapted from Portainer 2.45.3 DashboardItem/Widget.
+  // Altered MindIE-Motor Console presentation adapted from Portainer 2.45.3 DashboardItem/Widget.
   // See NOTICE.md and /third-party-licenses.txt for the original zlib notice.
   return (
     <div className="overview-page">
