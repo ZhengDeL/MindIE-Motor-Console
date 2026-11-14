@@ -40,7 +40,7 @@ SDK 版本与 Console 版本独立。发布附件中的 wheel/tarball 可安装�
 
 ## 从独立目录开始
 
-先安装[开发环境](../README.md)和所需 SDK，构建 Node 宿主后再使用 Node 相关命令。在仓库根运行：
+先安装[开发环境](../README.md)和所需 SDK，构建 Node 宿主后再使用 Node 相关命令。先准备一个有写权限的开发目录；以下以已存在的 `/work` 为父目录，请换成自己的路径。在仓库根运行：
 
 ```sh
 python web/scripts/plugin_dev.py init --kind provider --id acme.notes --namespace acme-notes --directory /work/acme-notes
