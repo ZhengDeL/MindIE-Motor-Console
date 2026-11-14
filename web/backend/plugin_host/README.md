@@ -71,7 +71,7 @@ with ExitStack() as application_cleanup:
 
 真实控制面管理员的导入仅校验并保存按 SHA-256 标识的不可变制品；选择操作带当前 revision 和明确的代码信任确认，写入下次启动配置。当前加载与下次启动选择分别显示。旧摘要保留供回退，停用不删除模型和数据库。演示模式不执行外部插件代码。
 
-社区包合同自平台 `0.11.0` 起提供。检查目标宿主时，应在已登录会话读取 `/api/plugin-sdk`，确认 `features` 包含 `community-import-v1`、`http-routes-v1`、`status-table-v1`。宿主 API、软件版本和包的兼容边界是独立维度；不自动放宽第三方包的最高宿主版本限制。
+检查目标宿主时，应在已登录会话读取 `/api/plugin-sdk`，确认 `features` 包含 `community-import-v1`、`http-routes-v1`、`status-table-v1`。宿主 API、软件版本和包的兼容边界是独立维度；不自动放宽第三方包的最高宿主版本限制。
 
 包摘要校验不是发布者签名，受信 Python 代码也不是沙箱。只有被维护者审查并由部署侧明确选择的代码才应装配；包自己的数据迁移、外部服务、线程终止和升级回退仍需单独验证。
 

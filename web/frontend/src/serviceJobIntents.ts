@@ -1,6 +1,6 @@
 import { createOperationKey } from "./api";
+import { SERVICE_JOB_INTENTS_STORAGE_KEY } from "./browserStateKeys";
 
-const STORAGE_KEY = "qinghuan-platform-service-job-intents-v1";
 const MAX_PENDING = 64;
 const SIMPLE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
 const SERVICE_ACTION =
@@ -92,7 +92,7 @@ export class ServiceJobIntentStore {
   private read(): Entry[] {
     let raw: string | null;
     try {
-      raw = this.storage.getItem(STORAGE_KEY);
+      raw = this.storage.getItem(SERVICE_JOB_INTENTS_STORAGE_KEY);
     } catch {
       throw Error("无法读取浏览器待确认操作，未提交新任务");
     }
@@ -140,7 +140,7 @@ export class ServiceJobIntentStore {
   }
   private write(items: Entry[]) {
     try {
-      this.storage.setItem(STORAGE_KEY, JSON.stringify({ schema: 1, items }));
+      this.storage.setItem(SERVICE_JOB_INTENTS_STORAGE_KEY, JSON.stringify({ schema: 1, items }));
     } catch {
       throw Error("无法保存浏览器待确认操作；请允许会话存储后再操作");
     }

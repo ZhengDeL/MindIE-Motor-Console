@@ -25,9 +25,9 @@ class _NetworkLoop:
         self.pid = os.getpid()
         self.loop = asyncio.new_event_loop()
         self.loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(
-            max_workers=4, thread_name_prefix="qinghuan-agent-helper"))
+            max_workers=4, thread_name_prefix="motor-console-agent-helper"))
         self.capacity = None
-        self.thread = threading.Thread(target=self._serve, name="qinghuan-agent-network", daemon=True)
+        self.thread = threading.Thread(target=self._serve, name="motor-console-agent-network", daemon=True)
         self.thread.start()
 
     def _serve(self):

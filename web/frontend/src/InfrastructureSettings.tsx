@@ -268,7 +268,7 @@ export default function InfrastructureSettings({ canAdminister }: { canAdministe
           setExtensions((items) => items.map((item) => item.id === "observability.grafana" ? { ...item, connection_status: observation.connection } : item));
           setExtensionDeadlines((deadlines) => ({ ...deadlines, "observability.grafana": observation.deadline }));
         }
-        setFeedback("检查已返回，请查看检查明细。该结果不代表模型已完成业务验收。");
+        setFeedback("检查已完成，请查看连接检查明细。");
       } else {
         const identifier = value.operation_id;
         if (typeof identifier === "string" && /^grafana_[0-9a-f]{32}$/.test(identifier) &&
@@ -336,7 +336,7 @@ export default function InfrastructureSettings({ canAdminister }: { canAdministe
             <div><strong>{extension.name}</strong>{knownText(extension.version) && <span className="tag">模块版本 {extension.version}</span>}</div>
             {(connection || channel) && <div className="settings-extension-status">
               {connection && <Badge status={connection.badge}>{connection.label}</Badge>}
-              {channel && <><Badge status="stopped">{channel}</Badge><span className="settings-extension-scope">外部系统未验收</span></>}
+              {channel && <Badge status="stopped">{channel}</Badge>}
             </div>}
             {knownText(extension.detail) && <p>{extension.detail}</p>}
           </div>;
@@ -356,7 +356,7 @@ export default function InfrastructureSettings({ canAdminister }: { canAdministe
           {remote?.connection_status?.checked_at && connectionTimes(remote.connection_status) &&
             <span className="settings-extension-scope">检查完成于 {when(remote.connection_status.checked_at)}</span>}
         </div>}
-        <p className="settings-context-note">连接检查结果有效期为 5 分钟，仅检查 Grafana 的健康和只读访问；指标采集、看板数据及模型业务需分别验收。到期只更新显示，不会自动发起外部检查。</p>
+        <p className="settings-context-note">连接检查结果有效期为 5 分钟，仅检查 Grafana 健康接口和只读访问。指标采集与模型运行情况请在对应看板中查看；必要时通过实际请求确认服务状态。到期仅更新显示，不会自动发起外部检查。</p>
         <fieldset className="settings-extension-form" disabled={!canAdminister || !!busy || !remote}>
           <label className="checkbox-label"><input type="checkbox" checked={draft.enabled} onChange={(event) => change({ enabled: event.target.checked })} />启用 Grafana 连接</label>
           <Field label="Grafana 基础地址" hint="需由部署配置允许此来源，建议使用 HTTPS。">

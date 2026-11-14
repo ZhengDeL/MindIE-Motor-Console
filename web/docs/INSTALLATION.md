@@ -1,53 +1,50 @@
-# MindIE-Motor Console 0.11.1 部署与升级
+# 安装与升级
 
-0.11.1 统一默认显示名称为 **MindIE-Motor Console**，沿用 0.11.0 起提供的社区插件包、受保护 HTTP 扩展和声明式状态页面。显示名称调整不改变已有安装的数据库身份、协议或持久化资源标识。平台继续使用独立 Web/API、数据库插件和执行 Agent；原生 Motor 固定适配基线为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`，不随平台版本自动更新。
+MindIE-Motor Console 由独立 Web/API、数据库插件和执行 Agent 组成。Web 不持有节点执行权限；原生 Motor 使用固定源码画像，不随控制台更新自动变更。
 
-本文覆盖 Linux Docker 单实例 Control 的新安装，以及同产品 0.10.1/0.10.2/0.11.0 安装的升级。下列命令在 **Linux Bash、仓库根目录**执行，域名、路径和摘要均须替换。示例仓库名称不代表项目已经提供对应预构建镜像。开发环境另见[本地指南](../README.md)，运行维护见[生产手册](../PRODUCTION.md)。
+本指南用于 Linux Docker 单实例 Control 的安装和组件更新。命令在 **Linux Bash、仓库根目录**执行，域名、路径和摘要须替换为实际值。示例镜像地址不是预构建镜像下载源。本地体验见[开发指南](../README.md)，运行维护见[生产手册](../PRODUCTION.md)。
 
-本手册对应 `v0.11.1` 正式发行源码，下文使用该固定标签获取源码。源码获取、镜像构建和服务器上线分别执行；发布源码不代表已经提供预构建镜像或更新现有部署。
+源码获取方式及当前版本见[项目首页](../../README.md#获取源码)。取得源码后，按目标架构构建镜像，再执行安装；已有部署不会自动更新。
 
 ## 1. 兼容范围与部署前提
 
-| 项目 | 0.11.1 合同 |
+| 项目 | 要求 |
 | --- | --- |
 | 产品身份 | `motor-console`，与可编辑的界面品牌分开 |
 | Control | 单实例、单写者，使用独立持久目录；Web 不持有数据库或 Agent 秘密 |
 | 数据库 | SQLite 或 PostgreSQL，schema 2；PostgreSQL 不自动提供控制台高可用 |
 | Agent | 最低兼容版本 0.10.1，Agent/操作协议 1；产品、回执、账本、准入能力还须逐项通过 |
 | 社区插件 | 插件 API 1；实际宿主应报告 `community-import-v1`、`http-routes-v1`、`status-table-v1` |
-| 原生 Motor | 固定源码/profile、模型镜像及驱动分别核对，不由平台 0.11.1 号推断原生版本 |
+| 原生 Motor | 内置源码固定为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`；模型镜像与驱动版本单独核对 |
 | 观测 | Node/NPU 数据源与 Prometheus/Grafana 独立部署；已有采集器优先复用 |
 
 需要 Linux、Docker Engine、Compose V2、可信镜像来源和目标架构制品。宿主准备/维护工具需要 Python3.11+ 及项目锁定依赖，建议与已验证 API 镜像保持同一环境；SQLite 须通过 WAL-reset 修复版本门禁。Web 证书 SAN 必须覆盖实际访问域名/IP，客户端信任签发 CA。
 
 安装前核对数据盘与 Docker 存储容量/inode、端口、时间、现有服务和管理网络。API 不公开宿主端口；每台 Docker 执行宿主通常一个 Agent，每个 Kubernetes 集群通常一个执行 Agent。不要为平台修改 Docker daemon、重复安装 Exporter 或重新分配已有业务设备。
 
-## 2. 获取固定源码与构建
+## 2. 构建镜像
 
-获取正式标签并保留原生子模块：
+按[项目首页](../../README.md#获取源码)取得源码后，在仓库根目录确认源提交与固定子模块：
 
 ```bash
-git clone --recurse-submodules --branch v0.11.1 \
-  https://github.com/ZhengDeL/MindIE-Motor-Console.git /opt/motor-console/source-0.11.1
-cd /opt/motor-console/source-0.11.1
-git submodule update --init --recursive
 git submodule status mindie-motor/upstream
 git rev-parse HEAD
 ```
 
-原生提交应为上面的固定基线，不切换到原生 master。GitHub 自动源码压缩包及本次 Release 的平台源码 ZIP 均不展开子模块，不能直接当完整离线构建上下文。推荐使用上述递归克隆；离线安装另行准备完整源码、依赖、许可证和校验清单。压缩包没有 `.git`，不能在其中直接使用依赖 Git 索引的离线构建/源码画像工具，`git rev-parse HEAD` 也不能用于取得其来源；来源以随包清单为准。
+原生提交应与上表一致。GitHub 自动源码压缩包不展开子模块，也不包含 `.git`；依赖 Git 索引的构建或画像工具应使用递归克隆的源码。离线安装需同时准备固定子模块、依赖制品、许可证和校验清单。
 
 分别构建 API 与 Web，记录真实源提交、架构、Image ID 和仓库摘要：
 
 ```bash
+console_version=$(python3 -c 'from web.backend.version import CONSOLE_VERSION; print(CONSOLE_VERSION)')
 docker build -f web/Dockerfile --target api \
-  --build-arg CONSOLE_VERSION=0.11.1 \
+  --build-arg "CONSOLE_VERSION=$console_version" \
   --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/motor-console/api:0.11.1 .
+  -t "registry.example.test/motor-console/api:$console_version" .
 docker build -f web/Dockerfile --target web \
-  --build-arg CONSOLE_VERSION=0.11.1 \
+  --build-arg "CONSOLE_VERSION=$console_version" \
   --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/motor-console/web:0.11.1 .
+  -t "registry.example.test/motor-console/web:$console_version" .
 ```
 
 Dockerfile 前端构建基线为 Node22，API 基线为 Python3.12。目标 ARM64/AMD64 各自构建和验证，不能将本机可用推定为另一架构可用。安装使用审核过的 `image@sha256:...`；可变标签和全零摘要不能作为升级凭据。Agent 使用包含运行时适配的 API 制品，不使用纯 Web 镜像。
@@ -93,7 +90,7 @@ PY
 
 ```bash
 python3 web/scripts/prepare_production.py \
-  --project-dir /opt/motor-console/source-0.11.1 \
+  --project-dir /opt/motor-console/source \
   --data-dir /opt/motor-console/control-data \
   --agent-rollout-root /opt/motor-console/agents \
   --image 'registry.example.test/motor-console/api@sha256:<reviewed-api-digest>' \
@@ -131,17 +128,19 @@ CPU/内存/OS 来自 [Node Exporter](DOCKER_NODE_EXPORTER.md)，NPU 来自[受�
 
 `MOTOR_PLUGIN_DIR` 默认 `/var/lib/motor-console/plugin-packages`，标准 Compose 位于已有 Control 数据卷。改成外部路径时必须另行配置可写挂载及进程 UID 权限；只改环境变量不会自动增加绑定。**数据库快照和 .mcba 应用归档均不包含此目录**，已使用插件的安装按[独立备份步骤](../BACKUP_RECOVERY.md#社区插件包目录单独备份)保留整个目录与匹配宿主修订。
 
-## 6. 已有同产品安装升级
+## 6. 更新已有安装
 
-1. 核对实际产品身份、源提交、API/Web 镜像、数据库后端/schema、完整 Compose 栈和 Agent 合同。0.11.1 保持 schema2、协议1、最低 Agent0.10.1，不因平台升级强制重启模型或所有 Agent。
+更新前确认原安装的来源、产品身份、数据库后端/schema、备份格式和部署布局均在目标版本的兼容范围内。版本号相近或显示名称相同不能证明可原地更新。其他产品、来源不明的安装及跨数据库迁移，需要单独的数据迁移和回退方案，不使用以下增量流程。
+
+1. 核对源提交、API/Web 镜像、数据库后端/schema、完整 Compose 栈和 Agent 合同。当前 schema 为 2、管理/Agent 协议为 1、最低 Agent 版本为 0.10.1。控制台更新与 Agent、模型分别维护。
    同时记录实际 Compose 项目名、原数据和日志挂载、进程 UID/GID、监控看板 UID 与预计算序列名；更名时沿用这些值，不因显示名称变化另起项目或迁移数据。已有配置中的兼容标识不要求批量改写。
-2. 等待并审查执行中/结果未明的管理操作；生成一致数据库快照和加密应用归档，验证外部恢复密钥。另留 Agent 状态、TLS、环境、旧镜像及插件目录（如果旧开发安装已使用它）。不能复制运行中的单个 SQLite 文件作为完整备份。
-3. 构建并核验目标架构的0.11.1 API/Web 制品。使用真实镜像摘要、数据库兼容范围和受信发布者签名制作清单；结构参考 [release.example.json](../releases/release.example.json)，示例全零摘要不可应用。
+2. 处理执行中及结果未明的管理操作；生成一致数据库快照和加密应用归档，验证恢复密钥。另留 Agent 状态、TLS、环境、旧镜像及使用中的插件目录。不能复制运行中的单个 SQLite 文件作为完整备份。
+3. 构建并核验目标架构的 API/Web 制品。使用真实镜像摘要、数据库兼容范围和受信发布者签名制作清单；结构参考 [release.example.json](../releases/release.example.json)，全零占位摘要会被拒绝。
 4. 在系统维护页审查计划，由[生产维护 CLI](../PRODUCTION.md#升级与失败恢复)按实际 Compose 拓扑应用，仅更新平台组件并保留持久目录。已有安装不重新运行首次初始化，也不生成新的应用密钥覆盖旧密钥。
-5. 升级后验证实际0.11.1版本、构建修订、SDK features、三角色、节点连接、日志、备份和原操作回执。0.11.0 安装已可使用社区包；0.10.x 安装没有正式社区包能力。按实际包目录和加载状态核对，不预设数据库包含已启用包。
+5. 验证实际版本、构建修订、SDK features、三角色、节点连接、日志、备份和原操作回执；使用社区插件时核对包摘要、选择状态和当前加载结果。
 6. 需要升级 Agent 时作为独立维护项，保留原账本、凭据和工作区，先排空任务再更新；不能用全新 Agent 安装替代原账本交接。
 
-本版本没有因加入社区包而改变控制主库 schema，不能因此省略备份或跨后端验证。跨数据库、跨产品或不兼容 schema 的迁移不是此增量升级流程；失败应停止写入并采用已审核的恢复计划。
+即使 schema 相同，也应保留一致备份并验证恢复。更新失败时停止新写入，按已审核的计划回退。
 
 ## 7. 回退与启动失败
 
@@ -149,10 +148,10 @@ API/Web 回退必须使用同一受审计划，保留原 Compose 文件栈、环
 
 新增社区包后回退到不具备加载器的版本，不等于包代码已被宿主热卸载。先记录当前加载摘要及下一次选择，按[插件恢复说明](../backend/plugin_host/packages/README.md)检查并保留插件目录，再关闭唯一 Control 并回退；旧宿主忽略或无法加载某个目录不代表插件业务状态已恢复。
 
-插件导致启动失败时，使用**与当前0.11.1宿主匹配**的受控 CLI 检查/恢复选择，保留 `selection-backups` 和包文件，不删除数据库或模型。恢复工具的 `reset-selection` 不是业务数据库回滚，也不移除已经运行进程中的代码；按指南完成显式重启和实际状态核验。无法确认的失败保留停机状态，使用受审恢复材料处理。
+插件导致启动失败时，使用与当前宿主匹配的 CLI 检查或恢复选择，保留 `selection-backups` 和包文件，不删除数据库或模型。`reset-selection` 不回滚业务数据库；按指南重启控制面并核对插件状态。
 
 ## 8. 观测与上线验证
 
-Prometheus/Grafana 与平台 API/Web 独立维护，详见[运行观测手册](../observability/README.md)。升级平台不自动覆盖已有 Exporter、看板、TSDB、网关路由或 CCAE 配置。配置生成、连接成功、真实指标及业务请求是独立验收项。
+Prometheus/Grafana 与平台 API/Web 独立维护，详见[运行观测手册](../observability/README.md)。更新控制台不自动覆盖 Exporter、看板、TSDB、网关路由或 CCAE 配置。
 
-放行前逐项核对：严格 HTTPS、版本/修订与 SDK、三角色权限、持久化和恢复、Agent与设备身份、采样时效、部署/重启准入、目标 P/D 数量、普通/SSE 推理、日志指标，以及实际启用的外部集成。截图、CLI参数、demo、容器健康和真实模型验收分别留证；本安装说明不宣称这些目标环境已经完成验证。
+上线前检查 HTTPS、版本/修订与 SDK、三角色权限、持久化和恢复、Agent 与设备身份、采样时效、部署/重启准入、目标 P/D 数量、普通/SSE 推理及日志指标；已启用的外部集成按各自手册验证。

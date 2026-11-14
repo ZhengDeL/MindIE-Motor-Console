@@ -1,6 +1,6 @@
 # MindIE-Motor Console Agent 安装、凭据与任务维护
 
-本手册对应 0.11.1 控制面的 `motor-console` 执行 Agent；最低 Agent 兼容版本仍为 0.10.1，实际还需通过协议和能力检查。新安装、凭据轮换、任务恢复和配置编辑是不同操作；每项变更前先核对 Agent 身份、实际运行目录及未决任务。Agent 镜像版本与平台可独立升级，但必须符合产品、协议和最低版本要求。
+本手册说明 `motor-console` 执行 Agent 的安装与维护；最低兼容版本为 0.10.1，实际还需通过协议和能力检查。新安装、凭据轮换、任务恢复和配置编辑是不同操作；每项变更前先核对 Agent 身份、实际运行目录及未决任务。Agent 镜像版本与平台可独立升级，但必须符合产品、协议和最低版本要求。
 
 Console 与 Agent 独立发布，默认使用固定的原生 Motor profile；调用原生部署与配置入口，保留任意原生 JSON 字段。Control 数据库可选 SQLite/PostgreSQL，仍只允许一个控制写者；Agent 操作账本单独持久化于本地 SQLite。不要共享 Agent 数据目录，也不要把 SQLite 文件放到网络文件系统。选用 PostgreSQL 不会自动提供任务高可用，见[存储说明](STORAGE.md)。
 

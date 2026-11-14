@@ -20,6 +20,9 @@ from uuid import uuid4
 MAX_ARCHIVE = 2 * 1024**3
 ENV = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "HOME": "/root", "LANG": "C.UTF-8"}
 PRODUCT_ID = "motor-console"
+# This standalone SSH contract mirrors backend.version without importing the application.
+MIN_AGENT_VERSION = (0, 10, 1)
+AGENT_VERSION_PATTERN = r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
 RUNTIME_PROJECTS = {"docker": "motor-console-docker", "kubernetes": "motor-console-kubernetes"}
 
 
@@ -181,17 +184,16 @@ def platform_agents():
         config = value.get("Config") or {}; labels = config.get("Labels") or {}
         environment = config.get("Env", [])
         mode = next((v.split("=", 1)[1] for v in environment if v.startswith("MOTOR_MODE=")), "")
-        legacy_mode = next((v.split("=", 1)[1] for v in environment if v.startswith("MOTOR_MODE=")), "")
         project = labels.get("com.docker.compose.project", "")
-        foreign = legacy_mode == "agent" or project in {
+        recognized_project = project in {
             "motor-console-docker", "motor-console-kubernetes", "motor-console-docker-agent",
             "motor-console-kubernetes-agent", "qinghuan-docker", "qinghuan-kubernetes"}
         name = value.get("Name", "").lstrip("/")
-        if foreign or mode == "agent" or labels.get("com.docker.compose.project") in RUNTIME_PROJECTS.values() or (name.startswith("motor-console-") and name.endswith("-agent-1")):
+        if mode == "agent" or recognized_project or (name.startswith("motor-console-") and name.endswith("-agent-1")):
             agents.append({"id": value["Id"], "name": name[:100], "image_id": value["Image"],
                            "running": value.get("State", {}).get("Running") is True,
                            "runtime": "kubernetes" if labels.get("com.docker.compose.project") == RUNTIME_PROJECTS["kubernetes"] else "docker",
-                           "project": project, "foreign_product": foreign,
+                           "project": project,
                            "operation_id": labels.get("motor-console.rollout.id", "")})
     return agents
 
@@ -381,14 +383,17 @@ def prepare(payload):
     _, install, spec, operation, _, _ = own_state(payload)
     image = image_reference(payload.get("image")); inspect_image(image, payload)
     code = (
-        "import json;from pathlib import Path;from backend.compatibility import agent_metadata;"
+        "import json,re;from pathlib import Path;from backend.compatibility import agent_metadata;"
         "from backend.motor_adapter import verify_upstream_source;"
         "m=agent_metadata();n=verify_upstream_source();"
         "assert m['product_id']=='motor-console';"
-        "assert tuple(map(int,m['agent_version'].split('.'))) >= (0,1,0);"
-        "assert m['agent_protocol']==1 and m['operation_protocol']==1;"
+        f"assert isinstance(m['agent_version'],str) and re.fullmatch({AGENT_VERSION_PATTERN!r},m['agent_version']);"
+        f"assert tuple(map(int,m['agent_version'].split('.'))) >= {MIN_AGENT_VERSION!r};"
+        "assert type(m['agent_protocol']) is int and m['agent_protocol']==1;"
+        "assert type(m['operation_protocol']) is int and m['operation_protocol']==1;"
         "assert all(m['execution_capabilities'].get(k) is True for k in ('operation_receipts','resource_ledger','resource_admission'));"
-        "assert n['commit']=='37d615f232a36b8dba8630ffc3a01a20d289c65e' and n['verified_files']==465;"
+        "assert n['commit']=='37d615f232a36b8dba8630ffc3a01a20d289c65e';"
+        "assert type(n['verified_files']) is int and n['verified_files']==465;"
         "assert Path('/app/scripts/prepare_agent.py').is_file() and Path('/app/scripts/configure_agent_tls.py').is_file();"
         "print(json.dumps({'compatible':True,'product_id':m['product_id']}))"
     )

@@ -23,6 +23,9 @@ import threading
 from typing import Optional
 from uuid import uuid4
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from backend.version import MIN_AGENT_VERSION
+
 
 MOTOR_COMMIT = "37d615f232a36b8dba8630ffc3a01a20d289c65e"
 PRODUCT_ID = "motor-console"
@@ -205,7 +208,7 @@ def _probe(prefix: list, image_id: str) -> dict:
         "assert Path('/app/scripts/configure_agent_tls.py').is_file();"
         "assert Path('/app/scripts/prepare_agent.py').is_file();"
         "assert m['motor_profile']['bundled'] is True;"
-        "assert n['verified_files']==465;"
+        "assert type(n['verified_files']) is int and n['verified_files']==465;"
         "print(json.dumps({'console_version':m['agent_version'],"
         "'agent_protocol':m['agent_protocol'],'motor_commit':n['commit'],"
         "'product_id':m['product_id'],'operation_protocol':m['operation_protocol'],"
@@ -227,7 +230,7 @@ def _probe(prefix: list, image_id: str) -> dict:
     value = _json(raw)
     version_text = value.get("console_version") if isinstance(value, dict) else None
     version = _VERSION.fullmatch(version_text) if isinstance(version_text, str) else None
-    if (not version or tuple(map(int, version.groups())) < (0, 1, 0)
+    if (not version or tuple(map(int, version.groups())) < MIN_AGENT_VERSION
             or type(value.get("agent_protocol")) is not int or value["agent_protocol"] != AGENT_PROTOCOL
             or value.get("motor_commit") != MOTOR_COMMIT
             or value.get("product_id") != PRODUCT_ID

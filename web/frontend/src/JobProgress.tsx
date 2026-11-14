@@ -174,8 +174,8 @@ export default function JobProgress({
           </div>
           <InfoBox>
             对账只读取当前受管容器与 Kubernetes
-            资源，不会重放任务或修改服务状态。 资源存在、Pod
-            就绪均不代表推理业务验收通过。
+            资源，不会重放任务或修改服务状态。资源存在、Pod
+            就绪仅说明运行状态；请通过实际推理请求确认模型服务可用。
             {demo && "演示环境不连接真实节点。"}
           </InfoBox>
           {job.reconciliation ? (

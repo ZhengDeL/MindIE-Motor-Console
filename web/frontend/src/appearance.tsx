@@ -1,11 +1,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
+import { THEME_STORAGE_KEY, MODE_STORAGE_KEY, DENSITY_STORAGE_KEY, MOTION_STORAGE_KEY, SIDEBAR_WIDTH_STORAGE_KEY } from "./browserStateKeys";
 
-export const THEME_STORAGE_KEY = "qinghuan-platform-theme";
-export const MODE_STORAGE_KEY = "qinghuan-platform-color-mode";
-export const DENSITY_STORAGE_KEY = "qinghuan-platform-density";
-export const MOTION_STORAGE_KEY = "qinghuan-platform-motion";
-export const SIDEBAR_WIDTH_STORAGE_KEY = "qinghuan-platform-navigation-width";
+export { THEME_STORAGE_KEY, MODE_STORAGE_KEY, DENSITY_STORAGE_KEY, MOTION_STORAGE_KEY, SIDEBAR_WIDTH_STORAGE_KEY } from "./browserStateKeys";
 export const SIDEBAR_WIDTH = { min: 200, max: 280, step: 8, default: 240 } as const;
 export const THEMES = [
   { id: "blue", name: "蓝灰", color: "var(--theme-blue-preview)" },

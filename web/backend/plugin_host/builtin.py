@@ -1,8 +1,7 @@
-"""Reviewed plugin composition for the bundled console distribution.
+"""Built-in plugin declarations and dependency-checked composition.
 
-Manifests identify existing implementations and their public extension points.
-They do not claim that an external service is connected or that every legacy
-handler has already moved into its own package.
+Manifests bind installed handlers, runtime providers and storage adapters to
+their public extension points. Connection state is reported by each provider.
 """
 from __future__ import annotations
 
@@ -54,16 +53,16 @@ def builtin_manifests(*, storage_backend: str = "sqlite") -> tuple[PluginManifes
                        routes=(Route("/api/system/releases"), Route("/api/system/upgrades"), Route("/api/system/backups"))),
         PluginManifest("branding", "平台品牌", "配置控制台名称、副标题和图标；保留默认品牌作为离线回退。",
                        kind="appearance", capabilities=("branding.configure",), routes=(Route("/api/branding"),)),
-        PluginManifest("grafana", "Grafana 观测", "接入独立 Grafana 并生成离线观测配置；健康检查与业务验收分别呈现。",
+        PluginManifest("grafana", "Grafana 观测", "接入独立 Grafana，检查连接并生成离线观测配置。",
                        kind="integration", capabilities=("grafana.connect", "grafana.provision"),
                        routes=(Route("/api/extensions/grafana"),)),
-        PluginManifest("ccae", "CCAE 原生接入", "使用原生 Reporter 配置；外部注册、Kafka 和控制效果需要真实环境验证。",
+        PluginManifest("ccae", "CCAE 原生接入", "提供原生 Reporter 配置入口，对接 CCAE 注册、Kafka 上报与实例控制。",
                        kind="integration", capabilities=("ccae.native-configuration",)),
         PluginManifest("motor-docker", "Motor Docker 运行时", "通过节点 Agent 执行固定原生 Docker 启动入口，保持资源账本与操作回执。",
                        kind="runtime", capabilities=("motor-docker.execute",), runtimes=("docker",),
                        routes=tuple(Route("/agent/" + name) for name in (
                            "operations", "images", "status", "preflight", "deploy", "stop", "restart", "remove", "logs"))),
-        PluginManifest("motor-kubernetes", "Motor Kubernetes 运行时", "对接客户 Kubernetes 集群并保留原生部署配置与资源所有权检查。",
+        PluginManifest("motor-kubernetes", "Motor Kubernetes 运行时", "对接 Kubernetes 集群，保留原生部署配置与资源所有权检查。",
                        kind="runtime", capabilities=("motor-kubernetes.execute",), runtimes=("kubernetes",),
                        routes=(Route("/agent/kubernetes"),)),
         PluginManifest("storage-sqlite", "SQLite 存储", "单实例关系存储驱动，实现事务、条件更新、原子审计及备份恢复合同。",

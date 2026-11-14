@@ -117,7 +117,7 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
             return host_inventory(docker_unavailable=True)
 
     @router.get("/inventory", dependencies=[Depends(authorize)])
-    def inventory(response: Response, x_hx_observation_nonce: str | None = Header(default=None, alias=OBSERVATION_NONCE_HEADER),
+    def inventory(response: Response, observation_nonce: str | None = Header(default=None, alias=OBSERVATION_NONCE_HEADER),
                   node_address: IPv4Address | None = Query(default=None)):
         # Cache the complete result, including the Kubernetes-only fallback.
         # The real Runtime shares this cache and invalidates it around writes.
@@ -130,7 +130,7 @@ def create_agent_router(runtime: DockerRuntime | None = None, *, docker_enabled:
             snapshot = inventory_cache.read(collect_inventory)
             if node_address is not None and docker_runtime is not None:
                 snapshot = docker_runtime.inventory_network_view(snapshot, str(node_address))
-            return inventory_response(snapshot, x_hx_observation_nonce)
+            return inventory_response(snapshot, observation_nonce)
 
         return call(observed)
 

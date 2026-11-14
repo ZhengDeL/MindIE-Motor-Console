@@ -1,8 +1,8 @@
 # MindIE-Motor Console
 
-MindIE-Motor Console 是面向 **MindIE-Motor** 的开源部署与运维控制台，当前正式源码版本为 **0.11.1**。它为原生模型配置、Docker/Kubernetes 部署、节点资源、服务日志、监控接入和平台维护提供统一的 Web 操作入口。
+MindIE-Motor Console 是面向 **MindIE-Motor** 的开源部署与运维控制台，为模型配置、Docker/Kubernetes 部署、节点资源、服务日志、监控接入和平台维护提供统一的 Web 操作入口。
 
-本项目独立维护，与原生 MindIE-Motor 分别发布和升级。平台作为独立管理组件运行。原生 Motor 继续负责请求路由、实例管理、P/D 协同及引擎执行；正常业务推理直接访问模型服务。平台不会因为更新界面或修改显示名称而更新原生源码、模型权重或正在运行的推理镜像。
+控制台独立部署，与原生 MindIE-Motor 分别升级。原生 Motor 负责请求路由、实例管理、P/D 协同及引擎执行；业务推理直接访问模型服务，控制台不承载推理流量。
 
 ## 可以做什么
 
@@ -17,14 +17,14 @@ MindIE-Motor Console 是面向 **MindIE-Motor** 的开源部署与运维控制�
 
 Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它不等同于 Kubernetes 的集群调度。Grafana 连接、已有推理网关接入和 CCAE 原生配置也分别有各自的安装、权限及业务验证前提。
 
-## 版本与源码范围
+## 获取源码
 
 | 获取方式 | 适用范围 |
 | --- | --- |
-| `v0.11.1` 发布标签 | 复现 0.11.1 发行源码。使用对应的[发布说明](web/docs/RELEASE_0.11.1.md)和[部署手册](web/docs/DEPLOYMENT_0.11.1.md)。 |
-| `main` | 当前正式主线；部署仍固定已审核提交或发行标签，记录实际镜像摘要。 |
+| [Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases) | 选择已发布标签及其安装说明，固定源码和实际镜像摘要。 |
+| `main` | 当前维护主线，适合贡献和评审；生产安装选择已发布标签。 |
 
-`main` 保存已批准的正式代码。源码标签、已构建镜像和服务器实际版本是不同对象；拉取代码不会自动升级已有部署。插件使用前核对目标实例 `/api/plugin-sdk` 的实际能力。
+当前开发版本为 **0.11.2**，`v0.11.2` 标签在正式发布后使用。源码、镜像和服务器分别管理；拉取代码不会自动升级已有部署。
 
 当前固定原生适配基线为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。平台通过受控适配器使用其配置、模板和 deployer 入口；不同运行时并非每个动作都直接执行同一个 `deploy.py`。原生版本、模型镜像及外部依赖的具体兼容范围见[原生集成说明](web/docs/NATIVE_INTEGRATION.md)与[能力矩阵](web/docs/NATIVE_CAPABILITY_MATRIX.md)。
 
@@ -32,10 +32,11 @@ Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它
 
 **部署用户**：先阅读[文档导航](web/docs/README.md)，选择运行时、数据库和网络入口，再按[安装入口](web/DEPLOYMENT.md)准备独立目录、密钥、镜像及 Agent。
 
-以下命令获取 `v0.11.1` 的固定发行源码：
+从 Releases 选择已发布标签，替换下面的 `SOURCE_REF`；`v0.11.2` 发布后可使用该值：
 
 ```bash
-git clone --recurse-submodules --branch v0.11.1 \
+SOURCE_REF=v0.11.2
+git clone --recurse-submodules --branch "$SOURCE_REF" \
   https://github.com/ZhengDeL/MindIE-Motor-Console.git motor-console
 cd motor-console
 git submodule update --init --recursive
@@ -43,7 +44,7 @@ git submodule update --init --recursive
 
 GitHub 自动源码压缩包不展开原生子模块。自行构建镜像时应记录源提交、目标架构与镜像摘要；仓库中的示例镜像地址和摘要占位符须由部署方替换。
 
-**应用开发者**：使用所需开发分支或审核后的提交，按[本地开发指南](web/README.md)运行。该指南使用已取得的源码，不要求把开发能力误装到旧标签中。
+**本地体验与开发**：按[本地预览指南](web/README.md)启动独立演示环境；无需 Docker、NPU 或模型权重。
 
 **插件作者**：阅读[插件开发指南](web/PLUGIN_DEVELOPMENT.md)，从[完整示例](web/plugins/examples/community-status/README.md)开始。当前包导入只做校验与暂存，管理员明确选择后在下次启动加载；插件不是进程沙箱，不能用于绕过宿主权限。
 
@@ -74,6 +75,6 @@ flowchart LR
 - [插件扩展面](web/PLUGIN_EXTENSION_POINTS.md)：已实现合同与后续可迁移模块。
 - [贡献指南](CONTRIBUTING.md)、[安全报告](SECURITY.md)、[许可及第三方来源](NOTICE.md)。
 
-缺失或过期的采样不会补成零；采样值也不代表设备已预留或模型业务已就绪。部署、外部系统、性能与长期运行需要针对目标环境分别验证。项目不把页面打开、HTTP 200 或容器 Running 当成完整业务验收。
+设备观测、资源预留和模型就绪分别展示；缺失或过期的采样保持不可用状态。配置范围与外部依赖见[能力矩阵](web/docs/NATIVE_CAPABILITY_MATRIX.md)。
 
 本项目采用 [Apache License 2.0](LICENSE)。固定原生子模块及其他第三方组件保留各自许可；技术产品标识为 `motor-console`，显示品牌可由管理员配置。

@@ -32,7 +32,7 @@ install -d -m 0700 /srv/motor-console-agent-package
 python3 web/scripts/package_agent_image.py \
   --image 'sha256:<64位实际ImageID>' \
   --output-dir /srv/motor-console-agent-package \
-  --artifact-id motor-agent-arm64-0.11.1
+  --artifact-id motor-agent-arm64
 ```
 
 工具仅用本机Docker socket，不拉镜像、不登录仓库、不SSH。短命候选容器无网络、无宿主挂载/设备/socket、只读、非root、删除capability并有资源上限；按随机名称/标签/镜像核对后仅清理本次候选。
@@ -41,18 +41,18 @@ python3 web/scripts/package_agent_image.py \
 
 同一Image ID导出gzip，分块SHA256，未压缩流/成品各最多2GiB，默认超时900秒。默认不允许已有非空目录，追加其他ID需显式`--allow-existing-directory`，仍不覆盖同名文件。清单最后独占发布，未完成`.part`保留供核对，不冒充可用包。
 
-清单schema1恰含11项：
+工具生成的清单使用 schema 1，包含以下 11 项。版本和摘要以实际制品为准，不手工填写占位符后用于安装：
 
 ```json
 {
   "schema": 1,
-  "id": "motor-agent-arm64-0.11.1",
-  "filename": "motor-agent-arm64-0.11.1.tar.gz",
+  "id": "motor-agent-arm64",
+  "filename": "motor-agent-arm64.tar.gz",
   "sha256": "<成品SHA256>",
   "size_bytes": 123456789,
   "image_id": "sha256:<实际ImageID>",
   "architecture": "arm64",
-  "console_version": "0.11.1",
+  "console_version": "<实际Agent版本>",
   "agent_protocol": 1,
   "motor_commit": "37d615f232a36b8dba8630ffc3a01a20d289c65e",
   "product_id": "motor-console"
@@ -66,5 +66,3 @@ python3 web/scripts/package_agent_image.py \
 任何阶段只处理本次operation归属。上传失败保留未完成文件；加载或准备中断不能假定“未执行”。恢复核对只读归属标记、TLS回执和容器身份，不重复生成密钥、不执行up、不删资源。Agent正确运行后可重试连接。
 
 `.active-rollout.json`可能在中断后保留，禁止新装。必须先确认原进程和Docker动作已结束，核对完整operation/目录/容器归属，再按维护流程处理，不能只凭SSH断线就删锁。新装流程不承担已有Agent的覆盖升级。
-
-真实打包、远程安装、HTTPS接入、运行时授权与模型推理分别验收；本地mock或候选容器校验不能代替这些结果。

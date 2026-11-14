@@ -18,7 +18,7 @@ _IMPORT_LOCK = threading.RLock()
 class BundleLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     """No extraction, global sys.path edits, dependency installation or network."""
     def __init__(self, identifier: str, digest: str, files: dict[str, bytes]):
-        self.namespace = "_qinghuan_plugin_" + identifier.replace("-", "_") + "_" + digest[:16] + "_" + uuid4().hex[:12]
+        self.namespace = "_motor_console_plugin_" + identifier.replace("-", "_") + "_" + digest[:16] + "_" + uuid4().hex[:12]
         self.files = files
         self.closed = False
 

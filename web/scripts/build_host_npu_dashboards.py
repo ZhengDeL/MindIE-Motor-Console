@@ -250,7 +250,7 @@ def base(detail: bool) -> dict:
             'description': 'Node Exporter 与 Ascend NPU Exporter 的运行观测。当前值只使用90秒内成功采样，缺失保持空值；不表示部署预留或可分配资源。',
             'schemaVersion': 39, 'version': 6, 'editable': False, 'refresh': '30s',
             'time': {'from': 'now-1h', 'to': 'now'}, 'timezone': 'browser',
-            'tags': ['qinghuan', 'node-exporter', 'ascend'],
+            'tags': ['motor-console', 'node-exporter', 'ascend'],
             'tooltip': {'shared': True}, 'graphTooltip': 1,
             'templating': {'list': variables(detail)},
             'links': [{'title': '集群概览' if detail else '节点详情', 'type': 'link', 'targetBlank': False,

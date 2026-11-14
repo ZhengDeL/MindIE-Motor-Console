@@ -29,7 +29,7 @@ def validate_install_root(value: str) -> str:
         return value
     if (not re.fullmatch(r"/(?:var/lib|opt|srv|mnt/models)/[A-Za-z0-9_./-]{1,300}", value)
             or not any(part in {"motor-console", "qinghuan"} or part.startswith(("motor-console-", "qinghuan-")) or part.endswith("-qh") for part in parts)):
-        raise ValueError("MOTOR_AGENT_ROLLOUT_ROOT requires a dedicated motor-console, qinghuan or -qh installation directory")
+        raise ValueError("MOTOR_AGENT_ROLLOUT_ROOT requires a dedicated platform installation directory, for example /opt/motor-console/agents")
     return value
 
 

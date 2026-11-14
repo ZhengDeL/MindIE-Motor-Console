@@ -6,6 +6,7 @@ import { Badge, Button, ErrorBox, Field, InfoBox, Select } from "./ui";
 import { runtimeAvailable } from "./ClusterNodes";
 import { ChevronDown } from "./icons";
 import { documentationUrl } from "./documentation";
+import { SESSION_EXPIRED_EVENT } from "./brand";
 import "./integration.css";
 
 const evidenceLabel: Record<string, string> = {
@@ -118,9 +119,9 @@ export default function ImageContractPanel({
     };
   }, [image, nodeId, probe, runtime, fingerprint, invalidate]);
   useEffect(() => {
-    window.addEventListener("qinghuan-platform-session-expired", invalidate);
+    window.addEventListener(SESSION_EXPIRED_EVENT, invalidate);
     return () =>
-      window.removeEventListener("qinghuan-platform-session-expired", invalidate);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, invalidate);
   }, [invalidate]);
   const applyPreset = () => {
     if (!preset) return;
@@ -352,8 +353,8 @@ export default function ImageContractPanel({
               ))}
             </ul>
             <InfoBox>
-              检查结果仅覆盖已列出的镜像内容与入口。尚未进行模型加载、NPU
-              推理或多节点通信验收。
+              检查结果仅覆盖已列出的镜像内容与启动入口，不验证模型加载、NPU
+              推理或多节点通信。
             </InfoBox>
           </div>
         )}

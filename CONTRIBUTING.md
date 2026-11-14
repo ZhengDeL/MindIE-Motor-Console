@@ -4,7 +4,7 @@ MindIE-Motor Console 接受缺陷修复、文档、运行时适配和社区插�
 
 ## 正式主线与本地任务分支
 
-项目主仓库为 [`ZhengDeL/MindIE-Motor-Console`](https://github.com/ZhengDeL/MindIE-Motor-Console)，仅以 `main` 作为公开代码主线，首个产品发行版本为 `v0.11.0`。固定标签仅对应本仓实际发行；临时开发分支默认仅在本地保留。维护者在完成审核和明确授权后集成正式主线。安装用户使用 `main` 或所需版本的固定标签。
+项目主仓库为 [`ZhengDeL/MindIE-Motor-Console`](https://github.com/ZhengDeL/MindIE-Motor-Console)，公开维护主线为 `main`。贡献使用独立工作分支和 PR；生产安装选择 Releases 中的固定标签。
 
 维护者每个独立任务先新建**本地工作分支**，同一任务的修正继续使用该分支。任务分支默认仅在本地保留，只有明确要求时才发布到主仓库。下面的 `BASE_REF` 是需要替换的基线，例如 `origin/main` 或已审查的提交；`YYYYMMDD-topic` 替换为日期和简短主题：
 
@@ -71,7 +71,7 @@ PR 应说明具体问题、修改后的行为、影响范围、验证结果和�
 
 ## 社区插件贡献
 
-社区插件包与公开 SDK 自平台 `0.11.0` 起提供。插件作者使用对应发布源码或目标 PR 的基线，并确认目标宿主明确报告所需能力。阅读[插件开发指南](web/PLUGIN_DEVELOPMENT.md)，复制 [community-status 完整示例](web/plugins/examples/community-status/README.md)，按说明运行 `build` / `inspect`。样例的最低宿主版本为 `0.11.0`，不能据此自动修改其他插件声明的版本上界。
+插件作者使用目标宿主对应的源码或 PR 基线，并确认其 SDK 报告所需能力。阅读[插件开发指南](web/PLUGIN_DEVELOPMENT.md)，复制 [community-status 完整示例](web/plugins/examples/community-status/README.md)，按说明运行 `build` / `inspect`。样例的最低宿主版本为 `0.11.0`，不能据此自动修改其他插件声明的版本上界。
 
 每个贡献应包括稳定 ID、作者、许可证全文、兼容范围、显式依赖与最低访问角色，以及能运行的入口、说明文档和升级/回退方法。不得在导入模块时启动线程、联网、修改原生配置或执行部署；资源在工厂中创建后立即登记退出清理。
 

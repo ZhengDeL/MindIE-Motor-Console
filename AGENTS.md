@@ -2,7 +2,7 @@
 
 - For every new update or task, create a new branch before editing. Use a descriptive name such as `feat/YYYYMMDD-topic`, `fix/YYYYMMDD-topic`, or `docs/YYYYMMDD-topic`.
 - Continue commits belonging to the same active update on its branch. Start the next update on a new branch; do not reuse a previous delivery branch.
-- Task branches are local by default. Unless explicitly requested, do not publish temporary development branches to the canonical repository, `https://github.com/ZhengDeL/MindIE-Motor-Console`. Its only public code branch is `main`; the initial product release is `v0.11.0`. Create fixed tags only for releases actually published in this repository.
+- Task branches are local by default. Unless explicitly requested, do not publish temporary development branches to the canonical repository, `https://github.com/ZhengDeL/MindIE-Motor-Console`. Its only public code branch is `main`. Create fixed tags only for releases actually published in this repository.
 - Review and validate work on its task branch, then obtain explicit authorization before integrating it into `main` or publishing a release. External contributors use branches in their own forks and open pull requests against canonical `main`; canonical temporary branches are not long-term public entry points.
 - Do not commit or push implementation changes directly to `main` or `master`. Do not force-push or merge without an explicit request.
 - Testing or branch cleanup never authorizes direct implementation edits on `main`, a force-push, or an unapproved merge. Remote temporary-branch removal requires a checked backup and explicit authorization; it does not authorize rewriting commit history or moving release tags.

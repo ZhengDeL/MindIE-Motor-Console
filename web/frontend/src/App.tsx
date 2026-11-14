@@ -2,6 +2,7 @@ import { lazy, useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Home, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import DeferredPanel from "./DeferredPanel";
 import { DATA_CHANGED_EVENT, SESSION_EXPIRED_EVENT } from "./brand";
+import { LEGACY_SESSION_TOKEN_STORAGE_KEY, NAVIGATION_COLLAPSED_STORAGE_KEY } from "./browserStateKeys";
 import PlatformBrand from "./PlatformBrand";
 import { applyDocumentBranding, captureBrandingReadGeneration, publishBranding, useBranding } from "./brandingState";
 import { usePollingQuery } from "./usePollingQuery";
@@ -327,7 +328,7 @@ export default function App() {
   const [refreshInterval] = useRefreshPreference();
   const [commandOpen, setCommandOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    try { return localStorage.getItem("qinghuan-platform-spatial-navigation-collapsed") === "true"; }
+    try { return localStorage.getItem(NAVIGATION_COLLAPSED_STORAGE_KEY) === "true"; }
     catch { return false; }
   });
   useEffect(() => {
@@ -574,8 +575,8 @@ export default function App() {
   }, [sessionQuery.refresh, pluginQuery.refresh, overviewQuery.refresh, servicesQuery.refresh, nodesQuery.refresh, grafanaNavigationQuery.refresh]);
   useEffect(() => { clearSessionViews(); }, [auth?.user?.id, auth?.user?.role, auth?.authenticated, clearSessionViews]);
   useEffect(() => {
-    // Browser state from the separate HX edition is deliberately not imported.
-    sessionStorage.removeItem("qinghuan-platform-token");
+    // Authentication uses server-managed cookies; discard obsolete browser tokens.
+    sessionStorage.removeItem(LEGACY_SESSION_TOKEN_STORAGE_KEY);
   }, []);
   useEffect(() => {
     const expired = () => {
@@ -1327,7 +1328,7 @@ export default function App() {
           <div className="topbar-left">
             <button type="button" className="icon-btn navigation-toggle" aria-label={sidebarCollapsed ? "展开导航" : "收起导航"} aria-controls="primary-navigation" aria-expanded={!sidebarCollapsed}
               onClick={() => setSidebarCollapsed((value) => {
-                try { localStorage.setItem("qinghuan-platform-spatial-navigation-collapsed", String(!value)); } catch { /* Browser preference remains optional. */ }
+                try { localStorage.setItem(NAVIGATION_COLLAPSED_STORAGE_KEY, String(!value)); } catch { /* Browser preference remains optional. */ }
                 return !value;
               })}>{sidebarCollapsed ? <PanelLeftOpen size={24} /> : <PanelLeftClose size={24} />}</button>
             <button

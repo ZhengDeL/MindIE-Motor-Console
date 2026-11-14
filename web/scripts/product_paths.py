@@ -11,7 +11,7 @@ def require_product_path(value, purpose: str) -> Path:
     if any(part in foreign for part in parts):
         raise ValueError(purpose + " must not reuse a directory reserved for another product")
     if not any(part in {"qinghuan", "motor-console"} or part.startswith(("motor-console-", "qinghuan-")) or part.endswith("-qh") for part in parts):
-        raise ValueError(purpose + " must use a dedicated motor-console/qinghuan namespace or -qh installation directory")
+        raise ValueError(purpose + " must use a dedicated platform installation directory, for example /opt/motor-console")
     for candidate in (path, *path.parents):
         if candidate.is_symlink():
             raise ValueError(purpose + " must not traverse a symbolic link")

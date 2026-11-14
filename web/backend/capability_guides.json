@@ -252,14 +252,14 @@
           ]
         },
         {
-          "title": "Docker 外接 Conductor：独立验证容器示例",
+          "title": "Docker 外接 Conductor：独立容器配置示例",
           "format": "shell",
           "target": "管理员在选定宿主终端执行；不是平台自动任务",
-          "code": "MOTOR_IMAGE=\"YOUR_REVIEWED_MOTOR_IMAGE\"\nCONDUCTOR_IP=\"192.0.2.10\"\ndocker run --detach --name qinghuan-kv-conductor-example \\\n  --network host --restart unless-stopped --cpus 1 --memory 1g --pids-limit 128 \\\n  --entrypoint python \"$MOTOR_IMAGE\" -m motor.kv_conductor \\\n  --host \"$CONDUCTOR_IP\" --port 13333",
+          "code": "MOTOR_IMAGE=\"YOUR_REVIEWED_MOTOR_IMAGE\"\nCONDUCTOR_IP=\"192.0.2.10\"\ndocker run --detach --name motor-console-kv-conductor-example \\\n  --network host --restart unless-stopped --cpus 1 --memory 1g --pids-limit 128 \\\n  --entrypoint python \"$MOTOR_IMAGE\" -m motor.kv_conductor \\\n  --host \"$CONDUCTOR_IP\" --port 13333",
           "notes": [
-            "镜像先离线准备并确认 python -m motor.kv_conductor --help 可用；IP 必须为宿主真实管理网地址。该容器不挂 NPU、权重或 Docker socket。",
+            "已有同用途 Conductor 时先核对身份和配置并复用，不重复启动。镜像须确认 python -m motor.kv_conductor --help 可用；IP 为宿主真实管理网地址。该容器不挂 NPU、权重或 Docker socket。",
             "1 CPU / 1 GiB 是隔离验证上限，实际容量需另行评估；13333 只允许本服务管理网访问。先 health / workers 验证再启用亲和，不由平台自动创建或接管。",
-            "恢复时先把服务切回原策略；确认无消费者后，管理员仅停止和删除 qinghuan-kv-conductor-example 这一命名容器，不做全局清理。"
+            "恢复时先把服务切回原策略；确认无消费者后，管理员仅停止和删除 motor-console-kv-conductor-example 这一命名容器，不做全局清理。"
           ]
         }
       ],

@@ -2,7 +2,7 @@
 
 MindIE-Motor Console 通过内置插件组合业务能力，通过社区源码包扩展受保护 API、页面和后台服务。本文说明部署管理员如何选择插件及判断生效状态；插件作者使用[开发指南](PLUGIN_DEVELOPMENT.md)。
 
-社区源码包自平台 `0.11.0` 起提供。使用前，在已登录会话读取 `/api/plugin-sdk`，确认目标安装报告 `community-import-v1`、`http-routes-v1` 和所需页面能力。平台版本、插件 API 与具体能力分别检查；发布版本与源码获取见[文档入口](docs/README.md)。
+使用社区包前，在已登录会话读取 `/api/plugin-sdk`，确认目标安装报告 `community-import-v1`、`http-routes-v1` 和所需页面能力。平台版本、插件 API 与具体能力分别检查；发布版本与源码获取见[文档入口](docs/README.md)。
 
 MindIE-Motor 负责原生推理与部署，平台负责管理连接和操作编排。插件不替换 Coordinator、Controller、NodeManager 或引擎算法，也不自动更换固定的原生源码基线。
 

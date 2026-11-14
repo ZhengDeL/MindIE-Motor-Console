@@ -1,6 +1,6 @@
 # Docker 裸机 Node Exporter 离线安装
 
-适用范围：MindIE-Motor Console 0.11.1 的 Docker 主机观测接口。下面的命令在 **Linux Bash** 中执行。示例目录为 `/opt/motor-console/monitoring/node-exporter`，示例地址为文档专用地址，需替换为实际管理网地址。Kubernetes 节点复用集群侧已有监控，不执行本手册重复安装。
+适用范围：MindIE-Motor Console 的 Docker 主机观测接口。下面的命令在 **Linux Bash** 中执行。示例目录为 `/opt/motor-console/monitoring/node-exporter`，示例地址为文档专用地址，需替换为实际管理网地址。Kubernetes 节点复用集群侧已有监控，不执行本手册重复安装。
 
 Node Exporter 提供宿主 CPU、内存、系统版本、磁盘、文件系统和网络指标；NPU 使用 [NPU 采集与 Exporter 手册](DOCKER_NPU_EXPORTER.md)。本版主机观测统一采用 **Node Exporter → Agent → 控制台**：CPU、内存和操作系统来自同一采集源，Agent 不再自行读取宿主 `/proc/stat`、`/proc/meminfo` 或 `os-release` 采集这些指标，也不以 Docker 信息回退为宿主系统。用于宿主身份绑定和 NPU 快照时效校验的只读信息独立保留。采集缺失时保留不可用状态，不能补零或混入另一来源。
 
@@ -219,8 +219,8 @@ docker rm "$container_id"
 
 先从 Prometheus 移除对应 job/target 并按既有流程加载，再停止采集。保留离线镜像包、环境文件、Compose、摘要和验收记录以便恢复；不要运行全局 `prune`、按模糊名称批量删除、卸载 systemd 旧实例或删除其他 Node/NPU Exporter。标签或镜像不匹配时停止卸载并人工核对。
 
-## 来源与验收范围
+## 来源与安装检查
 
 依据：[官方 v1.12.1 Docker 部署说明与 collector 支持表](https://github.com/prometheus/node_exporter/blob/v1.12.1/README.md)、[启动参数](https://github.com/prometheus/node_exporter/blob/v1.12.1/node_exporter.go)、[宿主 OS 读取实现](https://github.com/prometheus/node_exporter/blob/v1.12.1/collector/os_release.go)、[Linux stat/启动时间](https://github.com/prometheus/node_exporter/blob/v1.12.1/collector/stat_linux.go)、[UTS namespace 配置](https://docs.docker.com/reference/compose-file/services/#uts)、[Docker 绑定挂载与递归只读限制](https://docs.docker.com/engine/storage/bind-mounts/)。
 
-目标环境按第 3、6 节验证实际镜像参数、宿主身份、两次有效采样、Prometheus 抓取和资源成本。本文提供安装与核验流程，不替代某个节点的运行记录；未执行的安装、采样或长稳检查应保留为未验证。
+按第 3、6 节检查镜像参数、宿主身份、两次有效采样、Prometheus 抓取和资源成本。

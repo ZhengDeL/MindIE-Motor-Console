@@ -1,6 +1,6 @@
 # MindIE-Motor Console 生产运行手册
 
-本手册面向部署和维护人员，适用于单实例控制面。本手册随 0.11.1 源码维护，部署步骤见 [0.11.1 部署与升级](docs/DEPLOYMENT_0.11.1.md)。0.11.0 正式包含社区插件包；仍须核对实际构建修订、SDK features 和发布清单。插件导入、信任选择、启动加载是独立步骤，页面版本号不足以证明包已加载。
+本手册面向单实例控制面的部署和维护。首次安装、镜像构建与组件更新见[安装指南](docs/INSTALLATION.md)；插件选择与加载见[插件管理](PLUGINS.md)。
 
 下列命令在 Linux Bash 和仓库根目录执行；域名、目录、镜像摘要均为示例。没有通用默认密码，首个管理员通过部署时生成的一次性 bootstrap token 创建。
 
@@ -8,7 +8,7 @@
 
 推荐 `compose.modular.yaml`：HTTPS Web 与 Control API 分容器部署，API 不公开宿主端口；Web 不持有数据库或 Agent 凭据。数据库可选本地 SQLite 或独立 PostgreSQL，始终只有一个控制写者。Docker 每台执行宿主通常一个 Agent；Kubernetes 每个集群通常一个执行 Agent。Agent 不承载客户端正常推理流量。
 
-显示名称统一为 MindIE-Motor Console，已有安装仍应沿用原 Compose 项目名、环境、持久目录和凭据。项目名属于运行资源身份，不因显示名称变化自动迁移；兼容配置中的既有标识及处理方式见[名称与技术身份](docs/BRANDING.md#显示品牌与技术身份)。维护时记录实际 Compose 项目名，并对同一文件栈进行检查、升级和回退。
+维护时记录实际 Compose 项目名、环境、持久目录和凭据，对同一文件栈执行检查、更新和回退。显示品牌不改变运行资源身份，见[名称与技术身份](docs/BRANDING.md#显示品牌与技术身份)。
 
 需要 Linux、Docker Engine、Compose V2、可信镜像来源及覆盖浏览器实际地址的 HTTPS 证书。准备工具和维护 CLI 使用 Python 3.11+ 及项目锁定依赖，建议与所用 API 镜像保持相同环境。SQLite 必须通过代码中的 WAL-reset 修复版本门禁；升级 Python 本身不能替代检查其链接的 SQLite。
 
@@ -16,33 +16,46 @@ Control 使用非 root UID、只读根文件系统和有界临时目录；不挂
 
 SQLite 必须使用可靠本地持久存储，不能放在共享文件系统由多个实例写入。PostgreSQL 也使用单写者租约，选用它不等于获得高可用。进程重启会将未完成任务标记为中断，不自动重放主机操作；不能删除租约或数据库绕过未决状态。
 
-## 构建固定版本
+## 镜像与源码
 
-下方命令获取 `v0.11.1` 正式发行源码。构建时记录实际源提交与制品摘要，不能把本地构建参数当作发布凭据。
-
-```bash
-git clone --recurse-submodules --branch v0.11.1 \
-  https://github.com/ZhengDeL/MindIE-Motor-Console.git /opt/motor-console/source
-cd /opt/motor-console/source
-git submodule update --init --recursive
-git submodule status mindie-motor/upstream
-docker build -f web/Dockerfile --target api \
-  --build-arg CONSOLE_VERSION=0.11.1 --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/motor-console/api:0.11.1 .
-docker build -f web/Dockerfile --target web \
-  --build-arg CONSOLE_VERSION=0.11.1 --build-arg VCS_REF="$(git rev-parse HEAD)" \
-  -t registry.example.test/motor-console/web:0.11.1 .
-```
-
-原生提交应为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。不要在安装时跟随原生 master；GitHub 自动源码归档不含子模块内容，离线构建必须另备完整固定源码。分别为目标架构构建、验证并记录真实 Image ID 和仓库摘要。示例标签不表示项目提供对应预构建镜像。
+按[安装指南](docs/INSTALLATION.md#2-构建镜像)构建 API/Web 镜像，记录源码提交、目标架构和真实摘要。Agent 使用包含原生适配器的 API 制品，不使用纯 Web 镜像。
 
 安装使用审核过的 `registry/name@sha256:<64位真实摘要>`。可按所选 Dockerfile 配置构建源及 kubectl 版本，不把凭据写入 build arg，不关闭 TLS 或哈希检查。Docker-only 制品可以不含 kubectl；启用 Kubernetes 的 Agent 必须包含受支持 kubectl。
+
+### 维护者：准备离线构建上下文
+
+`web/scripts/build_offline_images.py` 汇集构建输入并生成 `Dockerfile.offline` 与 `build-manifest.json`；它不连接 Docker、不构建镜像，也不下载依赖。当前合同面向 `linux/arm64`。运行前准备：
+
+- 完整 Git checkout、已初始化且干净的固定原生子模块；自动源码 ZIP 不适用。
+- 已构建的前端 `dist`，以及 `requirements.lock` 允许的 ARM64/通用 wheel 文件。
+- 官方 Python `3.12-slim-bookworm` 与 nginx `stable-alpine` 的独立来源收据，记录真实 manifest/Image ID、`linux/arm64`，并已验证压缩层摘要和 rootfs diff ID。
+- 受审二进制依赖镜像的完整 Image ID，以及其中经验证的 SQLite 精确版本；启用 kubectl 时还需该镜像包含受支持二进制。
+
+来源收据的 JSON 字段为 `official_repository`、`resolved_tag`、`architecture`、`manifest_digest`、`config_image_id`、`all_compressed_digests_verified` 和 `all_rootfs_diff_ids_verified`。两个验证标志必须来自实际来源核验；工具不代替维护者验证远端制品。
+
+先查看实际参数，再将示例路径与摘要替换为已准备的输入。目标目录必须不存在：
+
+```bash
+python3 web/scripts/build_offline_images.py --help
+python3 web/scripts/build_offline_images.py \
+  --project-dir /opt/motor-console/source \
+  --destination /srv/motor-console-build-context \
+  --wheelhouse /srv/motor-console-inputs/wheelhouse \
+  --frontend-dist /opt/motor-console/source/web/frontend/dist \
+  --python-receipt /srv/motor-console-inputs/python-receipt.json \
+  --nginx-receipt /srv/motor-console-inputs/nginx-receipt.json \
+  --dependency-image 'sha256:<真实二进制依赖镜像ID>' \
+  --sqlite-version '<已验证的SQLite版本>' \
+  --version "$(python3 -c 'from web.backend.version import CONSOLE_VERSION; print(CONSOLE_VERSION)')"
+```
+
+只有需要 Kubernetes Agent 时才加 `--include-kubectl`。工具校验输入后生成上下文和逐文件摘要，并记录源提交与未提交变更状态；发布构建应使用受审提交。未完成目录保留供排查，不覆盖重跑。之后核对清单要求的本地镜像别名，再在目标构建环境单独构建和验证镜像。
 
 ## 初始化与启动
 
 先确认数据盘和 Docker 存储的可用容量、inode、架构、时间、端口及管理网络来源。容量检查使用容器用户可用空间，不能以 root 保留空间代替。日志、镜像、模型权重和恢复材料分别预留容量。
 
-准备受信发布者的 Ed25519 公钥 PEM，以及包含 `server.crt`、`server.key` 的私有 TLS 目录。自行发布时按[部署指南](docs/DEPLOYMENT_0.11.1.md#3-安全初始化)在受控离线环境生成独立发布密钥，仅传递公钥。证书 SAN、访问端口与 origin 必须匹配；签名私钥留在受控发布环境。对新独立空目录运行：
+准备受信发布者的 Ed25519 公钥 PEM，以及包含 `server.crt`、`server.key` 的私有 TLS 目录。自行发布时按[部署指南](docs/INSTALLATION.md#3-安全初始化)在受控离线环境生成独立发布密钥，仅传递公钥。证书 SAN、访问端口与 origin 必须匹配；签名私钥留在受控发布环境。对新独立空目录运行：
 
 ```bash
 python3 web/scripts/prepare_production.py \

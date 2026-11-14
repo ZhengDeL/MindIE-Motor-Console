@@ -1,6 +1,6 @@
 # MindIE-Motor Console 独立 HTTPS 入口
 
-本手册对应 0.11.1，用于 bundled 兼容拓扑的可选独立 TLS 代理。推荐模块化部署已包含独立 Web/TLS 入口，见[生产手册](PRODUCTION.md)，通常不再增加此代理。它是平台的 HTTPS 访问组件，不是原生 Motor 部署要求，也不转发模型推理流量。
+本手册说明 bundled 兼容拓扑的可选独立 TLS 代理。推荐模块化部署已包含独立 Web/TLS 入口，见[生产手册](PRODUCTION.md)，通常不再增加此代理。它是平台的 HTTPS 访问组件，不是原生 Motor 部署要求，也不转发模型推理流量。
 
 [compose.ingress.host-network.yaml](compose.ingress.host-network.yaml) 使用独立 Nginx 容器，将 `https://192.0.2.10:19443` 转发到同机 `127.0.0.1:19080` 控制面。入口容器独立升级和重启，使用 host 网络、`runc`、非 root UID/GID `101:101`，无需 Docker socket。控制面需只监听 loopback，并仅信任 loopback 转发代理；`MOTOR_TRUSTED_ORIGINS` 填写包含端口的准确 HTTPS 来源。
 

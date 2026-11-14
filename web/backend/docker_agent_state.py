@@ -18,7 +18,7 @@ import uuid
 
 from .observability import redact
 
-AGENT_APPLICATION_ID = 0x4D43414A  # MCAJ; an HX journal is never implicitly adopted.
+AGENT_APPLICATION_ID = 0x4D43414A  # MCAJ; incompatible journals are never adopted implicitly.
 _SESSION = uuid.uuid4().hex
 _INIT = threading.RLock()
 _INITIALIZED: set[str] = set()

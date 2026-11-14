@@ -1,6 +1,6 @@
 # MindIE-Motor Console 加密应用备份与离线恢复演练
 
-本手册对应 0.11.1，说明单实例 Control 的应用归档、定时备份与新目录恢复演练。恢复包格式标识为 `MCBA`、产品身份为 `motor-console`，扩展名为 `.mcba`。不支持的产品或归档格式会被拒绝，不能通过修改扩展名或产品标识进行迁移。
+本手册说明单实例 Control 的应用归档、定时备份与新目录恢复演练。恢复包格式标识为 `MCBA`、产品身份为 `motor-console`，扩展名为 `.mcba`。不支持的产品或归档格式会被拒绝，不能通过修改扩展名或产品标识进行迁移。
 
 此工具保护单实例 Console 的应用状态。它不更改原生 Motor，不操作业务容器，不实现控制面 HA，也不把文件存在或 SQL 可读等同于完整业务恢复。
 
@@ -62,7 +62,7 @@ python3 web/scripts/backup_console.py drill \
 
 ## 社区插件包目录单独备份
 
-0.11.0 正式支持 `community-import-v1` 社区插件包。本节适用于已导入包或保存选择的控制面；先在已登录会话查询 `/api/plugin-sdk` 核对实际宿主能力，见[插件宿主说明](backend/plugin_host/README.md)。未使用社区包时不需要凭空建立插件目录备份。
+已导入社区插件包或保存选择配置时，需要单独备份插件目录。未使用社区包的实例可跳过本节；目录与状态见[插件宿主说明](backend/plugin_host/README.md)。
 
 `MOTOR_PLUGIN_DIR` 默认位于 `/var/lib/motor-console/plugin-packages`；在标准数据卷上对应宿主 Control 数据目录的 `plugin-packages`。修改环境变量不会自动增加 Compose 挂载，外部目录必须由部署者另行绑定并核对权限。**数据库快照和 `.mcba` 应用归档均不包含这份目录。**
 

@@ -6,6 +6,7 @@ import { Download, RefreshCw } from "./icons";
 import { usePollingQuery } from "./usePollingQuery";
 import Pagination from "./Pagination";
 import { knownText } from "./resourcePresentation";
+import { imageOperationStorageKey } from "./browserStateKeys";
 
 export type ImageRemoval = { id: string; node_id: string; node_name: string; tags: string[] };
 type Receipt = {
@@ -41,7 +42,7 @@ export default function ImageOperations({ nodes, canOperate, principal, removal,
   nodes: NodeInfo[]; canOperate: boolean; principal: string; removal: ImageRemoval | null;
   onRemovalClosed: () => void; onCompleted: () => void;
 }) {
-  const storageKey = `qinghuan-platform-image-operation:${principal}`;
+  const storageKey = imageOperationStorageKey(principal);
   const [tracked, setTracked] = useState<Tracked | null>(() => stored(storageKey));
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState("");
@@ -164,7 +165,7 @@ export default function ImageOperations({ nodes, canOperate, principal, removal,
       <p>操作 ID：<code>{tracked.operation_id}</code><Copy value={tracked.operation_id} /><Button kind="text" onClick={() => operation.invalidate()} loading={operation.refreshing}><RefreshCw size={13} />核对回执</Button></p>
       {receipt?.message && <p>{receipt.message}</p>}
       {receipt?.result?.image_id && <p>本地镜像：<code className="break-word">{receipt.result.image_id}</code><Copy value={receipt.result.image_id} /></p>}
-      <small>镜像可读取不代表原生版本、模型配置或推理兼容已验收；结果未知时不会自动重试提交。</small>
+      <small>镜像检查仅确认镜像可读取；部署前请核对原生版本与模型配置。操作结果待核实时，请先查询原操作回执，避免重复提交。</small>
     </div>}
     {pullOpen && <Modal title="拉取节点镜像" onClose={() => { if (!submitting) { setPullOpen(false); setUsername(""); setPassword(""); } }} closeDisabled={submitting} footer={<><Button disabled={submitting} onClick={() => { setPullOpen(false); setUsername(""); setPassword(""); }}>取消</Button><Button kind="primary" loading={submitting} onClick={() => void submit("pull", nodeId, image)}>提交拉取</Button></>}>
       {formError && <ErrorBox message={formError} />}

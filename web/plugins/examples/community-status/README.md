@@ -4,7 +4,7 @@
 
 许可证为目录中的 `LICENSE`（Apache-2.0）。复制修改示例时保留原有许可证及适用版权通知，并注明修改来源；为自己的新增代码选择兼容的许可证。使用独立实现时填写其实际许可证。另需替换插件 ID、名称、作者、API 前缀、导航 endpoint 和提供的接口名。使用平台 SDK 不自动改变独立插件的许可证。
 
-使用 Python 3.12，在平台 `0.11.0` 或对应后续基线的源码仓库根目录构建并检查。本样例插件版本保持 `1.0.0`，最低宿主版本为 `0.11.0`。目标基线的选取方法见[开发指南](../../../PLUGIN_DEVELOPMENT.md)，容器内命令模块前缀为 `backend.plugin_host.packages`：
+使用 Python 3.12，在目标宿主的源码仓库根目录构建并检查。本样例插件版本保持 `1.0.0`，最低宿主版本为 `0.11.0`。目标基线的选取方法见[开发指南](../../../PLUGIN_DEVELOPMENT.md)，容器内命令模块前缀为 `backend.plugin_host.packages`：
 
 ```bash
 python -m web.backend.plugin_host.packages build web/plugins/examples/community-status --output community-status-1.0.0.qhplugin

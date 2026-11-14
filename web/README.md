@@ -1,6 +1,6 @@
 # Web 开发与本地预览
 
-本页面向已取得 0.11.1 源码的应用开发者。正式安装从[文档导航](docs/README.md)进入；源码、镜像与服务器的身份关系见[版本识别](docs/VERSIONING.md)。社区插件自 0.11.0 正式提供，使用前仍需核对目标实例的 SDK 与能力。
+本指南用于本地界面体验和应用开发。正式安装见[安装指南](docs/INSTALLATION.md)；插件开发见[公开 SDK 指南](PLUGIN_DEVELOPMENT.md)。
 
 ## 环境与源码
 
@@ -74,7 +74,7 @@ npm run preview -- --host 127.0.0.1
 
 ```bash
 docker build -f web/Dockerfile --target bundled \
-  --build-arg CONSOLE_VERSION=0.11.1 -t motor-console:local .
+  --build-arg CONSOLE_VERSION=0.11.2 -t motor-console:local .
 MOTOR_CONSOLE_IMAGE=motor-console:local \
   docker compose -f web/compose.yaml --profile demo up -d demo
 ```

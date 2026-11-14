@@ -1,6 +1,6 @@
 # Docker 节点 NPU 采集与官方 Exporter 离线安装
 
-适用范围：MindIE-Motor Console 0.11.1 的 NPU 观测接口。命令均在 **Linux Bash** 中执行，安装目录示例为 `/opt/motor-console/monitoring`；不要直接粘贴到 Windows CMD。已有可用采集器优先复用，不因为升级平台重复安装 Exporter、驱动或容器运行时。
+适用范围：MindIE-Motor Console 的 NPU 观测接口。命令均在 **Linux Bash** 中执行，安装目录示例为 `/opt/motor-console/monitoring`；不要直接粘贴到 Windows CMD。已有可用采集器优先复用，不因为升级平台重复安装 Exporter、驱动或容器运行时。
 
 平台需要可信的设备观测，并不要求每台 Docker 节点安装一套 Prometheus。以下两条路径可独立选择：
 
@@ -333,4 +333,4 @@ docker rm "$qhmon_container_id"
 - [v26.2.0 发布源码](https://github.com/Ascend/mind-cluster/tree/6cb6683c8b73d1c26341bb81a2c1cefe12a855ca/component/npu-exporter)；[v26.0.0 对照源码](https://github.com/Ascend/mind-cluster/tree/2fa1c4f06738892c2cb8f9262bd30fb03405ffcd/component/npu-exporter)。官方 GitCode 原地址为相同仓库和相对路径；文中链接使用 Ascend 官方 GitHub 镜像固定 commit，避免上游分支更新使示例含义漂移。
 - [Docker run 参数](https://docs.docker.com/reference/cli/docker/container/run/)：runtime、挂载、进程/网络命名空间和资源限制。
 
-本文依据固定 release 的官方文档与源码提供安装示例，不代表每种驱动、设备或运行时组合已经通过验收。目标环境须分别验证真实字段、设备映射、PID 命名空间、普通 runc 配套、无 CRI 时的日志/稳定性与实际资源成本。平台不提供绕过这些条件的高权限一键安装；没有执行的检查应明确保留为未验证。
+安装后检查实际指标、设备映射、PID 命名空间、runc 与驱动配套、无 CRI 时的日志和稳定性，以及采集资源成本。平台不提供跳过这些检查的高权限一键安装。

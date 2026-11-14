@@ -371,7 +371,7 @@ class GrafanaIntegration:
                 else "configured" if value.get("base_url") else "not_configured",
                 "scope": "existing-instance-connection", "connection_status": connection,
                 "external_system_verified": False,
-                "detail": "接入已有 Grafana，保留其独立登录；连接检查不等于指标、看板或模型业务验收。"}
+                "detail": "接入已有 Grafana，保留独立登录。连接检查确认服务健康及只读访问，指标与模型状态在对应看板查看。"}
 
     def save(self, data: GrafanaSettings):
         with self.lock:
@@ -704,11 +704,11 @@ def create_extension_router(store, secrets, lock, upstream, *, enabled=None):
     if selected("ccae"):
         registry.register(NativeIntegration(ExtensionDescriptor("native.ccae", "CCAE 原生接入", "native",
         ("native-configuration", "offline-guidance", "explicit-control-effects")),
-        "通过原生 Reporter 上报；precisioncontrol 可终止实例，真实注册/Kafka/控制需要外部系统验收"))
+        "通过原生 Reporter 对接注册、Kafka 上报与控制通道；precisioncontrol 可终止实例，请按权限启用。"))
     if selected("gateways"):
         registry.register(NativeIntegration(ExtensionDescriptor("gateway.existing", "已有推理网关", "gateway",
         ("connection-registry", "model-discovery", "binding-check")),
-        "接入已有 OpenAI 兼容网关；不等于安装 AIGW 或创建网关路由",
+        "保存已有 OpenAI 兼容网关连接并核对模型列表；路由规则在网关侧维护。",
         scope="existing-gateway-connection", state_label="已有网关接入"))
     registry.freeze()
 
