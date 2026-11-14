@@ -1,6 +1,6 @@
 # 安装与升级
 
-MindIE-Motor Console 由独立 Web/API、数据库提供者和执行 Agent 组成。0.12.0 候选还提供独立 Node 插件入口、Python Provider SDK 与完整 UI 制品，详见[提供者部署](PROVIDER_PLUGINS.md)；本页基础拓扑仍可直接运行 Python API。Web 不持有节点执行权限；原生 Motor 使用固定源码画像，不随控制台更新自动变更。
+MindIE-Motor Console 由独立 Web/API、数据库提供者和执行 Agent 组成。0.12.0 提供独立 Node 插件入口、Python Provider SDK 与完整 UI 制品，详见[提供者部署](PROVIDER_PLUGINS.md)；本页基础拓扑仍可直接运行 Python API。Web 不持有节点执行权限；原生 Motor 使用固定源码画像，不随控制台更新自动变更。
 
 本指南用于 Linux Docker 单实例 Control 的安装和组件更新。命令在 **Linux Bash、仓库根目录**执行，域名、路径和摘要须替换为实际值。示例镜像地址不是预构建镜像下载源。本地体验见[开发指南](../README.md)，运行维护见[生产手册](../PRODUCTION.md)。
 

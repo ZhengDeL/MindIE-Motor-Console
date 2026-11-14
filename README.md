@@ -4,7 +4,7 @@ MindIE-Motor Console 是面向 **MindIE-Motor** 的开源部署与运维控制�
 
 控制台独立部署，与原生 MindIE-Motor 分别升级。原生 Motor 负责请求路由、实例管理、P/D 协同及引擎执行；业务推理直接访问模型服务，控制台不承载推理流量。
 
-0.12.0 候选提供可替换的业务与完整 UI：Node 插件宿主、Python Provider SDK 和浏览器 SDK 分层装配，默认参考实现与第三方遵循相同公开合同。发行状态以 Releases 为准，源码候选不等于服务器已升级或真实模型验收完成。见[插件架构](web/ARCHITECTURE.md)和[导入/部署指南](web/docs/PROVIDER_PLUGINS.md)。
+0.12.0 提供可替换的业务与完整 UI：Node 插件宿主、Python Provider SDK 和浏览器 SDK 分层装配，默认参考实现与第三方遵循相同公开合同。发布源码不会自动升级服务器；具体兼容与验收范围见[版本说明](web/docs/RELEASE_0.12.0.md)、[插件架构](web/ARCHITECTURE.md)和[导入/部署指南](web/docs/PROVIDER_PLUGINS.md)。
 
 ## 可以做什么
 
@@ -26,7 +26,7 @@ Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它
 | [Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases) | 选择已发布标签及其安装说明，固定源码和实际镜像摘要。 |
 | `main` | 当前维护主线，适合贡献和评审；生产安装选择已发布标签。 |
 
-当前正式发行版本为 **0.11.2**，使用固定标签 `v0.11.2`；本分支的 0.12.0 仍为候选。源码、镜像和服务器分别管理；拉取代码不会自动升级已有部署。
+当前源码发行版本为 **0.12.0**，使用固定标签 `v0.12.0`。源码、镜像和服务器分别管理；拉取代码不会自动升级已有部署。本次发行是经过接口、浏览器与隔离 ARM64 运行验证的插件化版本，未据此宣称所有真实模型、集群或第三方插件已完成生产认证。
 
 当前固定原生适配基线为 `37d615f232a36b8dba8630ffc3a01a20d289c65e`。平台通过受控适配器使用其配置、模板和 deployer 入口；不同运行时并非每个动作都直接执行同一个 `deploy.py`。原生版本、模型镜像及外部依赖的具体兼容范围见[原生集成说明](web/docs/NATIVE_INTEGRATION.md)与[能力矩阵](web/docs/NATIVE_CAPABILITY_MATRIX.md)。
 
@@ -34,10 +34,10 @@ Docker 的布局建议与最终准入由平台和执行 Agent 协同完成；它
 
 **部署用户**：先阅读[文档导航](web/docs/README.md)，选择运行时、数据库和网络入口，再按[安装入口](web/DEPLOYMENT.md)准备独立目录、密钥、镜像及 Agent。
 
-以下命令获取 `v0.11.2` 发行源码；如需其他已发布版本，从 Releases 选择对应标签替换 `SOURCE_REF`：
+以下命令获取 `v0.12.0` 发行源码：
 
 ```bash
-SOURCE_REF=v0.11.2
+SOURCE_REF=v0.12.0
 git clone --recurse-submodules --branch "$SOURCE_REF" \
   https://github.com/ZhengDeL/MindIE-Motor-Console.git motor-console
 cd motor-console

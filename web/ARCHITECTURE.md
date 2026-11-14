@@ -1,6 +1,6 @@
 # 架构与维护边界
 
-MindIE-Motor Console 为原生 Motor 提供可选的部署与运维控制台。0.12.0 候选采用小型宿主、显式提供者绑定和默认参考插件；Node 入口、Python 业务/Agent 与浏览器 UI 各有公开 SDK。具体实现可以替换，原生 Motor 的模型管理和请求调度保持独立。
+MindIE-Motor Console 为原生 Motor 提供可选的部署与运维控制台。0.12.0 采用小型宿主、显式提供者绑定和默认参考插件；Node 入口、Python 业务/Agent 与浏览器 UI 各有公开 SDK。具体实现可以替换，原生 Motor 的模型管理和请求调度保持独立。
 
 ## 部署与数据流
 

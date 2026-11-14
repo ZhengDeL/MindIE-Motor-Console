@@ -8,6 +8,7 @@
 - 本地体验与应用开发：使用[本地预览指南](../README.md)。
 - 社区插件：从[插件开发指南](../PLUGIN_DEVELOPMENT.md)和完整示例开始。
 - 已发布版本与变更：[GitHub Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases)。
+- 0.12.0 的功能、兼容与实际验收范围：[版本说明](RELEASE_0.12.0.md)。
 
 版本、构建修订、Agent 协议、数据库 schema、原生 Motor 与模型镜像之间的关系见[版本与兼容规则](VERSIONING.md)。
 

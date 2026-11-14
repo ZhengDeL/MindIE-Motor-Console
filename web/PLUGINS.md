@@ -1,6 +1,6 @@
 # 插件管理与运行边界
 
-MindIE-Motor Console 通过显式提供者组合业务与 UI。0.12.0 候选包含 Node 宿主、Python 业务/Agent 提供者和完整浏览器插件；默认参考实现与第三方按同一合同选择。本文说明状态与边界，实际安装和替换命令见[提供者部署](docs/PROVIDER_PLUGINS.md)。
+MindIE-Motor Console 通过显式提供者组合业务与 UI。0.12.0 包含 Node 宿主、Python 业务/Agent 提供者和完整浏览器插件；默认参考实现与第三方按同一合同选择。本文说明状态与边界，实际安装和替换命令见[提供者部署](docs/PROVIDER_PLUGINS.md)。
 
 在已登录会话读取 `/api/plugins` 的 `assembly` 查看实际绑定/状态，通过 `/api/plugin-sdk` 的 `provider_sdk` 查看公开合同。增量 `.qhplugin` 仍独立检查 `community-import-v1`、`http-routes-v1` 等能力；完整 UI 与 Python 提供者不使用这个旧包格式。平台版本、SDK、提供者及实际能力分别核对，见[文档入口](docs/README.md)。
 

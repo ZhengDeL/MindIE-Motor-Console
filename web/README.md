@@ -74,7 +74,7 @@ npm run preview -- --host 127.0.0.1
 
 ```bash
 docker build -f web/Dockerfile --target bundled \
-  --build-arg CONSOLE_VERSION=0.11.2 -t motor-console:local .
+  --build-arg CONSOLE_VERSION=0.12.0 -t motor-console:local .
 MOTOR_CONSOLE_IMAGE=motor-console:local \
   docker compose -f web/compose.yaml --profile demo up -d demo
 ```
