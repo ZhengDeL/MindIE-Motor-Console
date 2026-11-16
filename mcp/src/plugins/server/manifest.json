@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "reference.mcp.server",
+  "version": "1.0.0",
+  "sdk": "^1.0.0",
+  "entry": "index.js",
+  "provides": [
+    {
+      "contract": "console.mcp.server",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": [
+    {
+      "contract": "console.mcp.toolsets",
+      "range": "^1.0.0"
+    },
+    {
+      "contract": "console.mcp.auth",
+      "range": "^1.0.0"
+    },
+    {
+      "contract": "console.mcp.control",
+      "range": "^1.0.0"
+    }
+  ]
+}

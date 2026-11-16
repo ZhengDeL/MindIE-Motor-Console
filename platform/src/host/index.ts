@@ -5,3 +5,4 @@ export type { Plan } from "./planner.js";
 export { generation, packageDigest, readComposition } from "./artifacts.js";
 export { parseComposition, parseManifest } from "./schema.js";
 export { importArtifact } from "./importer.js";
+export { pinComposition } from "./selection.js";

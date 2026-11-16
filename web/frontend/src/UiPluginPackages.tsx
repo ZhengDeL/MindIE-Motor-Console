@@ -5,8 +5,9 @@ import { RefreshCw, Upload } from "./icons";
 import { usePollingQuery } from "./usePollingQuery";
 import { useUnsavedChanges } from "./unsavedChanges";
 import { UiElement, UiRegion, UiText, withUiSlot, type UiPackageManifest } from "./uiPluginSdk";
+import { UI_KERNEL_SLOTS } from "@mindie-motor/ui-sdk";
 
-type Selection = { packages: Record<string, string>; bindings: Record<string, string> };
+type Selection = { packages: Record<string, string>; bindings: Record<string, string>; inherit_defaults?: boolean };
 type Package = { digest: string; manifest: UiPackageManifest & { name?: string; description?: string }; selected: boolean };
 type Directory = { revision: number; items: Package[]; selection: Selection; active_generation: string;
   desired_generation: string; pending_restart: boolean; activation: "next-start" };
@@ -17,7 +18,8 @@ function parseDirectory(input: unknown): Directory {
   if (!value || !Number.isSafeInteger(value.revision) || !Array.isArray(value.items) || value.items.length > 128
     || !value.selection || typeof value.selection.packages !== "object" || !value.selection.bindings
     || typeof value.active_generation !== "string" || typeof value.desired_generation !== "string"
-    || typeof value.pending_restart !== "boolean" || value.activation !== "next-start") throw Error("UI 插件目录格式无效");
+    || typeof value.pending_restart !== "boolean" || value.activation !== "next-start"
+    || value.selection.inherit_defaults !== undefined && typeof value.selection.inherit_defaults !== "boolean") throw Error("UI 插件目录格式无效");
   const digests = new Set<string>();
   for (const item of value.items) {
     if (!item || !SHA.test(item.digest) || digests.has(item.digest) || !item.manifest || typeof item.manifest.id !== "string"
@@ -91,15 +93,18 @@ function DefaultUiPluginPackages({ canManage, identity }: { canManage: boolean; 
 function DefaultUiPluginReview({ review, onClose, onSaved }: { review: Review; onClose: () => void; onSaved: () => Promise<void> }) {
   const { item } = review;
   const [slots, setSlots] = useState(() => new Set(item?.manifest.provides.map(p => p.slot) ?? []));
+  const [inheritDefaults, setInheritDefaults] = useState(review.selection.inherit_defaults ?? true);
   const [trusted, setTrusted] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const guard = useRef(false);
-  useUnsavedChanges(trusted || busy);
+  useUnsavedChanges(trusted || busy || inheritDefaults !== (review.selection.inherit_defaults ?? true)
+    || !!item && (slots.size !== item.manifest.provides.length || item.manifest.provides.some(p => !slots.has(p.slot))));
   async function save() {
     if (guard.current || !trusted) return;
     guard.current = true; setBusy(true); setError("");
     try {
       const selection: Selection = item ? structuredClone(review.selection) : { packages: {}, bindings: {} };
       if (item) {
+        selection.inherit_defaults = inheritDefaults;
         selection.packages[item.manifest.id] = item.digest;
         for (const [slot, id] of Object.entries(selection.bindings)) if (id === item.manifest.id) delete selection.bindings[slot];
         for (const slot of slots) selection.bindings[slot] = item.manifest.id;
@@ -113,7 +118,11 @@ function DefaultUiPluginReview({ review, onClose, onSaved }: { review: Review; o
   return <Modal title={item ? "选择 UI 提供者" : "恢复默认 UI 装配"} subtitle={item ? `${item.manifest.id} · ${item.manifest.version}` : "清除第三方 UI 槽位选择，下次启动采用默认参考包。"}
     onClose={onClose} closeDisabled={busy} wide footer={<><Button actionId="ui.selection.cancel" disabled={busy} onClick={onClose}><UiText>取消</UiText></Button>
       <Button actionId="plugins.ui.select" kind="primary" loading={busy} disabled={!trusted} onClick={() => void save()}><UiText>保存下次启动选择</UiText></Button></>}>
-    {item && <><UiElement as="p" className="plugin-digest"><UiElement as="code">{item.digest}</UiElement></UiElement><Field label="替换槽位" hint="可选取同一包中的多个槽位；未选槽位保留其他已选择提供者。">
+    {item && <><UiElement as="p" className="plugin-digest"><UiElement as="code">{item.digest}</UiElement></UiElement>
+      <UiElement as="label" className="plugin-trust-check"><UiElement as="input" type="checkbox" checked={inheritDefaults} disabled={busy} onChange={event => setInheritDefaults(event.target.checked)} />
+        <UiElement as="span"><UiText>继承参考界面的默认槽位，适合替换部分页面或组件。</UiText></UiElement></UiElement>
+      {!inheritDefaults && <InfoBox><UiText>独立装配仅使用显式选择，不补入参考界面。请提供全部核心槽位及插件声明的依赖：</UiText> {UI_KERNEL_SLOTS.join("、")}。</InfoBox>}
+      <Field label="替换槽位" hint="可选取同一包中的多个槽位；未选槽位保留其他已选择提供者。">
       <UiElement as="div" className="ui-slot-choice-list">{item.manifest.provides.map(contribution => <UiElement as="label" key={contribution.slot} className="plugin-trust-check">
         <UiElement as="input" type="checkbox" checked={slots.has(contribution.slot)} disabled={busy} onChange={event => setSlots(previous => {
           const next = new Set(previous); if (event.target.checked) next.add(contribution.slot); else next.delete(contribution.slot); return next;

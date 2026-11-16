@@ -7,6 +7,10 @@ export * from "./components.js";
 import type { BuiltinUiContracts } from "./components.js";
 
 export const UI_SDK_VERSION = "1.0.0";
+/** Required by the browser kernel, independently of any reference UI package. */
+export const UI_KERNEL_SLOTS = Object.freeze([
+  "ui.appearance", "ui.theme", "ui.shell", "ui.i18n", "ui.notifications", "ui.button", "ui.actions",
+] as const);
 export type UiComponentProps<P extends object = { children?: React.ReactNode }> = P & { Default: React.ComponentType<P> };
 /** Values cross an untyped module boundary and are validated before resolution. */
 export type UiProvider = unknown;
@@ -42,7 +46,10 @@ export type UiResolver = {
   <T>(slot: string): T;
 };
 export type UiActivationContext = { generation: string; signal: AbortSignal; selectedSlots: readonly string[];
-  onStop: (stop: () => void | Promise<void>) => void; consume: UiResolver;
+  /** Register before acquiring resources; registration closes when stopping begins. */
+  onStop: (stop: () => void | Promise<void>) => void;
+  /** Activation consumption requires an explicit entry in this package's requires. */
+  consume: UiResolver;
   assetUrl: (member: string) => string; loadAsset: (member: string) => Promise<Uint8Array> };
 export type UiPlugin = { id: string; version: string; buildDigest?: string;
   providers: Readonly<Record<string, unknown>>; activate?: (context: UiActivationContext) => void | Promise<void> };

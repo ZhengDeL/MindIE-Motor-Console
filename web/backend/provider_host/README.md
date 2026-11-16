@@ -1,4 +1,10 @@
-# Python Provider SDK v1
+# Python Provider host contracts
+
+Install the independent [motor-console-sdk](../../../packages/python-sdk/README.md)
+for provider development. This guide describes host assembly and runtime contracts.
+The version dimensions are independent: SDK package `1.0.0`, contract API
+`SDK_VERSION=1`, and assembly/manifest `schemaVersion` 1 or 2. Schema v2 adds
+extension contracts and HTTP declarations while retaining v1 compatibility.
 
 `MOTOR_PROVIDER_ASSEMBLY_FILE` selects exact provider versions and contract
 versions at startup, before the data store opens. Omit it for reference

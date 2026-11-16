@@ -61,6 +61,11 @@ def assemble_reference_application(providers) -> FastAPI:
     upstream = Path(upstream_dir or os.getenv("MOTOR_UPSTREAM_DIR", Path(__file__).resolve().parents[2] / "mindie-motor/upstream"))
     directory = Path(data_dir or os.getenv("MOTOR_DATA_DIR", Path(__file__).resolve().parents[1] / ".data"))
     configuration = PlatformConfiguration.from_env(directory)
+    ui_enabled = os.getenv("MOTOR_UI_ENABLED", "true").lower()
+    if ui_enabled not in {"true", "false"}:
+        raise ValueError("MOTOR_UI_ENABLED must be true or false")
+    if ui_enabled == "false" and configuration.static_enabled:
+        raise ValueError("MOTOR_UI_ENABLED=false requires MOTOR_STATIC_ENABLED=false")
     community = providers.consume("plugins.packages", legacy_profiles=providers.require("legacy_profiles"))
     plugins = build_registry(storage_backend=configuration.database_backend, extra_manifests=community.declarations())
     plugin_cleanup = ExitStack()
@@ -181,7 +186,7 @@ def assemble_reference_application(providers) -> FastAPI:
 
 
     from .ui_plugin_assets import public_ui_plugin_read
-    from .provider_host.authorization import account_path, public_auth_request, authenticate_session
+    from .provider_host.authorization import account_path, public_auth_request, authenticate_session, authorize_request
     body_limits = {"/api/plugin-packages/import": MAX_PACKAGE_BYTES,
                    "/api/ui-plugins/packages/import": MAX_PACKAGE_BYTES}
     if selected_mode != "agent":
@@ -243,14 +248,8 @@ def assemble_reference_application(providers) -> FastAPI:
                         # session. Other non-public auth operations are browser
                         # self-service, including any unknown extension path.
                         roles = {"admin"} if account_path(path) else {"admin", "operator", "viewer"}
-                    authenticated = authenticate_session(session_provider, request, required=True)
-                    request.state.principal = authenticated
-                    principal = policy_provider.authorize(request, roles, account_only=account_only)
-                    if principal is None:
-                        raise HTTPException(503, {"code": "invalid_authorization_result", "message": "所选授权提供者未返回有效身份，已拒绝请求"})
-                    if (getattr(principal, "role", None) not in roles
-                            or account_only and getattr(principal, "kind", None) != "session"):
-                        raise HTTPException(403, "此身份无权执行此操作")
+                    principal = authorize_request(session_provider, policy_provider, request, roles,
+                                                  account_only=account_only)
                     if method not in {"GET", "HEAD", "OPTIONS"} and (directory / "maintenance.json").exists():
                         raise HTTPException(503, "平台正在维护，暂停新的配置和部署操作")
                     if method not in {"GET", "HEAD", "OPTIONS"} and not application.state.log_health:
@@ -425,10 +424,12 @@ def assemble_reference_application(providers) -> FastAPI:
 
     application.state.system = None
     application.state.agent_rollouts = None
-    ui_router = providers.consume("console.ui-assets")(directory=directory, mode=selected_mode,
-                                                       store=store, role_for_request=role_for_request)
-    application.include_router(ui_router)
-    application.state.ui_generation = getattr(ui_router, "ui_generation", "")
+    application.state.ui_generation = ""
+    if ui_enabled == "true":
+        ui_router = providers.consume("console.ui-assets")(directory=directory, mode=selected_mode,
+                                                           store=store, role_for_request=role_for_request)
+        application.include_router(ui_router)
+        application.state.ui_generation = getattr(ui_router, "ui_generation", "")
     providers.prepare_api_routes(application, LEGACY_API_CONTRACTS)
     legacy_publications.finalize()
     community.mount(plugins, plugin_context, plugin_cleanup)

@@ -1,0 +1,91 @@
+name: motor-console-headless
+services:
+  control:
+    image: ${MOTOR_HEADLESS_CONTROL_IMAGE:?Set a reviewed headless image with @sha256 digest}
+    user: ${MOTOR_HEADLESS_UID:-10001}:${MOTOR_HEADLESS_GID:-10001}
+    runtime: runc
+    environment:
+      MOTOR_MODE: control
+      MOTOR_ENV: production
+      MOTOR_UI_ENABLED: 'false'
+      MOTOR_STATIC_ENABLED: 'false'
+      MOTOR_DATA_DIR: /var/lib/motor-console
+      MOTOR_LOG_DIR: /var/log/motor-console
+      MOTOR_UPSTREAM_DIR: /opt/motor/upstream
+      MOTOR_PROVIDER_ASSEMBLY_FILE: /run/motor-config/assembly.json
+      MOTOR_SERVICE_CREDENTIALS_FILE: /run/motor-credentials/backend-credentials.json
+      MOTOR_SECRET_KEY_FILE: /run/motor-credentials/encryption.key
+      MOTOR_BOOTSTRAP_TOKEN_FILE: /run/motor-credentials/bootstrap.token
+      MOTOR_ALLOW_LEGACY_TOKEN: 'false'
+      MOTOR_COOKIE_SECURE: 'true'
+      MOTOR_TRUSTED_ORIGINS: ${MOTOR_MCP_PUBLIC_ORIGIN:?Set the exact external HTTPS MCP origin}
+    volumes:
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT:?Set an absolute private directory}/control-config
+      target: /run/motor-config
+      read_only: true
+      bind: { create_host_path: false }
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/control-credentials
+      target: /run/motor-credentials
+      read_only: true
+      bind: { create_host_path: false }
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/data
+      target: /var/lib/motor-console
+      bind: { create_host_path: false }
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/logs
+      target: /var/log/motor-console
+      bind: { create_host_path: false }
+    # Outbound access is for registered Agents, Exporters and service probes.
+    networks: [control_plane, runtime_egress]
+    read_only: true
+    tmpfs: [/tmp:size=64m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 256
+    restart: unless-stopped
+  mcp:
+    image: ${MOTOR_MCP_IMAGE:?Set a reviewed MCP image with @sha256 digest}
+    user: ${MOTOR_HEADLESS_UID:-10001}:${MOTOR_HEADLESS_GID:-10001}
+    runtime: runc
+    init: true
+    environment:
+      NODE_ENV: production
+      NODE_TLS_REJECT_UNAUTHORIZED: '1'
+    depends_on:
+      control: { condition: service_healthy }
+    ports:
+    - '${MOTOR_MCP_BIND_IP:-127.0.0.1}:${MOTOR_MCP_PORT:-8443}:8443'
+    volumes:
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/mcp-config
+      target: /run/motor-mcp/config
+      read_only: true
+      bind: { create_host_path: false }
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/mcp-credentials
+      target: /run/motor-mcp/credentials
+      read_only: true
+      bind: { create_host_path: false }
+    - type: bind
+      source: ${MOTOR_HEADLESS_ROOT}/tls
+      target: /run/motor-mcp/tls
+      read_only: true
+      bind: { create_host_path: false }
+    networks: [ingress, control_plane]
+    read_only: true
+    tmpfs: [/tmp:size=32m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1
+    pids_limit: 128
+    restart: unless-stopped
+networks:
+  ingress: {}
+  control_plane: { internal: true }
+  runtime_egress: {}

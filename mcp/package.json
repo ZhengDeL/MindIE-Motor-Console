@@ -1,0 +1,34 @@
+{
+  "name": "@mindie/console-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Headless MCP composition on the Console plugin host",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "console-mcp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build:dependencies": "npm --prefix ../platform run build && npm --prefix ../packages/mcp-sdk run build",
+    "build": "npm run build:dependencies && tsc && node scripts/copy-manifests.mjs",
+    "check": "npm run build:dependencies && tsc --noEmit",
+    "start": "node dist/cli.js start",
+    "validate": "node dist/cli.js validate",
+    "pin": "node dist/cli.js pin"
+  },
+  "dependencies": {
+    "@mindie-motor/host-sdk": "file:../packages/node-sdk",
+    "@mindie-motor/mcp-sdk": "file:../packages/mcp-sdk",
+    "@mindie/console-platform": "file:../platform",
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "jsonc-parser": "3.3.1"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@types/node": "22.15.30",
+    "typescript": "5.8.3"
+  }
+}

@@ -26,3 +26,10 @@ Declare the matching slot version, service kind and method names in `manifest.js
 To add a complete React page, contribute a component slot and `contributes.pages` with a package-prefixed ID, explicit account roles and a route `extensions/<package-id>/<leaf>`. `UiPageProps` contains its declaration. The host registers navigation, command search and deep links; it checks role visibility before rendering. API authorization remains enforced by the backend. UI declarations grant no API permissions.
 
 The running host pins artifact digests and a boot generation, loads only selected providers, validates dependencies and runs lifecycle cleanup. Selection takes effect on the next owning API start; browsers preserve their generation and unsaved drafts until an explicit reload. Components should call `useUnsavedChanges` and preserve native disabled, keyboard, focus and ref behavior. Plugins share the authenticated browser session and are trusted code, without a browser security sandbox.
+
+`UI_KERNEL_SLOTS` lists the seven contracts required by the browser loader,
+independently of the reference application's component catalogue. Select with
+`inherit_defaults: false` to bind an independent UI explicitly. Unselected
+reference code, pages and styles are omitted. The default remains inheritance
+for compatible partial replacements. See the source distribution's
+`web/frontend/sdk/README.md` for selection, lifecycle and rollback contracts.

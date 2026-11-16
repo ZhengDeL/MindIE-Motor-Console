@@ -6,9 +6,9 @@
 
 | 边界 | 实际宿主与 SDK | 默认实现与替换方式 |
 | --- | --- | --- |
-| 进程与 HTTP 入口 | [TypeScript 宿主](../../platform/README.md)、[公开 SDK](../../platform/src/sdk/index.ts) | HTTP transport 和 Python bridge 都是普通 ESM 包；装配文件精确选择契约提供者，可替换成其他受信 HTTP 处理器。 |
-| Python 业务与 Agent | [Provider SDK](../backend/provider_host/README.md)、[调用合同](../backend/provider_host/sdk.py)、[可执行目录](../backend/provider_host/catalogue.py) | 存储、身份/会话/策略、审计、日志、任务、节点连接、采集、资源、Motor/运行时、API 模块均从绑定解析。 |
-| 浏览器 | [UI SDK](../frontend/sdk/README.md)、[公开入口](../frontend/sdk/index.ts) | 外壳、登录、页面、组件、表单/弹窗、动作、图标、主题与语言均有实际渲染插槽；可导入独立 UI 制品。 |
+| 进程与 HTTP 入口 | [独立 Node SDK](../../packages/node-sdk/README.md)、[Node 宿主指南](../../platform/README.md) | HTTP transport 和 Python bridge 都是普通 ESM 包；装配文件精确选择契约提供者，可替换成其他受信 HTTP 处理器。 |
+| Python 业务与 Agent | [独立 Python SDK](../../packages/python-sdk/README.md)、[提供者宿主契约](../backend/provider_host/README.md) | 存储、安全、业务、资源、Motor/运行时与 API 模块从绑定解析，具体接口见[可执行目录](../backend/provider_host/catalogue.py)。 |
+| 浏览器 | [独立 UI SDK](../../packages/ui-sdk/README.md)、[UI 插槽契约](../frontend/sdk/README.md) | 外壳、页面、组件与设计系统使用显式插槽；可导入独立 UI 制品。 |
 
 这些合同分别面向 Node、Python 和浏览器，格式及版本不互换。默认与第三方在各自宿主中使用同一公开合同；Node 的原始 HTTP 转发不会把 Motor JSON 解析成 JavaScript 数值。
 
@@ -28,18 +28,7 @@
 
 空覆盖使用参考提供者。第三方使用自己的 ID，并在 `providers` 中填写真实导入描述符，随后在 `bindings` 为相应契约选择精确版本。不能只修改显示名称、冒用 `reference.*` ID，或向一份空数组示例填入虚构摘要。
 
-| 提供者组 | 可替换范围 |
-| --- | --- |
-| `storage.store` | 存储门面、Repository/UoW、条件写、审计原子性及备份恢复；不仅限于 SQLite。自定义实现须满足完整合同，不能仅提供 SQL 连接。 |
-| `security.identity/session/policy/agent/secrets` | 账号身份、可撤销会话、授权、Agent 身份和秘密存储；各项可以独立替换。 |
-| `audit.sink`、`logs.*`、`tasks.scheduler` | 事务审计、结构化日志、运行日志、任务调度与清理。 |
-| `agent.connection`、`telemetry.*` | Agent 传输、宿主源、节点采样、服务状态与服务指标。 |
-| `resources.*` | 库存投影、布局建议、分配账本与最终准入；观测与分配记录仍分层处理。 |
-| `motor.native`、`runtime.*` | 原生版本/配置/清单适配及 Docker/K8s Agent 执行器；不改原生调度算法。 |
-| `templates.catalog`、`features.catalog` | 模板与能力来源。保存任意原生配置字段，不把配置可见当作部署成功。 |
-| `integration.grafana`、品牌、维护及 `api.*` | 集成实现、品牌/维护服务和独立 API 模块。网关、CCAE 等已有功能可通过对应业务 API、能力和原生适配合同替换，外部产品仍需独立安装验收。 |
-
-实际方法、属性、输入和可选性以可执行目录与 SDK 为准；不能仅实现表中的名字。数据迁移由持有数据的提供者声明；选择新数据库不会自动复制原数据库，也不自动获得高可用。
+可替换范围见[Python 公开契约目录](../PLUGIN_EXTENSION_POINTS.md#python-公开合同)，实际方法、属性、输入和可选性以 SDK 与可执行目录为准。存储实现须满足完整 Repository/UoW、条件写、审计原子性及备份恢复契约，不能仅提供 SQL 连接。数据迁移由持有数据的提供者声明；选择新数据库不会自动复制原数据库，也不自动获得高可用。
 
 ### 导入 `.mcprovider`
 
@@ -96,12 +85,7 @@ python web/scripts/provider_packages.py select /secure/candidate.json \
 
 “系统设置 → 插件管理”提供 UI 制品导入、摘要/版本/插槽检查、显式信任及下次启动选择。一个包可以提供整个应用，也可以只替换一个页面、图标包或按钮/动作实现；不是每个按钮都要单独安装一个包。
 
-可替换层次包含：
-
-- `ui.shell`、`ui.appearance`、`ui.theme`：完整外壳、外观与设计系统。
-- `page.*`、`component.*`、`tab.service.*`、`layout.*`：页面、部署编辑器、详情页签、表格、表单、弹窗与布局。
-- `ui.button`、`ui.actions`、`ui.element`：按钮渲染、稳定动作及原生元素渲染。
-- `ui.icons`、`ui.i18n`、`ui.notifications`：语义图标、语言及通知。
+可替换层次见[完整 UI 扩展目录](../PLUGIN_EXTENSION_POINTS.md#完整-ui-替换)，具体 props、动作与生命周期见[浏览器 UI 契约](../frontend/sdk/README.md)。
 
 默认包也经过同一绑定和生命周期检查；完全未选择默认包时，不加载其 App、外观代码和业务样式。宿主只保留启动/失败诊断所需的极小界面。
 

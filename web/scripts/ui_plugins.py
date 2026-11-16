@@ -103,9 +103,11 @@ def main():
                 result = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw), "executes_code": False}
         elif args.command == "select":
             selection = json_document(read_regular(args.selection.absolute(), MAX_STATE_BYTES), maximum=MAX_STATE_BYTES)
-            if not isinstance(selection, dict) or set(selection) != {"packages", "bindings"}:
-                raise UiPluginError("Selection file must contain exactly packages and bindings")
-            result = store.select(packages=selection["packages"], bindings=selection["bindings"], expected_revision=args.expected_revision, trust_code=args.trust_code)
+            if (not isinstance(selection, dict) or not {"packages", "bindings"} <= selection.keys()
+                    or set(selection) - {"packages", "bindings", "inherit_defaults"}):
+                raise UiPluginError("Selection file requires packages and bindings, with optional inherit_defaults")
+            result = store.select(packages=selection["packages"], bindings=selection["bindings"], expected_revision=args.expected_revision,
+                                  trust_code=args.trust_code, inherit_defaults=selection.get("inherit_defaults", True))
         else:
             # This path intentionally does not load broken artifact manifests.
             # Keep the old bytes before changing only the named selection file.

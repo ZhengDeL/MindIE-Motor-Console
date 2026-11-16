@@ -46,17 +46,21 @@ CONTRACTS = MappingProxyType({item.id: item for item in (
 )})
 
 
+def _within(path: str, prefix: str) -> bool:
+    return path == prefix or path.startswith(prefix + "/")
+
+
 def route_contract(path: str) -> str | None:
     """Most-specific stable module owner; query strings never enter ownership."""
     if path in {"/health", "/ready", "/api/meta"}:
         return None
-    if path.startswith("/api/ui-plugins"):
+    if _within(path, "/api/ui-plugins"):
         return "console.ui-assets"
-    if path == "/api/auth/users" or path.startswith("/api/auth/users/"):
+    if _within(path, "/api/auth/users"):
         return "api.accounts"
-    if path == "/api/auth" or path.startswith("/api/auth/"):
+    if _within(path, "/api/auth"):
         return "api.auth"
-    if path.startswith(("/api/nodes", "/api/agent-rollouts")):
+    if any(_within(path, prefix) for prefix in ("/api/nodes", "/api/agent-rollouts")):
         return "api.nodes"
     if path.startswith("/api/services/"):
         if path.endswith("/logs"):
@@ -65,18 +69,18 @@ def route_contract(path: str) -> str | None:
             return "api.metrics"
         if path.endswith("/aigw-models"):
             return "api.gateways"
-    if path.startswith(("/api/services", "/api/resources")):
+    if any(_within(path, prefix) for prefix in ("/api/services", "/api/resources")):
         return "api.services"
-    if path.startswith("/api/integrations/images") or path.startswith("/api/images"):
+    if any(_within(path, prefix) for prefix in ("/api/integrations/images", "/api/images")):
         return "api.images"
     for prefix, name in (("/api/templates", "templates"), ("/api/gateways", "gateways"),
                          ("/api/overview", "overview"), ("/api/jobs", "tasks"),
                          ("/api/audit", "audit"), ("/api/extensions", "extensions"),
                          ("/api/system", "system"), ("/api/branding", "system"),
                          ("/api/plugins", "plugins"), ("/api/plugin-", "plugins")):
-        if path == prefix or path.startswith(prefix + "/") or prefix.endswith("-") and path.startswith(prefix):
+        if _within(path, prefix) or prefix.endswith("-") and path.startswith(prefix):
             return "api." + name
-    if path.startswith("/agent/kubernetes"):
+    if _within(path, "/agent/kubernetes"):
         return "api.agent-kubernetes"
     if path.startswith("/agent/"):
         return "api.agent-docker"

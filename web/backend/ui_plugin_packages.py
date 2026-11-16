@@ -21,6 +21,8 @@ from .plugin_host.packages.errors import PluginPackageError
 
 SDK_VERSION = "1.0.0"
 DEFAULT_ID = "console.ui.default"
+# Keep aligned with the public UI SDK; reference component slots are not kernel requirements.
+UI_KERNEL_SLOTS = frozenset({"ui.appearance", "ui.theme", "ui.shell", "ui.i18n", "ui.notifications", "ui.button", "ui.actions"})
 MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
 MAX_EXPANDED_BYTES = 16 * 1024 * 1024
 MAX_ENTRY_BYTES = 1024 * 1024
@@ -266,9 +268,11 @@ class UiPackageStore:
         if not path.exists() and not path.is_symlink():
             return {"schemaVersion": 1, "revision": 0, "packages": {}, "bindings": {}}
         value = json_document(read_regular(path, MAX_STATE_BYTES), maximum=MAX_STATE_BYTES)
-        _object(value, {"schemaVersion", "revision", "packages", "bindings"}, {"schemaVersion", "revision", "packages", "bindings"}, "UI selection")
+        _object(value, {"schemaVersion", "revision", "packages", "bindings", "inherit_defaults"}, {"schemaVersion", "revision", "packages", "bindings"}, "UI selection")
         if type(value["schemaVersion"]) is not int or value["schemaVersion"] != 1 or type(value["revision"]) is not int or not 0 <= value["revision"] < 9007199254740991:
             raise UiPluginError("Invalid UI selection revision")
+        if type(value.get("inherit_defaults", True)) is not bool:
+            raise UiPluginError("UI inherit_defaults must be a boolean")
         return value
 
     def _artifact(self, digest):
@@ -296,6 +300,9 @@ class UiPackageStore:
             with store_lock(self.root):
                 return self.graph(state=self._state())
         selected, overrides = state["packages"], state["bindings"]
+        inherit_defaults = state.get("inherit_defaults", True)
+        if type(inherit_defaults) is not bool:
+            raise UiPluginError("UI inherit_defaults must be a boolean")
         if not isinstance(selected, dict) or len(selected) > MAX_SELECTED or not isinstance(overrides, dict) or len(overrides) > 512:
             raise UiPluginError("Invalid UI package selection")
         packages, assets = {DEFAULT_ID: self.default}, {}
@@ -324,18 +331,27 @@ class UiPackageStore:
                 for contribution in manifest["provides"]:
                     if contribution["slot"] not in builtin_slots and not contribution["slot"].startswith(identifier+"."):
                         raise UiPluginError("New UI contracts must belong to their package namespace")
-        bindings = {p["slot"]: DEFAULT_ID for p in self.default["provides"]}
+        bindings = {p["slot"]: DEFAULT_ID for p in self.default["provides"]} if inherit_defaults else {}
         for slot, identifier in overrides.items():
             bindings[_identifier(slot, slot=True)] = _identifier(identifier)
         for slot, identifier in bindings.items():
             if identifier not in packages or slot not in {p["slot"] for p in packages[identifier]["provides"]}:
                 raise UiPluginError("Selected UI provider does not implement slot: " + slot)
         needed = set(bindings.values())
+        # A standalone composition must be complete; it never silently loads reference code.
+        if not inherit_defaults:
+            missing = UI_KERNEL_SLOTS - bindings.keys()
+            if missing:
+                raise UiPluginError("Required UI kernel slot is unbound: " + sorted(missing)[0])
+            # The reference bundle renders its own component catalogue. Explicit reuse
+            # therefore requires that catalogue, but it is not a kernel-wide dependency.
+            if DEFAULT_ID in needed and builtin_slots - bindings.keys():
+                raise UiPluginError("Selected reference UI requires its complete slot bindings; inherit defaults or supply them explicitly")
         unused = set(selected)-needed
         if unused:
             raise UiPluginError("Selected UI package has no bound slots: " + sorted(unused)[0])
         page_ids, page_routes = set(), set()
-        for identifier in needed | {DEFAULT_ID}:
+        for identifier in needed:
             for page in packages[identifier].get("contributes", {}).get("pages", []):
                 if identifier != DEFAULT_ID and bindings.get(page["slot"]) != identifier:
                     continue
@@ -371,7 +387,7 @@ class UiPackageStore:
         for identifier in sorted(needed):
             visit(identifier)
         public = []
-        for identifier in ([DEFAULT_ID] if DEFAULT_ID not in order else []) + order:
+        for identifier in order:
             manifest = packages[identifier]
             item = {key: manifest[key] for key in ("id", "version", "sdkVersion", "provides", "requires")}
             if "contributes" in manifest:
@@ -383,14 +399,16 @@ class UiPackageStore:
                 item["assets"] = sorted(asset_metadata[identifier], key=lambda asset: asset["path"])
             public.append(item)
         value = {"schemaVersion": 1, "sdkVersion": SDK_VERSION, "packages": public, "bindings": bindings}
-        if "buildDigest" in self.default:
+        if DEFAULT_ID in needed and "buildDigest" in self.default:
             value["buildDigest"] = self.default["buildDigest"]
         value["generation"] = hashlib.sha256(canonical_json(value, maximum=MAX_STATE_BYTES)).hexdigest()
         return UiGraph(value, assets)
 
-    def select(self, *, packages: dict, bindings: dict, expected_revision: int, trust_code: bool):
+    def select(self, *, packages: dict, bindings: dict, expected_revision: int, trust_code: bool, inherit_defaults: bool = True):
         if type(expected_revision) is not int or not 0 <= expected_revision < 9007199254740990 or type(trust_code) is not bool:
             raise UiPluginError("Invalid UI selection preconditions")
+        if type(inherit_defaults) is not bool:
+            raise UiPluginError("UI inherit_defaults must be a boolean")
         if packages and trust_code is not True:
             raise UiPluginError("Explicit trust is required for selected UI code")
         with store_lock(self.root):
@@ -398,6 +416,8 @@ class UiPackageStore:
             if current["revision"] != expected_revision:
                 raise UiPluginError("UI selection changed; reload before saving", status=409)
             candidate = {"schemaVersion": 1, "revision": expected_revision+1, "packages": packages, "bindings": bindings}
+            if not inherit_defaults:
+                candidate["inherit_defaults"] = False
             graph = self.graph(state=candidate)
             previous = canonical_json(current, maximum=MAX_STATE_BYTES)
             atomic_write(self.root / "previous-selection.json", previous)
@@ -415,6 +435,6 @@ class UiPackageStore:
             for path in paths:
                 manifest, _ = self._artifact(path.stem)
                 items.append({"digest": path.stem, "manifest": manifest, "selected": state["packages"].get(manifest["id"]) == path.stem})
-            return {"schemaVersion": 1, "revision": state["revision"], "items": items, "selection": {"packages": state["packages"], "bindings": state["bindings"]}, "active_generation": active_generation,
+            return {"schemaVersion": 1, "revision": state["revision"], "items": items, "selection": {"packages": state["packages"], "bindings": state["bindings"], "inherit_defaults": state.get("inherit_defaults", True)}, "active_generation": active_generation,
                     "desired_generation": desired.bootstrap["generation"], "pending_restart": desired.bootstrap["generation"] != active_generation,
                     "activation": "next-start", "import_executes_code": False}

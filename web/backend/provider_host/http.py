@@ -20,7 +20,7 @@ def protect_extension_route(route, host, session, policy, audit, declarations):
     from fastapi import HTTPException
     from starlette.requests import Request
     from starlette.responses import JSONResponse
-    from .authorization import authenticate_session
+    from .authorization import authorize_request
 
     secured = copy(route)
     endpoint_app = route.app
@@ -36,20 +36,9 @@ def protect_extension_route(route, host, session, policy, audit, declarations):
             if declaration is None:
                 raise HTTPException(405, "HTTP method is outside the selected module declaration")
             roles = frozenset(declaration["roles"])
-            authenticated = authenticate_session(session, request, required=True)
-            request.state.principal = authenticated
-            principal = policy.authorize(request, roles, csrf=True, account_only=declaration["account_only"])
-            if principal is None:
-                raise HTTPException(503, "Selected authorization provider returned no identity")
-            if (authenticated.role not in roles or principal.role != authenticated.role
-                    or principal.kind != authenticated.kind or principal.user_id != authenticated.user_id
-                    or declaration["account_only"] and principal.kind != "session"):
-                raise HTTPException(403, "Identity is outside the selected module permission")
+            authorize_request(session, policy, request, roles, account_only=declaration["account_only"])
             unsafe = method not in {"GET", "HEAD", "OPTIONS"}
             if unsafe:
-                # Even a permissive third-party Policy cannot disable CSRF.
-                if authenticated.kind == "session":
-                    session.check_csrf(request)
                 generation = request.headers.get("X-Motor-Expected-Generation", "")
                 if generation and generation != host.generation:
                     raise HTTPException(409, {"code": "provider_generation_mismatch"})

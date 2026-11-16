@@ -116,22 +116,33 @@ export class PluginHost {
         const artifact = this.plan.artifacts.get(id)!;
         this.states.get(id)!.state = "starting";
         // Recheck immediately before import; only explicitly selected modules are imported.
-        if (await packageDigest(artifact.root) !== artifact.selection.sha256) fail("INTEGRITY", `${id}: artifact changed since validation`);
+        const actualDigest = await packageDigest(artifact.root);
+        this.controller.signal.throwIfAborted();
+        if (actualDigest !== artifact.selection.sha256) fail("INTEGRITY", `${id}: artifact changed since validation`);
         const previousPin = processArtifactPins.get(artifact.root);
         if (previousPin && previousPin !== artifact.selection.sha256) fail("RESTART_REQUIRED", `${id}: package root changed in this process; restart before using the new artifact`);
         processArtifactPins.set(artifact.root, artifact.selection.sha256);
         const module = await bounded(import(pathToFileURL(artifact.entry).href) as Promise<{ default?: Plugin }>, this.options.startupTimeoutMs ?? 30000, `${id} module import`);
+        this.controller.signal.throwIfAborted();
         if (!module.default || typeof module.default.activate !== "function") fail("PLUGIN_EXPORT", `${id} must export default { activate(context) }`);
         this.values.set(id, new Map());
         this.activePackage = id;
-        await bounded(Promise.resolve().then(() => module.default!.activate(this.context(id))), this.options.startupTimeoutMs ?? 30000, `${id} activation`);
+        await bounded(Promise.resolve().then(() => {
+          this.controller.signal.throwIfAborted();
+          return module.default!.activate(this.context(id));
+        }), this.options.startupTimeoutMs ?? 30000, `${id} activation`);
+        this.controller.signal.throwIfAborted();
         this.activePackage = undefined;
         for (const declaration of artifact.manifest.provides) if (!this.values.get(id)!.has(declaration.contract)) fail("MISSING_PROVIDE", `${id} did not provide declared ${declaration.contract}`);
       }
       for (const { id, start } of this.starts) {
         this.controller.signal.throwIfAborted();
         current = id;
-        await bounded(Promise.resolve().then(() => start(this.controller.signal)), this.options.startupTimeoutMs ?? 30000, `${id} startup`);
+        await bounded(Promise.resolve().then(() => {
+          this.controller.signal.throwIfAborted();
+          return start(this.controller.signal);
+        }), this.options.startupTimeoutMs ?? 30000, `${id} startup`);
+        this.controller.signal.throwIfAborted();
       }
       if (this.controller.signal.aborted) fail("LIFECYCLE", "Generation was stopped during startup");
       this.phase = "running";
@@ -150,9 +161,9 @@ export class PluginHost {
   stop(): Promise<void> {
     if (this.stopPromise) return this.stopPromise;
     this.phase = "draining";
-    this.controller.abort(new PluginError("SHUTDOWN", "Host generation is stopping"));
     const deadline = performance.now() + (this.options.shutdownTimeoutMs ?? 10000);
-    this.stopPromise = (async () => {
+    // Publish the shared completion before abort listeners can reenter stop().
+    this.stopPromise = Promise.resolve().then(async () => {
       for (const id of this.plan.order) if (this.states.get(id)!.state === "running" || this.states.get(id)!.state === "starting") this.states.get(id)!.state = "draining";
       for (const { id, cleanup } of [...this.cleanups].reverse()) {
         try {
@@ -174,7 +185,8 @@ export class PluginHost {
       for (const state of this.states.values()) if (state.state === "draining") state.state = "stopped";
       this.phase = "stopped";
       this.resolveStopped();
-    })();
+    });
+    this.controller.abort(new PluginError("SHUTDOWN", "Host generation is stopping"));
     return this.stopPromise;
   }
 }

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "contracts": [
+    {
+      "id": "console.mcp.server",
+      "version": "1.0.0",
+      "cardinality": "one"
+    },
+    {
+      "id": "console.mcp.auth",
+      "version": "1.0.0",
+      "cardinality": "one"
+    },
+    {
+      "id": "console.mcp.control",
+      "version": "1.0.0",
+      "cardinality": "one"
+    },
+    {
+      "id": "console.mcp.toolsets",
+      "version": "1.0.0",
+      "cardinality": "many"
+    }
+  ],
+  "packages": [
+    {
+      "id": "reference.mcp.server",
+      "version": "1.0.0",
+      "root": "../dist/plugins/server",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.auth",
+      "version": "1.0.0",
+      "root": "../dist/plugins/auth",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.control-client",
+      "version": "1.0.0",
+      "root": "../dist/plugins/control-client",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.inventory",
+      "version": "1.0.0",
+      "root": "../dist/plugins/toolset-inventory",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.services",
+      "version": "1.0.0",
+      "root": "../dist/plugins/toolset-services",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.configuration",
+      "version": "1.0.0",
+      "root": "../dist/plugins/toolset-configuration",
+      "sha256": "PIN"
+    },
+    {
+      "id": "reference.mcp.operations",
+      "version": "1.0.0",
+      "root": "../dist/plugins/toolset-operations",
+      "sha256": "PIN"
+    }
+  ],
+  "selected": [
+    "reference.mcp.server",
+    "reference.mcp.auth",
+    "reference.mcp.control-client",
+    "reference.mcp.inventory",
+    "reference.mcp.services",
+    "reference.mcp.configuration",
+    "reference.mcp.operations"
+  ],
+  "bindings": {
+    "console.mcp.server": "reference.mcp.server",
+    "console.mcp.auth": "reference.mcp.auth",
+    "console.mcp.control": "reference.mcp.control-client",
+    "console.mcp.toolsets": [
+      "reference.mcp.inventory",
+      "reference.mcp.services",
+      "reference.mcp.configuration",
+      "reference.mcp.operations"
+    ]
+  },
+  "settings": {
+    "reference.mcp.server": {
+      "transport": "http",
+      "host": "0.0.0.0",
+      "port": 8443,
+      "path": "/mcp",
+      "allowedHosts": [
+        "mcp.example.invalid"
+      ],
+      "allowedOrigins": [
+        "https://mcp.example.invalid"
+      ],
+      "tlsCertFile": "/run/motor-mcp/tls/server.crt",
+      "tlsKeyFile": "/run/motor-mcp/tls/server.key",
+      "requestTimeoutMs": 60000,
+      "maxBodyBytes": 2097152,
+      "maxConcurrentRequests": 32
+    },
+    "reference.mcp.auth": {
+      "registryFile": "/run/motor-mcp/credentials/registry.json"
+    },
+    "reference.mcp.control-client": {
+      "baseUrl": "http://control:8000",
+      "allowInsecureHttp": true,
+      "requestTimeoutMs": 30000,
+      "maxRequestBytes": 2097152,
+      "maxResponseBytes": 4194304
+    }
+  }
+}

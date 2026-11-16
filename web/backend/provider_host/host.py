@@ -13,7 +13,7 @@ import re
 import sys
 from types import MappingProxyType
 
-from ..plugin_host.contracts import PluginConfigurationError, PluginInstance
+from ..plugin_host.contracts import PluginConfigurationError, PluginInstance, synchronous_cleanup
 from .catalogue import CONTRACTS, route_contract
 from .contracts import Provider, ProviderContext, _LazyInput
 from motor_console_sdk.contracts import ProviderResult
@@ -262,7 +262,8 @@ class ProviderHost:
         modules = {item["contract"]: item for item in self._http_modules}
         def shape(name):
             if name in modules:
-                return {"kind": "APIRouter | tuple[BaseRoute, ...]", "inputs": [],
+                return {"kind": "APIRouter | tuple[BaseRoute, ...]", "inputs": ["api_inputs"],
+                    "api_inputs": "ReferenceApiInputsV1 host capabilities when supplied by the selected application",
                     **copy.deepcopy(modules[name]), "authorization": "mandatory selected Session/Policy, roles, CSRF and audit",
                     "mode": "control", "nested_routers": False, "websockets": False}
             if name in CONTRACTS:
@@ -352,14 +353,14 @@ class ProviderHost:
                 retained.append(route)
                 if hasattr(value, "routes"):
                     route_sources.setdefault(id(route), (value, {}))
-            for callback in getattr(value, "on_shutdown", ()):
-                self.cleanup.callback(callback)
+            self._register_router_cleanup(value)
         if self._http_modules and self.settings.get("mode") == "control":
             from .http import protect_extension_route
             session, policy = self.resolve("security.session"), self.resolve("security.policy")
             audit = self.resolve("audit.sink")
             for module in self._http_modules:
-                value = self.resolve(module["contract"])
+                value = self.resolve(module["contract"],
+                    api_inputs=getattr(application.state, "reference_api_inputs", None))
                 routes = getattr(value, "routes", value)
                 if not isinstance(routes, (tuple, list)):
                     raise PluginConfigurationError("Extension HTTP factory must return direct routes or APIRouter")
@@ -377,9 +378,7 @@ class ProviderHost:
                     retained.append(secured)
                 if actual != set(expected):
                     raise PluginConfigurationError("Extension HTTP factory omitted declared routes or methods")
-                for callback in getattr(value, "on_shutdown", ()):
-                    from ..plugin_host.contracts import synchronous_cleanup
-                    self.cleanup.callback(synchronous_cleanup(callback))
+                self._register_router_cleanup(value)
         seen = set()
         for route in retained:
             for method in route_methods[id(route)]:
@@ -395,6 +394,10 @@ class ProviderHost:
             mount(selected, route_sources)
         else:
             application.router.routes[:] = selected
+
+    def _register_router_cleanup(self, product):
+        for callback in getattr(product, "on_shutdown", ()):
+            self.cleanup.callback(synchronous_cleanup(callback))
 
     def _api_factory_inputs(self, application, contract, captured):
         inputs = {"reference_routes": captured, "application_state": application.state,
@@ -423,7 +426,6 @@ class ProviderHost:
 
     def _reference_routes(self, contract, inputs):
         """Legacy SDK capability; independent API factories never call this."""
-        from ..plugin_host.contracts import synchronous_cleanup
         reference = self._providers["reference." + contract]
         context = ProviderContext(self, reference, contract, inputs)
         product = reference.factory(context)
@@ -436,8 +438,7 @@ class ProviderHost:
         routes = getattr(product, "routes", product)
         if not isinstance(routes, (tuple, list)):
             raise PluginConfigurationError("Reference route capability did not return direct routes")
-        for callback in getattr(product, "on_shutdown", ()):
-            self.cleanup.callback(synchronous_cleanup(callback))
+        self._register_router_cleanup(product)
         return tuple(routes)
 
     def contract_definition(self, contract):

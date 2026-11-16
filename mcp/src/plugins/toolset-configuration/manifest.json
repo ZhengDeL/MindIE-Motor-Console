@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "reference.mcp.configuration",
+  "version": "1.0.0",
+  "sdk": "^1.0.0",
+  "entry": "index.js",
+  "provides": [
+    {
+      "contract": "console.mcp.toolsets",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": [
+    {
+      "contract": "console.mcp.control",
+      "range": "^1.0.0"
+    }
+  ]
+}

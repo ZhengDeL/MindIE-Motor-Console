@@ -6,6 +6,8 @@ MindIE-Motor Console 是面向 **MindIE-Motor** 的开源部署与运维控制�
 
 0.12.0 提供可替换的业务与完整 UI：Node 插件宿主、Python Provider SDK 和浏览器 SDK 分层装配，默认参考实现与第三方遵循相同公开合同。发布源码不会自动升级服务器；具体兼容与验收范围见[版本说明](web/docs/RELEASE_0.12.0.md)、[插件架构](web/ARCHITECTURE.md)和[导入/部署指南](web/docs/PROVIDER_PLUGINS.md)。
 
+需要通过 Agent 管理部署且不安装 Web 时，可选择独立的 [Headless MCP 服务与部署指南](web/docs/HEADLESS_MCP.md)，按需装配查询、配置和运行工具集。
+
 ## 可以做什么
 
 | 能力 | 范围 |
@@ -48,7 +50,7 @@ GitHub 自动源码压缩包不展开原生子模块。自行构建镜像时应�
 
 **本地体验与开发**：按[本地预览指南](web/README.md)启动独立演示环境；无需 Docker、NPU 或模型权重。
 
-**插件作者**：从[插件扩展面](web/PLUGIN_EXTENSION_POINTS.md)选择 Node、Python Provider、完整 UI 或增量社区 SDK，再阅读对应开发指南与源码示例。导入只做校验与暂存，管理员明确选择后在下次启动加载；插件是受信代码，不能用于绕过宿主权限。
+**插件作者**：从[插件框架与开发者入口](web/docs/PLUGIN_FRAMEWORK.md)选择 SDK，创建独立工程并阅读对应示例。`.qhplugin` 增量包见[增量社区包指南](web/PLUGIN_DEVELOPMENT.md)。导入只做校验与暂存，管理员明确选择后在下次启动加载；插件是受信代码，不能用于绕过宿主权限。
 
 ## 部署结构
 

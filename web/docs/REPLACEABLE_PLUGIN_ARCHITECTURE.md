@@ -12,7 +12,7 @@
 flowchart TB
   CONFIG["独立装配配置<br/>精确版本与制品摘要"] --> HOST["Node 宿主<br/>校验 · 依赖 · 生命周期"]
   HOST --> HTTP["HTTP 提供者<br/>默认 Python bridge 或替代处理器"]
-  HTTP --> PY["Python Provider 宿主<br/>49 个公开合同"]
+  HTTP --> PY["Python Provider 宿主<br/>版本化业务与执行契约"]
   PY --> DATA["存储 · 秘密 · 身份 · 会话<br/>权限 · 审计 · 日志"]
   PY --> BIZ["任务 · 节点 · 模板 · 观测<br/>资源账本 · 准入 · 业务 API"]
   PY --> RUNTIME["Motor 适配<br/>Docker / Kubernetes 执行"]
@@ -25,15 +25,11 @@ Node 是可独立部署的入口，已有独立 Web/Python 安装仍可直接使
 
 ## 三个 SDK 的职责
 
-| SDK | 实际职责 | 提供者交付 |
-| --- | --- | --- |
-| [Node](../../platform/README.md) | HTTP 入口、处理器、进程桥接、背压、断开、超时、精确配置与生命周期 | ESM 目录制品；固定整树摘要并显式选择，不运行 npm 安装钩子。 |
-| [Python](../backend/provider_host/README.md) | 业务和 Agent 合同、早期存储、安全、资源、原生适配、运行时、API | `.mcprovider` 或经过审查的已安装模块；入口摘要与完整绑定在开库前确定。 |
-| [浏览器](../frontend/sdk/README.md) | 完整应用、主题、页面、交互组件、动作、图标、通知和语言 | `.mcui` 自包含预构建制品；导入后经显式信任与选择，下次 API 启动生效。 |
+Node SDK 负责 HTTP 入口和进程桥接，Python SDK 负责业务、存储与 Agent 执行，浏览器 UI SDK 负责界面与交互。按执行边界选择 SDK，具体契约与交付格式见[插件扩展面](../PLUGIN_EXTENSION_POINTS.md)，独立安装和脚手架见[插件框架](PLUGIN_FRAMEWORK.md)。
 
-保留的 `.qhplugin` 是增量 HTTP 与声明式状态页 SDK，不能与上述三种格式互换。选择 SDK 的依据是执行边界和实际职责，不以一个文件扩展名覆盖所有场景。
+保留的 [`.qhplugin`](../PLUGIN_DEVELOPMENT.md) 是增量 HTTP 与声明式状态页 SDK，与上述三种格式分别维护，不能互换。
 
-Python 内置实现提供 SQLite/PostgreSQL 参考存储。第三方可实现其他完整存储合同，但平台不自动迁移数据。浏览器默认清单包含 137 个插槽；替换整个默认包后，不导入其应用和业务样式，不以“默认组件兜底”隐藏缺失依赖。
+Python 内置实现提供 SQLite/PostgreSQL 参考存储；第三方存储须实现完整契约，平台不自动迁移数据。浏览器插槽以[实际清单](../frontend/public/ui-default-manifest.json)为准；替换整个默认包后，不导入其应用和业务样式，也不隐式回退来隐藏缺失依赖。
 
 ## 装配与切换
 
@@ -70,9 +66,7 @@ sequenceDiagram
 
 ## 语言取舍
 
-当前采用 TypeScript 进程宿主与 React/TypeScript UI，保留 Python 业务和原生集成。这样可以复用已验证的 Motor 适配和管理流程，同时向前后端插件作者提供各自自然的 SDK。接口通过运行期 schema、字节传输和精确版本校验；TypeScript 类型不替代实际验证。
-
-Rust 适合需要独立二进制、明确资源边界的插件进程；跨进程应使用版本化 RPC/HTTP 或其他明确协议。全项目改写 Rust 不会自动解决 UI 替换、数据迁移、授权或原生执行兼容性，也不提供稳定的 Rust 动态 ABI。语言选择服从已测维护和部署成本，不以语言名称宣称可靠性提升。
+业务与原生适配使用 Python，Node 宿主和浏览器 UI 使用 TypeScript。跨边界依赖版本化契约、字节传输与运行期校验；静态类型不替代实际验证。
 
 ## 验收边界
 

@@ -6,7 +6,7 @@
 
 - 部署与升级：从[安装指南](INSTALLATION.md)开始。
 - 本地体验与应用开发：使用[本地预览指南](../README.md)。
-- 社区插件：从[插件开发指南](../PLUGIN_DEVELOPMENT.md)和完整示例开始。
+- 插件开发：从[插件框架与开发者入口](PLUGIN_FRAMEWORK.md)选择 SDK 与独立工程示例；`.qhplugin` 增量包见[增量社区包指南](../PLUGIN_DEVELOPMENT.md)。
 - 已发布版本与变更：[GitHub Releases](https://github.com/ZhengDeL/MindIE-Motor-Console/releases)。
 - 0.12.0 的功能、兼容与实际验收范围：[版本说明](RELEASE_0.12.0.md)。
 
@@ -64,11 +64,12 @@
 ## 插件与贡献
 
 - [插件管理](../PLUGINS.md)：导入、信任、下次启动选择、停用及回退。
-- [插件开发](../PLUGIN_DEVELOPMENT.md)：Manifest、公开 Context、API/页面、限额与完整操作流程。
+- [增量社区包（.qhplugin）](../PLUGIN_DEVELOPMENT.md)：Manifest、公开 Context、声明式状态页、限额与操作流程。
 - [扩展面](../PLUGIN_EXTENSION_POINTS.md)：业务、运行时及完整 UI 的实际替换合同与边界。
 - [提供者部署](PROVIDER_PLUGINS.md)：Node/Python/UI 包、导入、选择、恢复与三组件部署。
 - [可替换插件架构](REPLACEABLE_PLUGIN_ARCHITECTURE.md)：默认与第三方同契约装配、宿主边界及替换验收。
-- [Python Provider SDK](../backend/provider_host/README.md)、[浏览器 SDK](../frontend/sdk/README.md)、[Node SDK](../../platform/README.md)。
+- 独立 SDK 安装：[Python](../../packages/python-sdk/README.md)、[浏览器 UI](../../packages/ui-sdk/README.md)、[Node](../../packages/node-sdk/README.md)。
+- 宿主与契约参考：[Python Provider](../backend/provider_host/README.md)、[浏览器 UI](../frontend/sdk/README.md)、[Node 宿主](../../platform/README.md)。
 - [宿主合同](../backend/plugin_host/README.md)、[包格式与恢复](../backend/plugin_host/packages/README.md)。
-- [完整示例](../plugins/examples/community-status/README.md)、[离线 Schema](../plugins/sdk/README.md)。
+- 增量社区包：[完整示例](../plugins/examples/community-status/README.md)、[离线 Schema](../plugins/sdk/README.md)。
 - [贡献指南](../../CONTRIBUTING.md)、[安全报告](../../SECURITY.md)、[许可来源](../../NOTICE.md)。

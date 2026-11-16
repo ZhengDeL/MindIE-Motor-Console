@@ -1,6 +1,6 @@
 # Web 开发与本地预览
 
-本指南用于本地界面体验和应用开发。正式安装见[安装指南](docs/INSTALLATION.md)；插件开发见[公开 SDK 指南](PLUGIN_DEVELOPMENT.md)。
+本指南用于本地界面体验和应用开发。正式安装见[安装指南](docs/INSTALLATION.md)；插件开发从[插件框架与开发者入口](docs/PLUGIN_FRAMEWORK.md)开始。
 
 ## 环境与源码
 
@@ -107,4 +107,4 @@ PowerShell 可先设置 `$env:MOTOR_CONSOLE_IMAGE='motor-console:local'`，再�
 
 生产推荐独立 API/Web 镜像和 `compose.modular.yaml`。Web 不挂载数据库、节点凭据或 Docker socket；存储、原生执行及外部观测的职责见[系统架构](ARCHITECTURE.md)。
 
-继续阅读：[平台品牌](docs/BRANDING.md)、[观测接入](observability/README.md)、[数据库](STORAGE.md)、[插件开发](PLUGIN_DEVELOPMENT.md)、[贡献流程](../CONTRIBUTING.md)。运行数据库、环境文件、令牌、测试及私有验收材料不提交 Git。
+继续阅读：[平台品牌](docs/BRANDING.md)、[观测接入](observability/README.md)、[数据库](STORAGE.md)、[插件框架](docs/PLUGIN_FRAMEWORK.md)、[贡献流程](../CONTRIBUTING.md)。运行数据库、环境文件、令牌、测试及私有验收材料不提交 Git。

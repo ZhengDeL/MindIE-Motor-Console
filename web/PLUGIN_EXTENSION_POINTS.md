@@ -9,7 +9,7 @@
 | 替换 HTTP 传输或 Python 适配进程 | [Node SDK](../platform/README.md)，本地受信 ESM 制品目录 | 精确契约绑定、整目录摘要、启动与停止生命周期。 |
 | 替换存储、安全、业务、运行时或 API | [Python Provider SDK](backend/provider_host/README.md)，`.mcprovider` 或已审查镜像内的模块 | 数据库打开前读取独立装配文件，按契约和版本解析工厂。 |
 | 替换完整界面、页面、组件、按钮或图标 | [UI SDK](frontend/sdk/README.md)，预构建 `.mcui` | 导入、审查、明确信任、选择，API 重启后发布新的浏览器启动图；不要求重建宿主。 |
-| 添加独立业务 API 与简单状态页 | [社区 SDK](PLUGIN_DEVELOPMENT.md)，`.qhplugin` | 保留既有增量扩展合同，不能用此格式替代另外三个 SDK。 |
+| 添加受保护 API 与声明式状态页 | [增量社区包指南](PLUGIN_DEVELOPMENT.md)，`.qhplugin` | 保留既有增量扩展合同，不能用此格式替代另外三个 SDK。 |
 
 不同格式分别有自己的版本与校验器。包导入不执行代码，也不表示已启用；运行状态必须从实际进程读取。操作步骤见[提供者导入与部署](docs/PROVIDER_PLUGINS.md)。
 
@@ -63,6 +63,6 @@ Python schema v2 支持命名空间契约、逐产品依赖与独立 HTTP 贡献
 
 ## 贡献新实现
 
-从[开发入口](PLUGIN_DEVELOPMENT.md)选择 SDK，在[插件提案](../.github/ISSUE_TEMPLATE/plugin-proposal.yml)中说明契约、输入/输出、生命周期、权限、数据归属和失败语义。包版本与契约版本分别管理；升级现有合同须说明兼容及迁移，不直接扩写保留 ID。
+从[插件框架与开发者入口](docs/PLUGIN_FRAMEWORK.md)选择 SDK，在[插件提案](../.github/ISSUE_TEMPLATE/plugin-proposal.yml)中说明契约、输入/输出、生命周期、权限、数据归属和失败语义。包版本与契约版本分别管理；升级现有合同须说明兼容及迁移，不直接扩写保留 ID。
 
 提交代码时包括清晰的 README、LICENSE 和实际调用示例。测试、浏览器验收及部署证据保留本地；贡献流程和安全报告分别见[贡献指南](../CONTRIBUTING.md)与[安全策略](../SECURITY.md)。

@@ -28,20 +28,24 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-  FILE[独立启动配置与精确制品选择] --> CHECK["静态校验<br/>来源摘要 / 版本 / 依赖 / 绑定"]
+  FILE[启动配置与精确制品] --> CHECK["静态校验<br/>来源摘要 / 版本 / 依赖 / 绑定"]
   CHECK --> HOST["最小宿主机制<br/>生命周期 / 强制检查 / 诊断"]
   HOST --> PORTS[版本化契约绑定表]
   PORTS --> EARLY[存储 / 密钥 / 身份 / 会话 / 策略 / 审计]
   PORTS --> BIZ[节点 / 服务 / 模板 / 镜像 / 网关 / 维护 API]
   PORTS --> RUN[原生适配 / Docker / Kubernetes / 资源 / 观测]
-  PORTS --> UI["UI 外壳 / 页面 / 组件<br/>动作 / 图标 / 主题 / 语言"]
+  PORTS --> UI["浏览器内核契约<br/>UI_KERNEL_SLOTS"]
+  UI --> UIPACK[参考 UI 包 / 独立 UI 包]
+  UIPACK --> UISLOTS["页面 / 组件 / 动作<br/>图标 / 主题 / 语言"]
   EARLY --> LIFE[已登记资源逆序清理]
   BIZ --> LIFE
   RUN --> LIFE
-  UI --> LIFE
+  UISLOTS --> LIFE
 ```
 
 默认与第三方通过同一合同和生命周期装配。调用方依赖契约，配置选择具体提供者；重复 ID、错误版本、循环/缺失依赖、无效产物或路由越界均明确失败。关闭默认实现后可以绑定不同 ID 的实现，不靠冒用内置 ID 或静默回退。
+
+UI 选择默认继承参考界面绑定，以兼容局部替换；`inherit_defaults: false` 仅使用显式装配，须满足浏览器内核契约和所选包的依赖。未选中的参考包不贡献页面，也不加载其 App 和业务样式。具体选择、升级与恢复见[浏览器 UI SDK](frontend/sdk/README.md#contracts-and-selection)。
 
 | 边界 | 入口与合同 |
 | --- | --- |

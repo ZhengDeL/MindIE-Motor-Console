@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "reference.mcp.auth",
+  "version": "1.0.0",
+  "sdk": "^1.0.0",
+  "entry": "index.js",
+  "provides": [
+    {
+      "contract": "console.mcp.auth",
+      "version": "1.0.0"
+    }
+  ],
+  "requires": []
+}

@@ -47,3 +47,22 @@ def authenticate_session(session, request, *, required=True):
     if principal is None and required:
         raise HTTPException(401, "请先登录控制台")
     return principal
+
+
+def authorize_request(session, policy, request, allowed_roles, *, account_only=False):
+    """Keep the selected Session identity and CSRF mandatory around Policy."""
+    authenticated = authenticate_session(session, request, required=True)
+    user_id, role, kind = authenticated.user_id, authenticated.role, authenticated.kind
+    allowed_roles = frozenset(allowed_roles)
+    request.state.principal = authenticated
+    principal = policy.authorize(request, allowed_roles, csrf=True, account_only=account_only)
+    if principal is None:
+        raise HTTPException(503, {"code": "invalid_authorization_result", "message": "所选授权提供者未返回有效身份，已拒绝请求"})
+    if (role not in allowed_roles
+            or (getattr(principal, "user_id", None), getattr(principal, "role", None),
+                getattr(principal, "kind", None)) != (user_id, role, kind)
+            or account_only and principal.kind != "session"):
+        raise HTTPException(403, "此身份无权执行此操作")
+    if request.method not in {"GET", "HEAD", "OPTIONS"} and kind == "session":
+        session.check_csrf(request)
+    return principal

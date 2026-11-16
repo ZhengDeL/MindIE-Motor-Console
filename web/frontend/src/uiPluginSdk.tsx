@@ -280,6 +280,7 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
   const selected = new Set(Object.values(graph.bindings));
   const loaded = new Map<string, UiPlugin>();
   const abort = new AbortController(), cleanups: (() => void | Promise<void>)[] = [];
+  let stopPromise: Promise<void> | undefined;
   const resolve: UiResolver = <T,>(reference: string | UiSlotRef<T>): T => {
     const slot = typeof reference === "string" ? reference : reference.slot;
     const selectedId = Object.hasOwn(graph.bindings, slot) ? graph.bindings[slot] : undefined;
@@ -298,13 +299,27 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
       timer = setTimeout(() => reject(Error(`${label} timed out`)), milliseconds);
     })]); } finally { clearTimeout(timer!); }
   }
-  const stop = async () => {
+  const stop = (): Promise<void> => {
+    if (stopPromise) return stopPromise;
+    const deadline = performance.now() + 3000;
+    // Publish the shared completion before abort listeners can reenter stop().
+    stopPromise = Promise.resolve().then(async () => {
+      const errors: string[] = [];
+      for (const cleanup of cleanups.splice(0).reverse()) {
+        try {
+          const pending = Promise.resolve().then(cleanup);
+          const remaining = deadline - performance.now();
+          if (remaining <= 0) {
+            void pending.catch(() => undefined);
+            throw Error("UI cleanup completion is unknown after the total shutdown budget expired");
+          }
+          await bounded(pending, remaining, "UI cleanup");
+        } catch (error) { errors.push(String(error)); }
+      }
+      if (errors.length) console.error("UI lifecycle cleanup failed", errors);
+    });
     abort.abort();
-    const errors: string[] = [];
-    for (const cleanup of cleanups.splice(0).reverse()) {
-      try { await bounded(Promise.resolve().then(cleanup), 3000, "UI cleanup"); } catch (error) { errors.push(String(error)); }
-    }
-    if (errors.length) console.error("UI lifecycle cleanup failed", errors);
+    return stopPromise;
   };
   try {
     async function load(id: string): Promise<void> {
@@ -324,6 +339,7 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
         throw Error(`Compiled UI package does not match the server build: ${id}. Save drafts and reload the matching release.`);
       const plugin = await bounded(Promise.resolve(bundled ? "load" in bundled ? bundled.load() : bundled : loadArtifact(manifest, abort.signal)),
         15000, `UI package loading ${id}`);
+      abort.signal.throwIfAborted();
       if (!plugin || plugin.id !== id || plugin.version !== manifest.version || !plugin.providers || typeof plugin.providers !== "object")
         throw Error(`UI module identity does not match its pinned manifest: ${id}`);
       if (plugin.buildDigest !== undefined && plugin.buildDigest !== manifest.buildDigest)
@@ -365,9 +381,20 @@ export async function startUiRuntime(graph: UiBootstrap, builtins: readonly (UiP
         if (digest !== declared.sha256) throw Error(`UI asset digest mismatch: ${id}/${member}`);
         return new Uint8Array(bytes);
       };
+      const dependencies = new Set(manifest.requires?.map(dependency => dependency.slot));
+      const consume: UiResolver = <T,>(reference: string | UiSlotRef<T>): T => {
+        abort.signal.throwIfAborted();
+        const slot = typeof reference === "string" ? reference : reference.slot;
+        if (!dependencies.has(slot)) throw Error(`Undeclared UI dependency: ${id} attempted to consume ${slot}`);
+        return typeof reference === "string" ? resolve<T>(reference) : resolve(reference);
+      };
       await bounded(Promise.resolve(plugin.activate?.({ generation: graph.generation, signal: abort.signal,
         selectedSlots: Object.freeze(Object.entries(graph.bindings).filter(([, provider]) => provider === id).map(([slot]) => slot)),
-        onStop: fn => cleanups.push(fn), consume: resolve, assetUrl, loadAsset })), 15000, `UI activation ${id}`);
+        onStop: fn => {
+          if (stopPromise) throw Error("UI generation is stopping; cleanup registration is closed");
+          cleanups.push(fn);
+        }, consume, assetUrl, loadAsset })), 15000, `UI activation ${id}`);
+      abort.signal.throwIfAborted();
     }
     for (const id of selected) await load(id);
     return { generation: graph.generation, bindings: Object.freeze({ ...graph.bindings }), pages: Object.freeze(graph.packages.flatMap(manifest => (manifest.contributes?.pages ?? []).filter(page => manifest.id === "console.ui.default" || graph.bindings[page.slot] === manifest.id))), resolve, stop };

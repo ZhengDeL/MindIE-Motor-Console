@@ -55,6 +55,7 @@ class UiSelection(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     expected_revision: int = Field(ge=0, lt=9007199254740990)
     trust_code: bool = False
+    inherit_defaults: bool = True
     packages: dict[str, str] = Field(default_factory=dict, max_length=16)
     bindings: dict[str, str] = Field(default_factory=dict, max_length=512)
 
@@ -131,7 +132,7 @@ def create_ui_plugin_router(*, directory: Path, mode: str, store, role_for_reque
         admin(request, mutate=True)
         store.audit("选择 UI 插件请求", "ui-plugins", "accepted", metadata={"expected_revision": data.expected_revision})
         result = checked(packages.select, packages=data.packages, bindings=data.bindings,
-                         expected_revision=data.expected_revision, trust_code=data.trust_code)
+                         expected_revision=data.expected_revision, trust_code=data.trust_code, inherit_defaults=data.inherit_defaults)
         store.audit("选择 UI 插件", "ui-plugins", "success", "下次启动生效，当前 UI 与模型未重启", metadata={"revision": result["revision"], "desired_generation": result["desired_generation"]})
         return checked(packages.inventory, graph.bootstrap["generation"])
 

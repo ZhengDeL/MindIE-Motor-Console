@@ -8,7 +8,7 @@ MindIE-Motor Console 将装配机制、公共契约和参考实现分别维护�
 
 ```mermaid
 flowchart TB
-  A[管理员审查的制品与启动选择] --> H[最小插件宿主]
+  A[受信制品与启动选择] --> H[最小插件宿主]
   H --> V[版本 / 摘要 / 依赖图 / 生命周期]
   H --> E[代次 / 路由归属 / 强制权限与审计]
   V --> C[公开契约与显式绑定]
@@ -36,7 +36,7 @@ flowchart TB
 
 SDK 版本与 Console 版本独立。发布附件中的 wheel/tarball 可安装到独立开发目录；源码包和 npm/PyPI 注册表发布是不同交付形式，不假设注册表已有同名版本。参考应用消费同一份公共定义，不从私有组件实现反推公开 props，也不要求开发者导入后端内部模块。
 
-原 `.qhplugin` 增量扩展格式继续兼容，适合受保护附加 API 和声明式状态表；它与完整 Provider/UI/Node 格式分别维护，不能互换。具体字段、CLI 和恢复步骤见[提供者部署](PROVIDER_PLUGINS.md)。
+原 `.qhplugin` 增量扩展格式继续兼容，适合受保护附加 API 和声明式状态表；它与完整 Provider/UI/Node 格式分别维护，不能互换。具体字段、CLI 和恢复步骤见[增量社区包指南](../PLUGIN_DEVELOPMENT.md)。
 
 ## 从独立目录开始
 
@@ -75,8 +75,6 @@ UI 清单可声明自己的 component/service slot 以及 `contributes.pages`。
 
 ## 状态、升级与失败语义
 
-语言按组件职责选择：Python 保持原生 Motor 适配、业务和现有部署生态的直接集成；TypeScript 为 Node 宿主和浏览器提供可独立消费的强类型契约。新增 Rust 进程可以通过版本化协议接入，但重写语言本身不能替代事务、资源归属、幂等、权限和失败恢复。本版不为追逐语言更换原生执行逻辑；稳定接口和可验证边界是维护重点。
-
 包版本、契约版本、SDK 版本、原生 Motor 版本和数据 schema 各自记录。兼容范围需作者明确声明；不因版本字符串相近就跳过验证。装配固定到一次进程生命周期，正在运行的页面携带实际代次，已知旧代次写入在副作用前拒绝，保留草稿并提示刷新。
 
 数据库插件负责 Repository/UoW、条件写、审计一致性、备份和恢复，不能只返回一个 SQL 连接。自定义业务数据通过所选 Store 保存，写事务经所选 Audit；插件不关闭其他提供者的资源。外部资源或未知回执存在时，不能盲目更换关键执行/存储绑定。旧回执没有足够的执行器身份时应停止并按[升级与恢复](PROVIDER_PLUGINS.md)对账，不删除回执来绕过保护。
@@ -87,4 +85,4 @@ Python/Node 同进程插件和浏览器插件是受信代码。依赖权限与�
 
 提交插件时说明契约、依赖、数据来源、副作用、角色、生命周期、取消/超时、持久化、升级及回退。至少验证独立 SDK 安装、类型正反例、导入未执行、选择后重启、真实读写、权限/CSRF/旧代次、失败及恢复。UI 另检查导航、深链接、草稿、键盘和深浅主题。源码和说明按[贡献指南](../../CONTRIBUTING.md)提交，测试与私有验收材料保留本地。
 
-设计采用显式依赖、版本化接口、声明式贡献和生命周期管理。可参考 [Backstage 服务与依赖注入](https://backstage.io/docs/backend-system/architecture/services/)、[VS Code 扩展能力边界](https://code.visualstudio.com/api/extension-capabilities/overview)和 [Grafana 插件类型](https://grafana.com/developers/plugin-tools/key-concepts/plugin-types-usage)。采用这些成熟机制不等于本项目已经具有同等生态规模；本版实际验证与限制见[版本说明](RELEASE_0.12.0.md)。
+设计参考：[Backstage 服务与依赖注入](https://backstage.io/docs/backend-system/architecture/services/)、[VS Code 扩展能力边界](https://code.visualstudio.com/api/extension-capabilities/overview)和 [Grafana 插件类型](https://grafana.com/developers/plugin-tools/key-concepts/plugin-types-usage)。本版实际验证与限制见[版本说明](RELEASE_0.12.0.md)。

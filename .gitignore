@@ -18,6 +18,7 @@
 !/.github/ISSUE_TEMPLATE/plugin-proposal.yml
 !/web/
 !/platform/
+!/mcp/
 !/packages/
 !/mindie-motor/
 /mindie-motor/*

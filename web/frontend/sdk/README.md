@@ -31,6 +31,24 @@ The complete default contract manifest is
 Every required slot has exactly one explicit binding. Package IDs identify
 artifacts; slot IDs identify contracts. A package can provide many slots.
 
+The browser kernel requires only the seven `UI_KERNEL_SLOTS` exported by the
+public SDK: `ui.appearance`, `ui.theme`, `ui.shell`, `ui.i18n`,
+`ui.notifications`, `ui.button` and `ui.actions`. Reference page and component
+slots are not kernel requirements. Existing selections inherit the reference
+bindings by default, so replacing a single component remains compatible.
+
+For an independent shell, turn off **继承参考界面的默认槽位** in the package
+selection dialog, or send `inherit_defaults: false` with the normal
+`POST /api/ui-plugins/selection` request. Supply explicit bindings for the seven
+kernel slots and all dependencies of your selected packages. The request still
+requires an expected revision, administrator session, CSRF and trusted-code
+confirmation. A successful selection activates only at the next control-process
+start. The unselected reference package contributes no pages and loads neither
+App nor its global styles. Restoring the default selection enables inheritance
+again. Explicit reuse of `console.ui.default` requires its full reference
+catalogue to remain bound; the host rejects an incomplete reference selection
+instead of silently filling slots.
+
 | Slots | Provider contract |
 | --- | --- |
 | `ui.shell` | React component replacing the full default application; use `sdk.client.readSession()` for verified metadata, session and CSRF initialization, and implement navigation/draft coordination. |
@@ -66,6 +84,16 @@ Optional `activate(ctx)` is awaited in dependency order. `ctx` exposes
 with `onStop`; cleanups run in reverse order with a time bound. Activation has a
 15-second deadline. Browser code shares the host's trust and execution context;
 these controls do not isolate arbitrary code.
+
+`ctx.consume` accepts only dependencies listed in the active package's
+`requires`, including a self-provided service consumed during activation.
+Optional dependencies may remain unbound at startup; consuming an unbound slot
+throws an explicit error. Available dependencies must match their declared
+versions. Render-time `sdk.useSlot` resolves the
+selected graph and is a separate API. Register cleanup before acquiring owned
+resources; registration closes when stopping begins. Repeated `stop()` calls
+share the same completion promise. Late activation cannot reopen cleanup
+registration after a timeout, and arbitrary JavaScript is not forcibly canceled.
 
 `assetUrl("images/brand.png")` returns a same-origin path under this package's
 immutable archive digest. It rejects absolute/traversal paths. `loadAsset`

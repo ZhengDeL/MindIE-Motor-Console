@@ -102,5 +102,57 @@ EXPOSE 8080 8443
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1:8080/health
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
+# This independent stage does not depend on frontend-build or copy a UI manifest.
+# Select it explicitly with --target headless; existing targets retain their behavior.
+FROM ${PYTHON_BUILD_IMAGE} AS headless
+ARG ASCEND_VISIBLE_DEVICES=void
+ARG CONSOLE_VERSION=0.12.0
+ARG VCS_REF=""
+LABEL org.opencontainers.image.title="MindIE-Motor Console Headless Control" \
+    io.motor.product="motor-console" io.motor.component="headless-control" \
+    org.opencontainers.image.version="${CONSOLE_VERSION}" \
+    org.opencontainers.image.revision="${VCS_REF}" \
+    org.opencontainers.image.source="https://github.com/ZhengDeL/MindIE-Motor-Console"
+ARG DEBIAN_MIRROR=https://deb.debian.org
+ARG TARGETARCH
+ARG INSTALL_KUBECTL=true
+ARG KUBECTL_VERSION=v1.34.1
+ARG KUBECTL_DOWNLOAD_BASE=https://dl.k8s.io/release
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 LD_LIBRARY_PATH=/opt/sqlite/lib \
+    MOTOR_MODE=control MOTOR_DATA_DIR=/var/lib/motor-console \
+    MOTOR_UPSTREAM_DIR=/opt/motor/upstream MOTOR_UI_ENABLED=false MOTOR_STATIC_ENABLED=false \
+    MOTOR_HOST_WORKSPACE_DIR=/opt/motor-console/workspace MOTOR_HOST_ROOT=/host \
+    MOTOR_AGENT_BIND_IP=127.0.0.1 MOTOR_AGENT_PORT=19082
+RUN sed -i "s|http://deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources \
+    && apt-get -o Acquire::Retries=3 update && apt-get install -y --no-install-recommends ca-certificates curl tini \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=sqlite-build /opt/sqlite/lib/ /opt/sqlite/lib/
+RUN python -c "import sqlite3; assert sqlite3.sqlite_version_info >= (3,51,3), sqlite3.sqlite_version"
+RUN if [ "$INSTALL_KUBECTL" = true ]; then \
+      arch="${TARGETARCH:-$(dpkg --print-architecture)}"; \
+      curl -fL --retry 3 "${KUBECTL_DOWNLOAD_BASE}/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl" -o /usr/local/bin/kubectl \
+      && curl -fL --retry 3 "${KUBECTL_DOWNLOAD_BASE}/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl.sha256" -o /tmp/kubectl.sha256 \
+      && echo "$(cat /tmp/kubectl.sha256)  /usr/local/bin/kubectl" | sha256sum --check \
+      && chmod 0755 /usr/local/bin/kubectl && rm /tmp/kubectl.sha256; \
+    fi
+WORKDIR /app
+COPY LICENSE NOTICE.md /usr/share/doc/motor-console/
+COPY web/requirements.lock /app/requirements.lock
+ARG PYPI_INDEX_URL=https://pypi.org/simple
+RUN pip install --index-url "${PYPI_INDEX_URL}" --no-cache-dir --require-hashes -r /app/requirements.lock
+COPY mindie-motor/upstream /opt/motor/upstream
+RUN chmod -R a-w /opt/motor/upstream
+COPY web/backend /app/backend
+COPY packages/python-sdk/motor_console_sdk /app/motor_console_sdk
+COPY web/scripts /app/scripts
+COPY web/compose.docker-agent.yaml web/compose.kubernetes-agent.yaml \
+     web/compose.docker-kubernetes-agent.yaml web/compose.agent-kubectl-client.yaml /app/rollout-assets/
+RUN chmod 0755 /app/scripts/container-entrypoint.sh
+USER 10001:10001
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python /app/scripts/healthcheck.py
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/scripts/container-entrypoint.sh"]
+
 FROM runtime AS bundled
 COPY --from=frontend-build /build/web/frontend/dist /app/frontend/dist
